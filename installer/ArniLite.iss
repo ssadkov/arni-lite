@@ -2,7 +2,16 @@
 ; Keep AppVersion in step with src/ArniLite.App/ArniLite.App.csproj.
 
 #define AppVersion "0.1.0"
-#define SourceDir "..\src\ArniLite.App\bin\Release\net48"
+#ifndef Arch
+#define Arch "x64"
+#endif
+#if Arch == "x86"
+#define BuildDir "..\dist\publish\x86"
+#define SetupSuffix "-x86"
+#else
+#define BuildDir "..\src\ArniLite.App\bin\Release\net48"
+#define SetupSuffix "-x64"
+#endif
 
 [Setup]
 AppId={{9A38DA0B-ECAE-473E-A798-85B32D3D0F0B}
@@ -22,14 +31,18 @@ DefaultGroupName=Arni Lite
 DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
 OutputDir=..\dist
-OutputBaseFilename=ArniLiteSetup-{#AppVersion}
+OutputBaseFilename=ArniLiteSetup-{#AppVersion}{#SetupSuffix}
 SetupIconFile=..\src\ArniLite.App\ArniLite.ico
 UninstallDisplayIcon={app}\ArniLite.exe
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
+#if Arch == "x86"
+ArchitecturesAllowed=x86compatible
+#else
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
+#endif
 MinVersion=6.1sp1
 AppMutex=Local\ArniLite.SingleInstance
 CloseApplications=yes
@@ -50,9 +63,9 @@ english.NeedNet48=Arni Lite needs .NET Framework 4.8 or newer. Install it from M
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 
 [Files]
-Source: "{#SourceDir}\*.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#SourceDir}\*.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#SourceDir}\*.config"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#BuildDir}\*.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#BuildDir}\*.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#BuildDir}\*.config"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{autoprograms}\Arni Lite"; Filename: "{app}\ArniLite.exe"

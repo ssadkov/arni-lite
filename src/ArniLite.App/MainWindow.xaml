@@ -178,7 +178,7 @@
                     <MenuItem Header="Только бесплатные модели" IsCheckable="True" IsChecked="{Binding Chat.FreeOnly}" />
                     <MenuItem Header="Разрешить всё по умолчанию" IsCheckable="True" IsChecked="{Binding Chat.TrustSession}" />
                 </MenuItem>
-                <MenuItem Header="Вход">
+                <MenuItem Header="Аккаунт">
                     <MenuItem Header="Войти" Command="{Binding SignInCommand}" Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}, ConverterParameter=invert}" />
                     <MenuItem Header="Яндекс" Command="{Binding YandexCommand}" Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}, ConverterParameter=invert}" />
                     <MenuItem Header="Google" Command="{Binding GoogleCommand}" Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}, ConverterParameter=invert}" />
