@@ -1,0 +1,240 @@
+using System;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Threading;
+using ArniLite.Api;
+using ArniLite.Core;
+using ArniLite.Storage;
+using Xunit;
+
+namespace ArniLite.AppTests
+{
+    public class ChatSessionTests
+    {
+        [Fact]
+        public Task SwitchingChatsRestoresTheirProjectAndGeneralChatClearsIt() => OnDispatcher(async () =>
+        {
+            using var fixture = new SessionFixture();
+            var session = fixture.CreateSession();
+            Assert.Equal(fixture.ProjectB, session.ProjectPath);
+            session.OpenChatCommand.Execute(fixture.ChatA);
+            Assert.Equal(fixture.ProjectA, session.ProjectPath);
+            session.NewChatCommand.Execute(null);
+            Assert.False(session.HasProject);
+            Assert.Equal("Чат", session.SelectedMode);
+            session.NewProjectChatCommand.Execute(fixture.ProjectB);
+            Assert.Equal(fixture.ProjectB, session.ProjectPath);
+            Assert.Equal("Агент", session.SelectedMode);
+            Assert.Contains(session.ChatRows, row => row.Title == "Новый чат" && row.ProjectPath == fixture.ProjectB);
+            await Task.CompletedTask;
+        });
+
+        [Fact]
+        public Task SearchFindsChatsInsideCollapsedProjects() => OnDispatcher(async () =>
+        {
+            using var fixture = new SessionFixture();
+            var session = fixture.CreateSession();
+            session.ToggleProjectCommand.Execute(fixture.ProjectA);
+            Assert.DoesNotContain(session.ChatRows, row => row.ChatId == fixture.ChatA);
+            session.Search = "альфа";
+            Assert.Contains(session.ChatRows, row => row.ChatId == fixture.ChatA);
+            Assert.DoesNotContain(session.ChatRows, row => row.ChatId == fixture.ChatB);
+            session.Search = string.Empty;
+            Assert.DoesNotContain(session.ChatRows, row => row.ChatId == fixture.ChatA);
+            await Task.CompletedTask;
+        });
+
+        [Fact]
+        public Task FilePreviewReadsTextWithoutCallingTheModelOrRunningAProcess() => OnDispatcher(async () =>
+        {
+            using var fixture = new SessionFixture();
+            File.WriteAllText(Path.Combine(fixture.ProjectB, "sample.txt"), "Локальный просмотр", new UTF8Encoding(false));
+            var session = fixture.CreateSession();
+            session.OpenProjectFileCommand.Execute("sample.txt");
+            Assert.True(session.HasFilePreview);
+            Assert.Equal("Локальный просмотр", session.FilePreviewBody);
+            session.ClosePreviewCommand.Execute(null);
+            Assert.False(session.HasFilePreview);
+            await Task.CompletedTask;
+        });
+
+        [Fact]
+        public Task StopCancelsTheActiveStreamAndPersistsPartialTextOnce() => OnDispatcher(async () =>
+        {
+            using var fixture = new SessionFixture();
+            var stream = new PausingStream();
+            using var client = new HttpClient(new StreamHandler(stream));
+            var session = fixture.CreateSession(client);
+            session.SelectedCatalog = new CatalogModel { Id = "local-test" };
+            session.NewChatCommand.Execute(null);
+            session.Draft = "Проверка отмены";
+            var idle = new TaskCompletionSource<bool>();
+            session.PropertyChanged += (_, args) =>
+            {
+                if (args.PropertyName == nameof(ChatSession.IsBusy) && !session.IsBusy) idle.TrySetResult(true);
+            };
+            session.SendCommand.Execute(null);
+            await WithTimeout(stream.Paused.Task);
+            Assert.True(session.IsBusy);
+            Assert.True(session.StopCommand.CanExecute(null));
+            session.StopCommand.Execute(null);
+            await WithTimeout(idle.Task);
+            var messages = fixture.History.Load(fixture.History.CurrentChatId());
+            Assert.Equal(new[] { "Часть ответа" }, messages.Where(message => message.Role == "assistant").Select(message => message.Content));
+            Assert.Single(session.Items.Where(row => row.Title == "Arni" && row.Body == "Часть ответа"));
+            Assert.False(session.StopCommand.CanExecute(null));
+        });
+
+        private static async Task WithTimeout(Task task)
+        {
+            Assert.Same(task, await Task.WhenAny(task, Task.Delay(5000)));
+            await task;
+        }
+
+        [Fact]
+        public Task ToolRoundDoesNotDuplicateStreamedMessages() => OnDispatcher(async () =>
+        {
+            using var fixture = new SessionFixture();
+            File.WriteAllText(Path.Combine(fixture.ProjectB, "sample.txt"), "test");
+            using var client = new HttpClient(new ToolRoundHandler());
+            var session = fixture.CreateSession(client);
+            session.SelectedCatalog = new CatalogModel { Id = "local-test" };
+            session.Draft = "Прочитай sample.txt";
+            var idle = new TaskCompletionSource<bool>();
+            session.PropertyChanged += (_, args) =>
+            {
+                if (args.PropertyName == nameof(ChatSession.IsBusy) && !session.IsBusy) idle.TrySetResult(true);
+            };
+            session.SendCommand.Execute(null);
+            await WithTimeout(idle.Task);
+            Assert.Equal(new[] { "Читаю файл.", "Файл прочитан." }, session.Items.Where(row => row.Title == "Arni").Select(row => row.Body));
+        });
+
+        private static Task OnDispatcher(Func<Task> action)
+        {
+            var completion = new TaskCompletionSource<bool>();
+            var thread = new Thread(() =>
+            {
+                var dispatcher = Dispatcher.CurrentDispatcher;
+                SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext(dispatcher));
+                dispatcher.BeginInvoke(new Action(async () =>
+                {
+                    try { await action(); completion.TrySetResult(true); }
+                    catch (Exception ex) { completion.TrySetException(ex); }
+                    finally { dispatcher.BeginInvokeShutdown(DispatcherPriority.Send); }
+                }));
+                Dispatcher.Run();
+            });
+            thread.SetApartmentState(ApartmentState.STA);
+            thread.IsBackground = true;
+            thread.Start();
+            return completion.Task;
+        }
+
+        private sealed class SessionFixture : IDisposable
+        {
+            public string DirectoryPath { get; } = Path.Combine(Path.GetTempPath(), "arni-ui-tests-" + Guid.NewGuid().ToString("N"));
+            public string ProjectA { get; }
+            public string ProjectB { get; }
+            public string ChatA { get; }
+            public string ChatB { get; }
+            public ChatHistory History { get; }
+
+            public SessionFixture()
+            {
+                ProjectA = Path.Combine(DirectoryPath, "project-a");
+                ProjectB = Path.Combine(DirectoryPath, "project-b");
+                Directory.CreateDirectory(ProjectA);
+                Directory.CreateDirectory(ProjectB);
+                History = new ChatHistory(Path.Combine(DirectoryPath, "chats"));
+                ChatA = History.NewChat();
+                History.Append(ChatA, new ChatMessage { Role = "user", Content = "Задача альфа" });
+                ChatB = History.NewChat();
+                History.Append(ChatB, new ChatMessage { Role = "user", Content = "Задача бета" });
+                File.WriteAllLines(Path.Combine(DirectoryPath, "chat-folders.txt"), new[] { ChatA + "\t" + ProjectA, ChatB + "\t" + ProjectB });
+                File.WriteAllLines(Path.Combine(DirectoryPath, "folders.txt"), new[] { ProjectA, ProjectB });
+            }
+
+            public ChatSession CreateSession(HttpClient? client = null) => new ChatSession(
+                new ArniApiClient(client ?? new HttpClient(new RejectNetwork())), new MemoryToken(), new OsFacts(), new RejectProcesses(), DirectoryPath);
+
+            public void Dispose() => Directory.Delete(DirectoryPath, true);
+        }
+
+        private sealed class MemoryToken : ITokenStore
+        {
+            public string? Load() => "local-test-token";
+            public void Save(string token) => throw new NotSupportedException();
+            public void Clear() { }
+        }
+
+        private sealed class RejectProcesses : IProcessRunner
+        {
+            public Task<ProcessRunResult> RunPowerShellAsync(string command, int timeoutMs, CancellationToken cancellationToken) => throw new InvalidOperationException("Unexpected process");
+            public Task<ProcessRunResult> RunProcessAsync(string fileName, string arguments, string standardInput, string workingDirectory, int timeoutMs, CancellationToken cancellationToken) => throw new InvalidOperationException("Unexpected process");
+        }
+
+        private sealed class RejectNetwork : HttpMessageHandler
+        {
+            protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) => throw new InvalidOperationException("Unexpected network request");
+        }
+
+        private sealed class StreamHandler : HttpMessageHandler
+        {
+            private readonly Stream _stream;
+            public StreamHandler(Stream stream) { _stream = stream; }
+            protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            {
+                var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(_stream) };
+                response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("text/event-stream");
+                return Task.FromResult(response);
+            }
+        }
+
+        private sealed class ToolRoundHandler : HttpMessageHandler
+        {
+            private int _requests;
+            protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            {
+                var body = _requests++ == 0
+                    ? "{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":\"Читаю файл.\",\"tool_calls\":[{\"id\":\"read-1\",\"type\":\"function\",\"function\":{\"name\":\"read_file\",\"arguments\":\"{\\\"path\\\":\\\"sample.txt\\\"}\"}}]},\"finish_reason\":\"tool_calls\"}]}"
+                    : "{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":\"Файл прочитан.\"},\"finish_reason\":\"stop\"}]}";
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(body, Encoding.UTF8, "application/json") });
+            }
+        }
+
+        private sealed class PausingStream : Stream
+        {
+            private readonly byte[] _chunk = Encoding.UTF8.GetBytes("data: {\"choices\":[{\"delta\":{\"content\":\"Часть ответа\"}}]}\n\n");
+            private bool _sent;
+            public TaskCompletionSource<bool> Paused { get; } = new TaskCompletionSource<bool>();
+            public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+            {
+                if (!_sent)
+                {
+                    _sent = true;
+                    Array.Copy(_chunk, 0, buffer, offset, _chunk.Length);
+                    return _chunk.Length;
+                }
+                Paused.TrySetResult(true);
+                await Task.Delay(Timeout.Infinite, cancellationToken);
+                return 0;
+            }
+            public override bool CanRead => true;
+            public override bool CanSeek => false;
+            public override bool CanWrite => false;
+            public override long Length => throw new NotSupportedException();
+            public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+            public override void Flush() { }
+            public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+            public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+            public override void SetLength(long value) => throw new NotSupportedException();
+            public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+        }
+    }
+}
