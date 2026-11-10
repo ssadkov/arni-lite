@@ -1,0 +1,7 @@
+bin/
+obj/
+.vs/
+*.user
+*.suo
+TestResults/
+docs/g0-self-check.txt
