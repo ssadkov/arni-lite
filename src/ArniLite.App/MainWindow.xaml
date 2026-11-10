@@ -180,8 +180,6 @@
                 </MenuItem>
                 <MenuItem Header="Аккаунт">
                     <MenuItem Header="Войти" Command="{Binding SignInCommand}" Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}, ConverterParameter=invert}" />
-                    <MenuItem Header="Яндекс" Command="{Binding YandexCommand}" Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}, ConverterParameter=invert}" />
-                    <MenuItem Header="Google" Command="{Binding GoogleCommand}" Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}, ConverterParameter=invert}" />
                     <MenuItem Header="Ссылка для входа" Command="{Binding CopyLinkCommand}" Visibility="{Binding HasSignInLink, Converter={StaticResource BoolVis}}" />
                     <MenuItem Header="Выйти" Command="{Binding SignOutCommand}" Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}}" />
                 </MenuItem>
@@ -191,8 +189,6 @@
             <DockPanel>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button Margin="0,0,8,0" Content="Войти" Style="{StaticResource PrimaryButton}" Command="{Binding SignInCommand}" Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}, ConverterParameter=invert}" />
-                    <Button Margin="0,0,8,0" Content="Яндекс" Command="{Binding YandexCommand}" Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}, ConverterParameter=invert}" />
-                    <Button Margin="0,0,8,0" Content="Google" Command="{Binding GoogleCommand}" Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}, ConverterParameter=invert}" />
                     <Button Margin="0,0,8,0" Content="Ссылка" Command="{Binding CopyLinkCommand}" Visibility="{Binding HasSignInLink, Converter={StaticResource BoolVis}}" />
                     <Button Content="Выйти" Command="{Binding SignOutCommand}" Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}}" />
                 </StackPanel>
@@ -219,9 +215,12 @@
                         </StackPanel>
                     </StackPanel>
                     <TextBlock Margin="0,2,0,0" Foreground="#626262" Text="Вход не выполнен" Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}, ConverterParameter=invert}" />
-                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0" Visibility="{Binding HasUserCode, Converter={StaticResource BoolVis}}">
-                        <TextBlock FontFamily="Consolas" FontSize="18" VerticalAlignment="Center" Text="{Binding UserCode}" />
-                        <Button Margin="8,0,0,0" Style="{StaticResource IconButton}" ToolTip="Копировать код" Command="{Binding CopyCodeCommand}" />
+                    <StackPanel Margin="0,6,0,0" Visibility="{Binding HasUserCode, Converter={StaticResource BoolVis}}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock FontFamily="Consolas" FontSize="18" VerticalAlignment="Center" Text="{Binding UserCode}" />
+                            <Button Margin="8,0,0,0" Style="{StaticResource IconButton}" ToolTip="Копировать код" Command="{Binding CopyCodeCommand}" />
+                        </StackPanel>
+                        <TextBlock Margin="0,4,0,0" Foreground="#626262" TextWrapping="Wrap" Text="Введите этот код на открывшейся странице. Если она просит войти, выберите Google или Яндекс уже там." />
                     </StackPanel>
                 </StackPanel>
             </DockPanel>

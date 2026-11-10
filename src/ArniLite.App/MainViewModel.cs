@@ -37,8 +37,6 @@ namespace ArniLite
             SignInCommand = new RelayCommand(async () => await SignInAsync(), () => !_busy);
             CopyLinkCommand = new RelayCommand(CopyLink, () => !string.IsNullOrEmpty(_verificationUri));
             CopyCodeCommand = new RelayCommand(CopyCode, () => HasUserCode);
-            YandexCommand = new RelayCommand(() => Open(ArniEndpoints.YandexStart));
-            GoogleCommand = new RelayCommand(() => Open(ArniEndpoints.GoogleStart));
             PowerShellCommand = new RelayCommand(async () => await RunPowerShellAsync(), () => !_busy);
             StreamCommand = new RelayCommand(async () => await StreamAsync(), () => !_busy && HasToken());
             StopCommand = new RelayCommand(Stop, () => _busy);
@@ -86,8 +84,6 @@ namespace ArniLite
         public ICommand SignInCommand { get; }
         public ICommand CopyLinkCommand { get; }
         public ICommand CopyCodeCommand { get; }
-        public ICommand YandexCommand { get; }
-        public ICommand GoogleCommand { get; }
         public ICommand PowerShellCommand { get; }
         public ICommand StreamCommand { get; }
         public ICommand StopCommand { get; }
@@ -265,19 +261,6 @@ namespace ArniLite
 
             Clipboard.SetText(_userCode);
             Append("Код входа скопирован.");
-        }
-
-        private void Open(string uri)
-        {
-            try
-            {
-                ExternalBrowser.Open(uri);
-                Append("Страница открыта во внешнем браузере. Если браузер по умолчанию — Internet Explorer, скопируйте ссылку входа и откройте её в другом браузере.");
-            }
-            catch (Exception ex)
-            {
-                Append(ex.Message);
-            }
         }
 
         private void SignOut()
