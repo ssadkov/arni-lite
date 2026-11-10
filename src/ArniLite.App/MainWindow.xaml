@@ -1,53 +1,400 @@
 <Window x:Class="ArniLite.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:avalonedit="http://icsharpcode.net/sharpdevelop/avalonedit"
+        xmlns:local="clr-namespace:ArniLite"
         Title="Arni Lite"
         Width="1080"
-        Height="720"
-        MinWidth="800"
+        Height="780"
+        MinWidth="840"
         MinHeight="560"
         WindowStartupLocation="CenterScreen"
+        Background="#F3F3F1"
         FontFamily="Segoe UI"
         FontSize="14">
-    <DockPanel Margin="16">
-        <StackPanel DockPanel.Dock="Top">
-            <TextBlock FontSize="22" Text="Arni Lite" />
-            <TextBlock Margin="0,4,0,12" Text="{Binding StatusLine}" TextWrapping="Wrap" />
-            <TextBlock FontSize="28" FontFamily="Consolas" HorizontalAlignment="Left" Text="{Binding UserCode}" />
-        </StackPanel>
-        <WrapPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
-            <Button MinWidth="140" Margin="0,0,8,8" Padding="10,6" Content="Войти" Command="{Binding SignInCommand}" />
-            <Button MinWidth="160" Margin="0,0,8,8" Padding="10,6" Content="Скопировать ссылку" Command="{Binding CopyLinkCommand}" />
-            <Button MinWidth="140" Margin="0,0,8,8" Padding="10,6" Content="Яндекс" Command="{Binding YandexCommand}" />
-            <Button MinWidth="140" Margin="0,0,8,8" Padding="10,6" Content="Google" Command="{Binding GoogleCommand}" />
-            <Button MinWidth="180" Margin="0,0,8,8" Padding="10,6" Content="Проверить PowerShell" Command="{Binding PowerShellCommand}" />
-            <Button MinWidth="160" Margin="0,0,8,8" Padding="10,6" Content="Проверить поток" Command="{Binding StreamCommand}" />
-            <Button MinWidth="100" Margin="0,0,8,8" Padding="10,6" Content="Стоп" Command="{Binding StopCommand}" />
-            <Button MinWidth="100" Margin="0,0,8,8" Padding="10,6" Content="Выйти" Command="{Binding SignOutCommand}" />
-        </WrapPanel>
+    <Window.Resources>
+        <local:BoolVisibilityConverter x:Key="BoolVis" />
+        <local:CodeFontConverter x:Key="CodeFont" />
+        <local:FolderNameConverter x:Key="FolderName" />
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="Foreground" Value="#1C1C1C" />
+            <Setter Property="BorderBrush" Value="#D7D7D2" />
+            <Setter Property="Padding" Value="12,7" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Box" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" TextElement.Foreground="{TemplateBinding Foreground}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Box" Property="Background" Value="#F7F7F5" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.45" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="IconButton" TargetType="Button">
+            <Setter Property="Width" Value="28" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="Foreground" Value="#6A6A66" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="ToolTip" Value="Копировать" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Box" Background="{TemplateBinding Background}" CornerRadius="6" Width="28" Height="28">
+                            <Viewbox Width="14" Height="14">
+                                <Path Stroke="{TemplateBinding Foreground}" StrokeThickness="1.4" StrokeLineJoin="Round" Fill="Transparent"
+                                      Data="M5 7h7v8H5z M8 7V5h7v8h-2" />
+                            </Viewbox>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Box" Property="Background" Value="#E7E5E0" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="#1C1C1C" />
+            <Setter Property="BorderBrush" Value="#1C1C1C" />
+            <Setter Property="Padding" Value="12,7" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Box" Background="#1C1C1C" BorderBrush="#1C1C1C" BorderThickness="1" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" TextElement.Foreground="{TemplateBinding Foreground}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Box" Property="Background" Value="#333333" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.45" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <ControlTemplate x:Key="MenuTop" TargetType="MenuItem">
+            <Grid SnapsToDevicePixels="True">
+                <Border x:Name="Head" Background="Transparent" BorderBrush="Transparent" BorderThickness="1" Padding="10,4">
+                    <ContentPresenter ContentSource="Header" RecognizesAccessKey="True" VerticalAlignment="Center" />
+                </Border>
+                <Popup x:Name="PART_Popup" Placement="Bottom" AllowsTransparency="False" Focusable="False" PopupAnimation="None"
+                       IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}" PlacementTarget="{Binding ElementName=Head}">
+                    <Border Background="White" BorderBrush="#808080" BorderThickness="1" Padding="2" MinWidth="220" SnapsToDevicePixels="True">
+                        <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle" />
+                    </Border>
+                </Popup>
+            </Grid>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsHighlighted" Value="True">
+                    <Setter TargetName="Head" Property="Background" Value="#E6E6E6" />
+                    <Setter TargetName="Head" Property="BorderBrush" Value="#B0B0B0" />
+                </Trigger>
+                <Trigger Property="IsSubmenuOpen" Value="True">
+                    <Setter TargetName="Head" Property="Background" Value="#E6E6E6" />
+                    <Setter TargetName="Head" Property="BorderBrush" Value="#808080" />
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+        <ControlTemplate x:Key="MenuSub" TargetType="MenuItem">
+            <Border x:Name="Row" Background="Transparent" Padding="8,5" SnapsToDevicePixels="True">
+                <DockPanel>
+                    <Path x:Name="Mark" DockPanel.Dock="Left" Width="12" Height="10" Margin="0,0,8,0" VerticalAlignment="Center"
+                          Visibility="Collapsed" Stroke="#1C1C1C" StrokeThickness="1.6" StrokeLineJoin="Round"
+                          Data="M1,5 L4,8 L11,1" Fill="Transparent" />
+                    <ContentPresenter ContentSource="Header" RecognizesAccessKey="True" />
+                </DockPanel>
+            </Border>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsHighlighted" Value="True">
+                    <Setter TargetName="Row" Property="Background" Value="#D6E3F6" />
+                </Trigger>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter TargetName="Mark" Property="Visibility" Value="Visible" />
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.45" />
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+        <Style TargetType="MenuItem">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Foreground" Value="#1C1C1C" />
+            <Style.Triggers>
+                <Trigger Property="Role" Value="TopLevelHeader">
+                    <Setter Property="Template" Value="{StaticResource MenuTop}" />
+                </Trigger>
+                <Trigger Property="Role" Value="TopLevelItem">
+                    <Setter Property="Template" Value="{StaticResource MenuTop}" />
+                </Trigger>
+                <Trigger Property="Role" Value="SubmenuItem">
+                    <Setter Property="Template" Value="{StaticResource MenuSub}" />
+                </Trigger>
+                <Trigger Property="Role" Value="SubmenuHeader">
+                    <Setter Property="Template" Value="{StaticResource MenuSub}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style TargetType="Separator">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Margin" Value="4,4" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Separator">
+                        <Border Height="1" Background="#D0D0D0" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Background="#F0F0F0" BorderBrush="#D0D0D0" BorderThickness="0,0,0,1">
+            <Menu Background="#F0F0F0" Padding="4,1">
+                <MenuItem Header="Файл">
+                    <MenuItem Header="Новый диалог" Command="{Binding Chat.NewChatCommand}" />
+                    <MenuItem Header="Выбрать папку" Command="{Binding Chat.ChooseFolderCommand}" />
+                    <MenuItem Header="Открыть в проводнике" Command="{Binding Chat.OpenInExplorerCommand}" />
+                    <Separator />
+                    <MenuItem Header="Выход" Command="{Binding CloseCommand}" />
+                </MenuItem>
+                <MenuItem Header="Настройки">
+                    <MenuItem Header="Только бесплатные модели" IsCheckable="True" IsChecked="{Binding Chat.FreeOnly}" />
+                    <MenuItem Header="Разрешить всё по умолчанию" IsCheckable="True" IsChecked="{Binding Chat.TrustSession}" />
+                </MenuItem>
+                <MenuItem Header="Вход">
+                    <MenuItem Header="Войти" Command="{Binding SignInCommand}" Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}, ConverterParameter=invert}" />
+                    <MenuItem Header="Яндекс" Command="{Binding YandexCommand}" Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}, ConverterParameter=invert}" />
+                    <MenuItem Header="Google" Command="{Binding GoogleCommand}" Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}, ConverterParameter=invert}" />
+                    <MenuItem Header="Ссылка для входа" Command="{Binding CopyLinkCommand}" Visibility="{Binding HasSignInLink, Converter={StaticResource BoolVis}}" />
+                    <MenuItem Header="Выйти" Command="{Binding SignOutCommand}" Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}}" />
+                </MenuItem>
+            </Menu>
+        </Border>
+        <Border DockPanel.Dock="Top" Background="White" BorderBrush="#E6E6E2" BorderThickness="0,0,0,1" Padding="20,14">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Margin="0,0,8,0" Content="Войти" Style="{StaticResource PrimaryButton}" Command="{Binding SignInCommand}" Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}, ConverterParameter=invert}" />
+                    <Button Margin="0,0,8,0" Content="Яндекс" Command="{Binding YandexCommand}" Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}, ConverterParameter=invert}" />
+                    <Button Margin="0,0,8,0" Content="Google" Command="{Binding GoogleCommand}" Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}, ConverterParameter=invert}" />
+                    <Button Margin="0,0,8,0" Content="Ссылка" Command="{Binding CopyLinkCommand}" Visibility="{Binding HasSignInLink, Converter={StaticResource BoolVis}}" />
+                    <Button Content="Выйти" Command="{Binding SignOutCommand}" Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}}" />
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock FontSize="18" FontWeight="SemiBold" Text="Arni Lite" />
+                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0" Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}}">
+                        <Grid Width="22" Height="22" Margin="0,1,8,0" VerticalAlignment="Top">
+                            <Border CornerRadius="11" Background="#FC3F1D" Visibility="{Binding Chat.IsYandex, Converter={StaticResource BoolVis}}">
+                                <TextBlock Text="Я" Foreground="White" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <Border CornerRadius="11" Background="White" BorderBrush="#DADCE0" BorderThickness="1" Visibility="{Binding Chat.IsGoogle, Converter={StaticResource BoolVis}}">
+                                <TextBlock Text="G" Foreground="#4285F4" FontSize="12" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <Border CornerRadius="11" Background="#0077FF" Visibility="{Binding Chat.IsVk, Converter={StaticResource BoolVis}}">
+                                <TextBlock Text="VK" Foreground="White" FontSize="8" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <Border CornerRadius="11" Background="#6A6A66" Visibility="{Binding Chat.IsOtherProvider, Converter={StaticResource BoolVis}}">
+                                <TextBlock Text="·" Foreground="White" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-2,0,0" />
+                            </Border>
+                        </Grid>
+                        <StackPanel>
+                            <TextBlock FontWeight="SemiBold" Text="{Binding Chat.AccountEmail}" />
+                            <TextBlock Foreground="#626262" Text="{Binding Chat.AccountLine}" />
+                        </StackPanel>
+                    </StackPanel>
+                    <TextBlock Margin="0,2,0,0" Foreground="#626262" Text="Вход не выполнен" Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}, ConverterParameter=invert}" />
+                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0" Visibility="{Binding HasUserCode, Converter={StaticResource BoolVis}}">
+                        <TextBlock FontFamily="Consolas" FontSize="18" VerticalAlignment="Center" Text="{Binding UserCode}" />
+                        <Button Margin="8,0,0,0" Style="{StaticResource IconButton}" ToolTip="Копировать код" Command="{Binding CopyCodeCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+        <Border DockPanel.Dock="Top" Background="White" BorderBrush="#E6E6E2" BorderThickness="0,0,0,1" Padding="20,10">
+            <StackPanel>
+                <WrapPanel>
+                    <ComboBox Width="110" Margin="0,0,8,8" VerticalAlignment="Center" ItemsSource="{Binding Chat.Modes}" SelectedItem="{Binding Chat.SelectedMode}" />
+                    <ComboBox Width="460" Margin="0,0,8,8" VerticalAlignment="Center" ItemsSource="{Binding Chat.Models}" SelectedItem="{Binding Chat.SelectedCatalog}" />
+                    <CheckBox Margin="0,0,12,8" VerticalAlignment="Center" Content="Только бесплатные модели" IsChecked="{Binding Chat.FreeOnly}" />
+                </WrapPanel>
+                <TextBlock VerticalAlignment="Center" TextWrapping="Wrap" Foreground="#3A3A3A" Text="{Binding Chat.ProjectLabel}" />
+            </StackPanel>
+        </Border>
+        <Border DockPanel.Dock="Bottom" Background="White" BorderBrush="#E6E6E2" BorderThickness="0,1,0,0" Padding="20,12">
+            <StackPanel>
+                <Border Margin="0,0,0,10" Padding="12" Background="#FFF8F2" BorderBrush="#E7C8A4" BorderThickness="1" CornerRadius="10"
+                        Visibility="{Binding Chat.PermissionVisible, Converter={StaticResource BoolVis}}">
+                    <StackPanel>
+                        <TextBlock FontWeight="SemiBold" Text="{Binding Chat.PermissionTitle}" />
+                        <TextBox Margin="0,8,0,8" MinHeight="72" MaxHeight="160" IsReadOnly="True" BorderThickness="0" Background="Transparent"
+                                 TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" FontFamily="Consolas"
+                                 Text="{Binding Chat.PermissionBody, Mode=OneWay}" />
+                        <StackPanel Orientation="Horizontal">
+                            <Button Margin="0,0,8,0" Content="Разрешить" Style="{StaticResource PrimaryButton}" Command="{Binding Chat.AllowCommand}" />
+                            <Button Content="Отклонить" Command="{Binding Chat.DenyCommand}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+                <StackPanel Margin="0,0,0,10" Orientation="Horizontal" Visibility="{Binding Chat.HasActivity, Converter={StaticResource BoolVis}}">
+                    <ProgressBar Width="88" Height="6" Margin="0,0,10,0" VerticalAlignment="Center" IsIndeterminate="True"
+                                 Visibility="{Binding Chat.ShowLoader, Converter={StaticResource BoolVis}}" />
+                    <TextBlock VerticalAlignment="Center" Foreground="#626262" Text="{Binding Chat.Activity}" />
+                </StackPanel>
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Right" Margin="10,0,0,0" VerticalAlignment="Bottom">
+                        <Button Margin="0,0,0,8" Content="Стоп" Command="{Binding StopCommand}" />
+                        <Button Content="Отправить" Style="{StaticResource PrimaryButton}" Command="{Binding Chat.SendCommand}" />
+                    </StackPanel>
+                    <Border Background="White" BorderBrush="#D7D7D2" BorderThickness="1" CornerRadius="12" Padding="8">
+                        <TextBox x:Name="Draft" MinHeight="52" MaxHeight="140" AcceptsReturn="True" TextWrapping="Wrap"
+                                 BorderThickness="0" VerticalScrollBarVisibility="Auto"
+                                 Text="{Binding Chat.Draft, UpdateSourceTrigger=PropertyChanged}" PreviewKeyDown="Draft_OnPreviewKeyDown" />
+                    </Border>
+                </DockPanel>
+            </StackPanel>
+        </Border>
         <Grid>
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="232" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="320" />
+                <ColumnDefinition Width="200" />
             </Grid.ColumnDefinitions>
-            <TextBox Grid.Column="0"
-                     Margin="0,0,12,0"
-                     AcceptsReturn="True"
-                     FontFamily="Consolas"
-                     IsReadOnly="True"
-                     Text="{Binding Log, Mode=OneWay}"
-                     TextWrapping="Wrap"
-                     VerticalScrollBarVisibility="Auto" />
-            <DockPanel Grid.Column="1">
-                <TextBlock DockPanel.Dock="Top" Margin="0,0,0,8" TextWrapping="Wrap"
-                           Text="Редактор G0. Полноценный чат и агент сюда ещё не входят." />
-                <avalonedit:TextEditor x:Name="Editor"
-                                       FontFamily="Consolas"
-                                       FontSize="14"
-                                       IsReadOnly="True"
-                                       ShowLineNumbers="True" />
-            </DockPanel>
+            <Border Grid.Column="0" Background="#EBEAE6" BorderBrush="#E0DED8" BorderThickness="0,0,1,0">
+                <DockPanel Margin="12,14">
+                    <Button DockPanel.Dock="Top" Margin="0,0,0,12" HorizontalContentAlignment="Left" Content="Новый диалог" Command="{Binding Chat.NewChatCommand}" />
+                    <StackPanel DockPanel.Dock="Bottom">
+                        <TextBlock Margin="4,12,4,6" FontSize="12" FontWeight="SemiBold" Foreground="#6A6A66" Text="Папки" />
+                        <Button Margin="0,0,0,4" HorizontalContentAlignment="Left" Content="Выбрать папку" Command="{Binding Chat.ChooseFolderCommand}" />
+                        <Button Margin="0,0,0,8" HorizontalContentAlignment="Left" Content="Открыть папку" Command="{Binding Chat.OpenInExplorerCommand}" />
+                        <ScrollViewer MaxHeight="160" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding Chat.Folders}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Margin="0,0,0,4" HorizontalContentAlignment="Left" Padding="8,6"
+                                            Command="{Binding DataContext.Chat.OpenFolderCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}">
+                                            <TextBlock Text="{Binding Converter={StaticResource FolderName}}" TextTrimming="CharacterEllipsis" ToolTip="{Binding}" />
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        </ScrollViewer>
+                    </StackPanel>
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Margin="4,0,4,6" FontSize="12" FontWeight="SemiBold" Foreground="#6A6A66" Text="Диалоги" />
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding Chat.ChatRows}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Margin="0,0,0,4" HorizontalContentAlignment="Left" Padding="8,6"
+                                                IsEnabled="{Binding CanOpen}"
+                                                Command="{Binding DataContext.Chat.OpenChatCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding ChatId}">
+                                            <TextBlock Text="{Binding Title}" TextWrapping="Wrap" />
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </DockPanel>
+                </DockPanel>
+            </Border>
+            <ScrollViewer x:Name="ChatScroll" Grid.Column="1" Padding="20,16" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" ScrollChanged="ChatScroll_OnScrollChanged">
+            <ItemsControl ItemsSource="{Binding Chat.Items}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Margin="0,0,0,12">
+                            <Border MaxWidth="680" Padding="14,12" CornerRadius="16">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="White" />
+                                        <Setter Property="BorderBrush" Value="#E4E2DC" />
+                                        <Setter Property="BorderThickness" Value="1" />
+                                        <Setter Property="HorizontalAlignment" Value="Left" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsUser}" Value="True">
+                                                <Setter Property="Background" Value="#4A4742" />
+                                                <Setter Property="BorderBrush" Value="#4A4742" />
+                                                <Setter Property="HorizontalAlignment" Value="Right" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <StackPanel>
+                                    <DockPanel Margin="0,0,0,4">
+                                        <Button DockPanel.Dock="Right" Style="{StaticResource IconButton}" Command="{Binding CopyCommand}" />
+                                        <TextBlock FontSize="12" FontWeight="SemiBold" Text="{Binding Title}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#626262" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsUser}" Value="True">
+                                                            <Setter Property="Foreground" Value="#F4EFE6" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </DockPanel>
+                                    <TextBox IsReadOnly="True" BorderThickness="0" Background="Transparent" TextWrapping="Wrap" AcceptsReturn="True"
+                                             FontFamily="Consolas"
+                                             Text="{Binding Body, Mode=OneWay}"
+                                             Visibility="{Binding IsCode, Converter={StaticResource BoolVis}}">
+                                        <TextBox.Style>
+                                            <Style TargetType="TextBox">
+                                                <Setter Property="Foreground" Value="#1C1C1C" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsUser}" Value="True">
+                                                        <Setter Property="Foreground" Value="#F7F3EC" />
+                                                        <Setter Property="CaretBrush" Value="#F7F3EC" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBox.Style>
+                                    </TextBox>
+                                    <local:MarkdownView Source="{Binding Body}" Light="{Binding IsUser}"
+                                                        Visibility="{Binding IsCode, Converter={StaticResource BoolVis}, ConverterParameter=invert}" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+            <Border Grid.Column="2" Background="#F7F6F3" BorderBrush="#E0DED8" BorderThickness="1,0,0,0" Padding="10">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Margin="0,0,0,8" FontWeight="SemiBold" Text="Файлы проекта" />
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding Chat.ProjectFiles}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Margin="0,0,0,4" HorizontalContentAlignment="Left" Padding="8,6"
+                                            Command="{Binding DataContext.Chat.OpenProjectFileCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}">
+                                        <TextBlock Text="{Binding}" TextTrimming="CharacterEllipsis" ToolTip="{Binding}" />
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
         </Grid>
     </DockPanel>
 </Window>

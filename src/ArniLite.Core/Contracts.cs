@@ -71,5 +71,7 @@ namespace ArniLite.Core
     public interface IProcessRunner
     {
         Task<ProcessRunResult> RunPowerShellAsync(string command, int timeoutMs, CancellationToken cancellationToken);
+
+        Task<ProcessRunResult> RunProcessAsync(string fileName, string arguments, string standardInput, string workingDirectory, int timeoutMs, CancellationToken cancellationToken);
     }
 }

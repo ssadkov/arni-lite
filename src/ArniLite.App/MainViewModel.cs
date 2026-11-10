@@ -24,6 +24,8 @@ namespace ArniLite
         private string _userCode = string.Empty;
         private string _log = string.Empty;
         private bool _busy;
+        private bool _signedIn;
+        private bool _hasSignInLink;
 
         public MainViewModel(OsFacts os)
         {
@@ -34,14 +36,19 @@ namespace ArniLite
             _statusLine = os.Description + " · Framework " + FrameworkProbe.Describe();
             SignInCommand = new RelayCommand(async () => await SignInAsync(), () => !_busy);
             CopyLinkCommand = new RelayCommand(CopyLink, () => !string.IsNullOrEmpty(_verificationUri));
+            CopyCodeCommand = new RelayCommand(CopyCode, () => HasUserCode);
             YandexCommand = new RelayCommand(() => Open(ArniEndpoints.YandexStart));
             GoogleCommand = new RelayCommand(() => Open(ArniEndpoints.GoogleStart));
             PowerShellCommand = new RelayCommand(async () => await RunPowerShellAsync(), () => !_busy);
             StreamCommand = new RelayCommand(async () => await StreamAsync(), () => !_busy && HasToken());
             StopCommand = new RelayCommand(Stop, () => _busy);
             SignOutCommand = new RelayCommand(SignOut);
+            CloseCommand = new RelayCommand(() => Application.Current.Shutdown());
+            _signedIn = HasToken();
+            Chat = new ChatSession(_api, _store, _os, _runner);
             Append("Окно открыто. Диагностика сети выполняется в фоне.");
             _ = DiagnoseAsync();
+            _ = Chat.LoadAccountAsync();
         }
 
         public string StatusLine
@@ -53,7 +60,21 @@ namespace ArniLite
         public string UserCode
         {
             get => _userCode;
-            private set { _userCode = value; Notify(nameof(UserCode)); }
+            private set { _userCode = value; Notify(nameof(UserCode)); Notify(nameof(HasUserCode)); }
+        }
+
+        public bool HasUserCode => !string.IsNullOrEmpty(_userCode);
+
+        public bool IsSignedIn
+        {
+            get => _signedIn;
+            private set { _signedIn = value; Notify(nameof(IsSignedIn)); }
+        }
+
+        public bool HasSignInLink
+        {
+            get => _hasSignInLink;
+            private set { _hasSignInLink = value; Notify(nameof(HasSignInLink)); }
         }
 
         public string Log
@@ -64,12 +85,15 @@ namespace ArniLite
 
         public ICommand SignInCommand { get; }
         public ICommand CopyLinkCommand { get; }
+        public ICommand CopyCodeCommand { get; }
         public ICommand YandexCommand { get; }
         public ICommand GoogleCommand { get; }
         public ICommand PowerShellCommand { get; }
         public ICommand StreamCommand { get; }
         public ICommand StopCommand { get; }
         public ICommand SignOutCommand { get; }
+        public ICommand CloseCommand { get; }
+        public ChatSession Chat { get; }
 
         private bool HasToken()
         {
@@ -101,13 +125,16 @@ namespace ArniLite
 
         private async Task SignInAsync()
         {
-            using var operation = Begin();
+            var operation = Begin();
             try
             {
                 var start = await _api.StartDesktopAuthAsync(operation.Token).ConfigureAwait(true);
                 _deviceCode = start.DeviceCode;
                 _verificationUri = start.VerificationUri;
+                HasSignInLink = !string.IsNullOrEmpty(_verificationUri);
                 UserCode = start.UserCode;
+            Notify(nameof(HasUserCode));
+            (CopyCodeCommand as RelayCommand)?.Raise();
                 Append("Код входа показан выше. Сверьте его на странице и введите вручную. Ссылка не содержит секрет устройства.");
                 ExternalBrowser.Open(start.VerificationUri);
                 var interval = Math.Max(1, start.IntervalSeconds);
@@ -125,8 +152,13 @@ namespace ArniLite
                     {
                         _store.Save(poll.Token);
                         _deviceCode = string.Empty;
+                        _verificationUri = string.Empty;
+                        HasSignInLink = false;
+                        UserCode = string.Empty;
+                        IsSignedIn = true;
                         Append("Вход выполнен. Токен сохранён через DPAPI и в журнал не пишется.");
                         RefreshCommands();
+                        _ = Chat.LoadAccountAsync();
                         return;
                     }
 
@@ -148,13 +180,18 @@ namespace ArniLite
             finally
             {
                 _busy = false;
+                if (!IsSignedIn)
+                {
+                    HasSignInLink = !string.IsNullOrEmpty(_verificationUri);
+                }
+
                 RefreshCommands();
             }
         }
 
         private async Task RunPowerShellAsync()
         {
-            using var operation = Begin();
+            var operation = Begin();
             try
             {
                 Append("Запуск Windows PowerShell. Команда фиксированная, это проверка, а не терминал.");
@@ -184,7 +221,7 @@ namespace ArniLite
                 Append("Сначала войдите.");
                 return;
             }
-            using var operation = Begin();
+            var operation = Begin();
             try
             {
                 var model = await _api.FirstModelAsync(session, operation.Token).ConfigureAwait(true);
@@ -219,6 +256,17 @@ namespace ArniLite
             Append("Ссылка скопирована.");
         }
 
+        private void CopyCode()
+        {
+            if (string.IsNullOrEmpty(_userCode))
+            {
+                return;
+            }
+
+            Clipboard.SetText(_userCode);
+            Append("Код входа скопирован.");
+        }
+
         private void Open(string uri)
         {
             try
@@ -238,7 +286,10 @@ namespace ArniLite
             _store.Clear();
             _deviceCode = string.Empty;
             _verificationUri = string.Empty;
+            HasSignInLink = false;
             UserCode = string.Empty;
+            IsSignedIn = false;
+            Chat.ClearAccount();
             Append("Локальный токен удалён. Это не отзывает уже выданные серверные JWT.");
             RefreshCommands();
         }
@@ -256,8 +307,16 @@ namespace ArniLite
 
         private CancellationTokenSource Begin()
         {
-            _operation.Cancel();
+            var previous = _operation;
             _operation = new CancellationTokenSource();
+            try
+            {
+                previous.Cancel();
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+
             _busy = true;
             RefreshCommands();
             return _operation;
@@ -267,6 +326,7 @@ namespace ArniLite
         {
             (SignInCommand as RelayCommand)?.Raise();
             (CopyLinkCommand as RelayCommand)?.Raise();
+            (CopyCodeCommand as RelayCommand)?.Raise();
             (PowerShellCommand as RelayCommand)?.Raise();
             (StreamCommand as RelayCommand)?.Raise();
             (StopCommand as RelayCommand)?.Raise();

@@ -110,6 +110,13 @@
       },
       "arnilite.core": {
         "type": "Project"
+      },
+      "arnilite.storage": {
+        "type": "Project",
+        "dependencies": {
+          "ArniLite.Core": "[1.0.0, )",
+          "Newtonsoft.Json": "[13.0.3, )"
+        }
       }
     }
   }

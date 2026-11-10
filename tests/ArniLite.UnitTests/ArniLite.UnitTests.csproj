@@ -12,5 +12,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\ArniLite.Api\ArniLite.Api.csproj" />
     <ProjectReference Include="..\..\src\ArniLite.Core\ArniLite.Core.csproj" />
+    <ProjectReference Include="..\..\src\ArniLite.Storage\ArniLite.Storage.csproj" />
   </ItemGroup>
 </Project>

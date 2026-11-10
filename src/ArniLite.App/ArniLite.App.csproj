@@ -4,6 +4,7 @@
     <TargetFramework>net48</TargetFramework>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>ArniLite.ico</ApplicationIcon>
     <RootNamespace>ArniLite</RootNamespace>
     <AssemblyName>ArniLite</AssemblyName>
     <Version>0.1.0</Version>
@@ -13,7 +14,9 @@
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net48" Version="1.0.3" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Net.Http" />
+    <Reference Include="System.Windows.Forms" />
     <ProjectReference Include="..\ArniLite.Api\ArniLite.Api.csproj" />
     <ProjectReference Include="..\ArniLite.Core\ArniLite.Core.csproj" />
     <ProjectReference Include="..\ArniLite.Storage\ArniLite.Storage.csproj" />

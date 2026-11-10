@@ -18,9 +18,15 @@ namespace ArniLite.Windows
 
         public Task<ProcessRunResult> RunPowerShellAsync(string command, int timeoutMs, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrWhiteSpace(command))
+            var powershell = Path.Combine(Environment.SystemDirectory, @"WindowsPowerShell\v1.0\powershell.exe");
+            return RunProcessAsync(powershell, "-NoLogo -NoProfile -NonInteractive -Command -", command, Path.GetTempPath(), timeoutMs, cancellationToken);
+        }
+
+        public Task<ProcessRunResult> RunProcessAsync(string fileName, string arguments, string standardInput, string workingDirectory, int timeoutMs, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
             {
-                throw new ArgumentException("Command is empty.", nameof(command));
+                throw new ArgumentException("File name is empty.", nameof(fileName));
             }
 
             if (timeoutMs < 1)
@@ -28,21 +34,22 @@ namespace ArniLite.Windows
                 throw new ArgumentOutOfRangeException(nameof(timeoutMs));
             }
 
-            return Task.Run(() => Run(command, timeoutMs, cancellationToken), cancellationToken);
+            return Task.Run(() => Run(fileName, arguments ?? string.Empty, standardInput, workingDirectory, timeoutMs, cancellationToken), cancellationToken);
         }
 
-        private static ProcessRunResult Run(string command, int timeoutMs, CancellationToken cancellationToken)
+        private static ProcessRunResult Run(string fileName, string arguments, string standardInput, string workingDirectory, int timeoutMs, CancellationToken cancellationToken)
         {
             var started = Stopwatch.StartNew();
             var result = new ProcessRunResult();
-            var powershell = Path.Combine(Environment.SystemDirectory, @"WindowsPowerShell\v1.0\powershell.exe");
-            if (!File.Exists(powershell))
+            if (!File.Exists(fileName))
             {
                 result.Status = "failed";
-                result.JobDetail = "Windows PowerShell was not found.";
+                result.JobDetail = "The program was not found.";
                 result.DurationMs = started.ElapsedMilliseconds;
                 return result;
             }
+
+            var directory = string.IsNullOrWhiteSpace(workingDirectory) ? Path.GetTempPath() : workingDirectory;
 
             IntPtr job = IntPtr.Zero;
             IntPtr processHandle = IntPtr.Zero;
@@ -70,8 +77,8 @@ namespace ArniLite.Windows
                     hStdOutput = stdoutWrite,
                     hStdError = stderrWrite,
                 };
-                var commandLine = new StringBuilder(Quote(powershell) + " -NoLogo -NoProfile -NonInteractive -Command -");
-                if (!CreateProcess(powershell, commandLine, IntPtr.Zero, IntPtr.Zero, true, CreateSuspended | CreateNoWindow, IntPtr.Zero, Path.GetTempPath(), ref startup, out var info))
+                var commandLine = new StringBuilder(Quote(fileName) + (arguments.Length == 0 ? string.Empty : " " + arguments));
+                if (!CreateProcess(fileName, commandLine, IntPtr.Zero, IntPtr.Zero, true, CreateSuspended | CreateNoWindow, IntPtr.Zero, directory, ref startup, out var info))
                 {
                     throw new Win32Exception(Marshal.GetLastWin32Error());
                 }
@@ -109,16 +116,19 @@ namespace ArniLite.Windows
                 using (var stdin = new FileStream(new SafeFileHandle(stdinWrite, ownsHandle: true), FileAccess.Write))
                 {
                     stdinWrite = IntPtr.Zero;
-                    var payload = new UTF8Encoding(encoderShouldEmitUTF8Identifier: true).GetBytes(command);
-                    if (payload.Length == 0 || payload[payload.Length - 1] != (byte)'\n')
+                    if (!string.IsNullOrEmpty(standardInput))
                     {
-                        var withNewLine = new byte[payload.Length + 1];
-                        Buffer.BlockCopy(payload, 0, withNewLine, 0, payload.Length);
-                        withNewLine[payload.Length] = (byte)'\n';
-                        payload = withNewLine;
-                    }
+                        var payload = new UTF8Encoding(encoderShouldEmitUTF8Identifier: true).GetBytes(standardInput);
+                        if (payload.Length == 0 || payload[payload.Length - 1] != (byte)'\n')
+                        {
+                            var withNewLine = new byte[payload.Length + 1];
+                            Buffer.BlockCopy(payload, 0, withNewLine, 0, payload.Length);
+                            withNewLine[payload.Length] = (byte)'\n';
+                            payload = withNewLine;
+                        }
 
-                    stdin.Write(payload, 0, payload.Length);
+                        stdin.Write(payload, 0, payload.Length);
+                    }
                 }
 
                 var status = Wait(processHandle, timeoutMs, cancellationToken, () => StopTree(job, jobAssigned, processHandle, info.dwProcessId));

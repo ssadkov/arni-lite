@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -71,7 +72,7 @@ namespace ArniLite.Api
             var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
-                throw new ApiCallException((int)response.StatusCode, ApiErrorText.FromBody(body));
+                throw new ApiCallException((int)response.StatusCode, ApiErrorText.FromBody(body, (int)response.StatusCode));
             }
 
             var json = JObject.Parse(body);
@@ -108,7 +109,7 @@ namespace ArniLite.Api
             var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
-                throw new ApiCallException((int)response.StatusCode, ApiErrorText.FromBody(body));
+                throw new ApiCallException((int)response.StatusCode, ApiErrorText.FromBody(body, (int)response.StatusCode));
             }
 
             var json = JObject.Parse(body);
@@ -140,7 +141,7 @@ namespace ArniLite.Api
             if (!response.IsSuccessStatusCode)
             {
                 var errorBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                throw new ApiCallException((int)response.StatusCode, ApiErrorText.FromBody(errorBody));
+                throw new ApiCallException((int)response.StatusCode, ApiErrorText.FromBody(errorBody, (int)response.StatusCode));
             }
 
             var reader = new SseReader();
@@ -184,6 +185,353 @@ namespace ArniLite.Api
             return text.ToString();
         }
 
+        public async Task<ModelTurn> CompleteAsync(string token, string model, string chatId, IList<ChatMessage> messages, bool withTools, Action<string> onDelta, CancellationToken cancellationToken)
+        {
+            var payload = new JObject
+            {
+                ["model"] = model,
+                ["messages"] = ToMessages(messages),
+                ["stream"] = true,
+                ["max_tokens"] = 4096,
+            };
+            if (withTools)
+            {
+                payload["tools"] = ToolSchemas.AgentTools();
+            }
+
+            using var request = new HttpRequestMessage(HttpMethod.Post, ArniEndpoints.ApiOrigin + "/api/chat/completions");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            request.Headers.TryAddWithoutValidation("X-Arni-Chat-Id", chatId);
+            request.Content = new StringContent(payload.ToString(Newtonsoft.Json.Formatting.None), Encoding.UTF8, "application/json");
+            using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                throw new ApiCallException((int)response.StatusCode, ApiErrorText.FromBody(errorBody, (int)response.StatusCode));
+            }
+
+            var media = response.Content.Headers.ContentType?.MediaType ?? string.Empty;
+            if (media.IndexOf("json", StringComparison.OrdinalIgnoreCase) >= 0
+                && media.IndexOf("event-stream", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                return ParseFull(body, onDelta);
+            }
+
+            var reader = new SseReader();
+            var assembler = new ToolCallAssembler();
+            var text = new StringBuilder();
+            var finish = string.Empty;
+            var done = false;
+            var sawFinish = false;
+            using (var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
+            {
+                var buffer = new byte[4096];
+                while (!done)
+                {
+                    var read = await stream.ReadAsync(buffer, 0, buffer.Length, cancellationToken).ConfigureAwait(false);
+                    if (read == 0)
+                    {
+                        break;
+                    }
+
+                    foreach (var ev in reader.Push(buffer, read))
+                    {
+                        var delta = ChatStreamParser.Parse(ev);
+                        if (delta.Malformed)
+                        {
+                            continue;
+                        }
+
+                        if (!string.IsNullOrEmpty(delta.Error))
+                        {
+                            return new ModelTurn { Error = delta.Error, Done = true, FinishReason = "error" };
+                        }
+
+                        if (!string.IsNullOrEmpty(delta.Content))
+                        {
+                            text.Append(delta.Content);
+                            onDelta?.Invoke(delta.Content);
+                        }
+
+                        foreach (var call in delta.ToolCalls)
+                        {
+                            assembler.Add(call.Index, call.Id, call.Name, call.Arguments);
+                        }
+
+                        if (!string.IsNullOrEmpty(delta.FinishReason))
+                        {
+                            finish = delta.FinishReason;
+                            sawFinish = true;
+                        }
+
+                        if (delta.Done)
+                        {
+                            done = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            var turn = new ModelTurn
+            {
+                Content = text.ToString(),
+                FinishReason = finish,
+                Done = done || sawFinish,
+                Interrupted = !done && !sawFinish,
+            };
+            if (assembler.TryComplete(out var calls, out var assembleError))
+            {
+                turn.ToolCalls = calls;
+            }
+            else if (calls.Count == 0 && !string.IsNullOrEmpty(assembleError) && sawFinish && finish == "tool_calls")
+            {
+                turn.Error = assembleError;
+                turn.Interrupted = true;
+            }
+            else if (!string.IsNullOrEmpty(assembleError) && sawFinish && finish == "tool_calls")
+            {
+                turn.Error = assembleError;
+                turn.ToolCalls = new List<ToolCallRecord>();
+            }
+
+            if (reader.Remainder.Length > 0 && !turn.Done)
+            {
+                turn.Interrupted = true;
+                turn.Done = false;
+            }
+
+            return turn;
+        }
+
+        public async Task<IList<CatalogModel>> ListModelsAsync(string token, CancellationToken cancellationToken)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, ArniEndpoints.ApiOrigin + "/api/models");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            using var response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new ApiCallException((int)response.StatusCode, ApiErrorText.FromBody(body, (int)response.StatusCode));
+            }
+
+            var models = new List<CatalogModel>();
+            var data = JObject.Parse(body)["data"] as JArray;
+            if (data == null)
+            {
+                return models;
+            }
+
+            foreach (var item in data)
+            {
+                var id = (string)item["id"] ?? string.Empty;
+                if (id.Length == 0)
+                {
+                    continue;
+                }
+
+                var name = (string)item["name"];
+                var prompt = (string)item["pricing"]?["prompt"];
+                var completion = (string)item["pricing"]?["completion"];
+                var markedFree = item["arni_free"] != null && item["arni_free"].Type == JTokenType.Boolean && (bool)item["arni_free"];
+                var model = new CatalogModel
+                {
+                    Id = id,
+                    Name = string.IsNullOrWhiteSpace(name) ? id : name,
+                    Provider = CatalogModel.ProviderLabel((string)item["arni_provider"] ?? string.Empty),
+                    Free = markedFree || (prompt != null && completion != null && decimal.TryParse(prompt, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var promptValue) && promptValue == 0m && decimal.TryParse(completion, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var completionValue) && completionValue == 0m),
+                };
+                model.PriceLabel = CatalogModel.FormatPrice(model.Free, prompt, completion);
+                models.Add(model);
+            }
+
+            models.Sort((left, right) =>
+            {
+                var byName = string.Compare(left.Name, right.Name, StringComparison.CurrentCultureIgnoreCase);
+                return byName != 0 ? byName : string.Compare(left.Provider, right.Provider, StringComparison.CurrentCultureIgnoreCase);
+            });
+            return models;
+        }
+
+        public async Task<IList<string>> ModelIdsAsync(string token, CancellationToken cancellationToken)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, ArniEndpoints.ApiOrigin + "/api/models");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            using var response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new ApiCallException((int)response.StatusCode, ApiErrorText.FromBody(body, (int)response.StatusCode));
+            }
+
+            var ids = new List<string>();
+            var data = JObject.Parse(body)["data"] as JArray;
+            if (data == null)
+            {
+                return ids;
+            }
+
+            foreach (var item in data)
+            {
+                var id = (string?)item["id"];
+                if (!string.IsNullOrEmpty(id))
+                {
+                    ids.Add(id);
+                }
+            }
+
+            return ids;
+        }
+
+        public async Task<AccountInfo> AccountAsync(string token, CancellationToken cancellationToken)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, ArniEndpoints.ApiOrigin + "/api/account");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            using var response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new ApiCallException((int)response.StatusCode, ApiErrorText.FromBody(body, (int)response.StatusCode));
+            }
+
+            var json = JObject.Parse(body);
+            var user = json["user"];
+            var email = (string?)user?["email"] ?? string.Empty;
+            var micros = (long?)user?["budget"]?["balanceMicros"];
+            var remaining = (int?)user?["freeSteps"]?["remaining"];
+            var limit = (int?)user?["freeSteps"]?["limit"];
+            var steps = remaining != null && limit != null ? "бесплатные шаги " + remaining + " из " + limit : string.Empty;
+            var summary = steps;
+            if (micros != null)
+            {
+                var negative = micros.Value < 0;
+                var absolute = negative ? -micros.Value : micros.Value;
+                var dollars = absolute / 1000000;
+                var cents = (absolute % 1000000) / 10000;
+                var money = (negative ? "-" : string.Empty) + "$" + dollars + "." + cents.ToString("00");
+                summary = string.IsNullOrEmpty(steps) ? money : money + " · " + steps;
+            }
+            else if (string.IsNullOrEmpty(summary))
+            {
+                summary = string.IsNullOrEmpty(email) ? "Аккаунт" : email;
+            }
+
+            return new AccountInfo
+            {
+                Email = email,
+                Provider = ProviderFromEmail(email),
+                Summary = summary,
+            };
+        }
+
+        private static string ProviderFromEmail(string email)
+        {
+            if (string.IsNullOrEmpty(email))
+            {
+                return "other";
+            }
+
+            var at = email.LastIndexOf('@');
+            var domain = at >= 0 ? email.Substring(at + 1).ToLowerInvariant() : string.Empty;
+            if (domain == "yandex.ru" || domain == "ya.ru" || domain == "yandex.com" || domain == "yandex.kz" || domain == "yandex.by")
+            {
+                return "yandex";
+            }
+
+            if (domain == "gmail.com" || domain == "googlemail.com")
+            {
+                return "google";
+            }
+
+            if (domain == "accounts.arni.invalid" && email.StartsWith("vk-", StringComparison.OrdinalIgnoreCase))
+            {
+                return "vk";
+            }
+
+            return "other";
+        }
+
+        private static ModelTurn ParseFull(string body, Action<string> onDelta)
+        {
+            var delta = ChatStreamParser.Parse(new SseEvent("message", body));
+            if (!string.IsNullOrEmpty(delta.Error))
+            {
+                return new ModelTurn { Error = delta.Error, Done = true, FinishReason = "error" };
+            }
+
+            if (!string.IsNullOrEmpty(delta.Content))
+            {
+                onDelta?.Invoke(delta.Content);
+            }
+
+            var assembler = new ToolCallAssembler();
+            foreach (var call in delta.ToolCalls)
+            {
+                assembler.Add(call.Index, call.Id, call.Name, call.Arguments);
+            }
+
+            var turn = new ModelTurn
+            {
+                Content = delta.Content,
+                FinishReason = string.IsNullOrEmpty(delta.FinishReason) ? "stop" : delta.FinishReason,
+                Done = true,
+            };
+            if (!assembler.TryComplete(out var calls, out var error))
+            {
+                turn.Error = error;
+            }
+            else
+            {
+                turn.ToolCalls = calls;
+            }
+
+            return turn;
+        }
+
+        private static JArray ToMessages(IList<ChatMessage> messages)
+        {
+            var array = new JArray();
+            for (var i = 0; i < messages.Count; i++)
+            {
+                var message = messages[i];
+                var item = new JObject
+                {
+                    ["role"] = message.Role,
+                    ["content"] = message.Content ?? string.Empty,
+                };
+                if (!string.IsNullOrEmpty(message.ToolCallId))
+                {
+                    item["tool_call_id"] = message.ToolCallId;
+                }
+
+                if (message.ToolCalls != null && message.ToolCalls.Count > 0)
+                {
+                    var calls = new JArray();
+                    for (var callIndex = 0; callIndex < message.ToolCalls.Count; callIndex++)
+                    {
+                        var call = message.ToolCalls[callIndex];
+                        calls.Add(new JObject
+                        {
+                            ["id"] = call.Id,
+                            ["type"] = "function",
+                            ["function"] = new JObject
+                            {
+                                ["name"] = call.Name,
+                                ["arguments"] = call.ArgumentsJson,
+                            },
+                        });
+                    }
+
+                    item["tool_calls"] = calls;
+                }
+
+                array.Add(item);
+            }
+
+            return array;
+        }
+
         public async Task<string> FirstModelAsync(string token, CancellationToken cancellationToken)
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, ArniEndpoints.ApiOrigin + "/api/models");
@@ -196,7 +544,7 @@ namespace ArniLite.Api
             var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
-                throw new ApiCallException((int)response.StatusCode, ApiErrorText.FromBody(body));
+                throw new ApiCallException((int)response.StatusCode, ApiErrorText.FromBody(body, (int)response.StatusCode));
             }
 
             var id = (string?)JObject.Parse(body)["data"]?.First?["id"];
@@ -207,5 +555,12 @@ namespace ArniLite.Api
 
             return id;
         }
+    }
+
+    public sealed class AccountInfo
+    {
+        public string Email { get; set; } = string.Empty;
+        public string Provider { get; set; } = string.Empty;
+        public string Summary { get; set; } = string.Empty;
     }
 }
