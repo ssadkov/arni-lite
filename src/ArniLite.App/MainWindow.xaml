@@ -263,11 +263,26 @@
                     <Button Content="Добавить проект…" Margin="0,14,0,12" HorizontalContentAlignment="Left"
                             Style="{StaticResource QuietButton}" Command="{Binding Chat.ChooseFolderCommand}" />
                     <Border Height="1" Background="#DCE1D5" Margin="0,0,0,14" />
-                    <StackPanel Margin="8,0">
-                        <TextBlock Text="{Binding Chat.AccountEmail}" TextTrimming="CharacterEllipsis" FontSize="12" FontWeight="SemiBold" Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}}" />
-                        <TextBlock Text="{Binding Chat.AccountLine}" Foreground="#6B7465" FontSize="11" TextWrapping="Wrap" MaxHeight="48" Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}}" />
-                        <TextBlock Text="Ваши чаты — на этом компьютере" FontSize="11" Foreground="#6B7465" Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}, ConverterParameter=invert}" />
-                    </StackPanel>
+                    <Border Background="#F9FAF6" BorderBrush="#DCE1D5" BorderThickness="1" CornerRadius="9" Padding="10"
+                            Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}}">
+                        <StackPanel>
+                            <DockPanel Margin="0,0,0,7">
+                                <Button DockPanel.Dock="Right" Content="Обновить" Command="{Binding Chat.RefreshAccountCommand}" Style="{StaticResource QuietButton}" Padding="3,1" FontSize="10" />
+                                <TextBlock Text="АККАУНТ" FontSize="10" Foreground="#76816E" VerticalAlignment="Center" />
+                            </DockPanel>
+                            <TextBlock Text="{Binding Chat.AccountTitle}" ToolTip="{Binding Chat.AccountTitle}" TextTrimming="CharacterEllipsis" FontSize="12" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding Chat.Account.AccountType}" FontSize="11" Foreground="#6B7465" Margin="0,4,0,7" />
+                            <ItemsControl ItemsSource="{Binding Chat.Account.LimitLines}" ToolTip="{Binding Chat.Account.ResetInfo}">
+                                <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,5" /></DataTemplate></ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <TextBlock Text="{Binding Chat.Account.ResetInfo}" TextWrapping="Wrap" Foreground="#76816E" FontSize="10" />
+                            <TextBlock Text="Обновляем данные…" FontSize="10" Foreground="#76816E" Margin="0,5,0,0" Visibility="{Binding Chat.AccountLoading, Converter={StaticResource BoolVis}}" />
+                            <TextBlock Text="{Binding Chat.AccountError}" FontSize="11" Foreground="#93622D" TextWrapping="Wrap" Margin="0,5,0,0">
+                                <TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding Chat.AccountError}" Value=""><Setter Property="Visibility" Value="Collapsed" /></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+                    <TextBlock Margin="8,0" Text="Ваши чаты — на этом компьютере" FontSize="11" Foreground="#6B7465" Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}, ConverterParameter=invert}" />
                     <Button Content="Войти в Arni" Margin="0,10,0,0" Command="{Binding SignInCommand}" Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}, ConverterParameter=invert}" />
                     <Menu Margin="0,10,0,0" Background="Transparent">
                         <MenuItem Header="Настройки">
@@ -316,11 +331,15 @@
                                     <StackPanel>
                                         <DockPanel Margin="0,0,0,8">
                                             <Button DockPanel.Dock="Right" Style="{StaticResource IconButton}" Command="{Binding CopyCommand}" AutomationProperties.Name="Копировать сообщение" />
-                                            <TextBlock Text="{Binding Title}" FontSize="11" FontWeight="SemiBold" Foreground="#71806A" VerticalAlignment="Center" />
+                                            <TextBlock Text="{Binding DisplayTitle}" FontSize="11" FontWeight="SemiBold" Foreground="#71806A" VerticalAlignment="Center" />
                                         </DockPanel>
                                         <TextBox IsReadOnly="True" BorderThickness="0" Background="Transparent" TextWrapping="Wrap" AcceptsReturn="True"
                                                  FontFamily="Consolas" FontSize="13" Text="{Binding Body, Mode=OneWay}" MaxHeight="240" VerticalScrollBarVisibility="Auto"
-                                                 Visibility="{Binding IsCode, Converter={StaticResource BoolVis}}" />
+                                                 Visibility="{Binding IsCodeBlock, Converter={StaticResource BoolVis}}" />
+                                        <Expander Header="Подробности действия" FontSize="11" Foreground="#71806A" Visibility="{Binding IsTool, Converter={StaticResource BoolVis}}">
+                                            <TextBox IsReadOnly="True" BorderThickness="0" Background="Transparent" TextWrapping="Wrap" AcceptsReturn="True"
+                                                     Foreground="#242824" FontFamily="Consolas" FontSize="12" Text="{Binding Body, Mode=OneWay}" MaxHeight="240" VerticalScrollBarVisibility="Auto" Margin="0,8,0,0" />
+                                        </Expander>
                                         <local:MarkdownView Source="{Binding Body}" Visibility="{Binding IsCode, Converter={StaticResource BoolVis}, ConverterParameter=invert}" />
                                     </StackPanel>
                                 </Border>
@@ -396,11 +415,11 @@
                                     Visibility="{Binding Chat.IsBusy, Converter={StaticResource BoolVis}}" />
                             <Grid Margin="0,0,10,0" IsEnabled="{Binding Chat.CanChangeContext}">
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                                <ComboBox Width="82" ItemsSource="{Binding Chat.Modes}" SelectedItem="{Binding Chat.SelectedMode}" BorderThickness="0" Background="#F4F5F0" Padding="5" VerticalAlignment="Center" ToolTip="Режим работы" AutomationProperties.Name="Режим работы" />
+                                <TextBlock Text="Агент" FontSize="11" Foreground="#64765A" VerticalAlignment="Center" Margin="0,0,8,0" ToolTip="Arni отвечает на вопросы и использует инструменты, когда это нужно" />
                                 <Grid Grid.Column="1" Margin="8,0,0,0">
                                     <ComboBox ItemsSource="{Binding Chat.Models}" SelectedItem="{Binding Chat.SelectedCatalog}" BorderThickness="0" Background="#F4F5F0" Padding="5" VerticalAlignment="Center" ToolTip="Модель · фильтр бесплатных моделей в настройках" AutomationProperties.Name="Модель" />
-                                    <TextBlock Text="Модель появится после входа" Foreground="#7D8773" FontSize="11" Margin="8,0,24,0" VerticalAlignment="Center" IsHitTestVisible="False">
-                                        <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers><DataTrigger Binding="{Binding Chat.Models.Count}" Value="0"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+                                    <TextBlock Text="{Binding Chat.ModelStatus}" Foreground="#7D8773" FontSize="11" Margin="8,0,24,0" VerticalAlignment="Center" IsHitTestVisible="False" TextTrimming="CharacterEllipsis">
+                                        <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers><DataTrigger Binding="{Binding Chat.SelectedCatalog}" Value="{x:Null}"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style></TextBlock.Style>
                                     </TextBlock>
                                 </Grid>
                             </Grid>

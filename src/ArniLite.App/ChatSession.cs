@@ -44,10 +44,11 @@ namespace ArniLite
         private string _draft = string.Empty;
         private string _projectLabel = "Проекты сохраняются в: не выбрано";
         private string _preview = string.Empty;
-        private string _accountLine = string.Empty;
-        private string _accountEmail = string.Empty;
-        private string _accountProvider = string.Empty;
-        private string _selectedMode = "Агент";
+        private AccountInfo? _account;
+        private string _accountError = string.Empty;
+        private bool _accountLoading;
+        private int _accountGeneration;
+        private string _modelStatus = "Модель появится после входа";
         private readonly List<CatalogModel> _catalog = new List<CatalogModel>();
         private CatalogModel _selectedCatalog;
         private string _selectedModel = string.Empty;
@@ -78,8 +79,6 @@ namespace ArniLite
             LoadCurrentChat();
             RefreshLists();
 
-            Modes.Add("Чат");
-            Modes.Add("Агент");
             OpenChatCommand = new ParamCommand(OpenChat);
             OpenFolderCommand = new ParamCommand(OpenFolder);
             ToggleProjectCommand = new ParamCommand(ToggleProject);
@@ -93,10 +92,14 @@ namespace ArniLite
             ChooseFolderCommand = new RelayCommand(ChooseFolder, () => !_busy);
             AllowCommand = new RelayCommand(() => Resolve(true), () => _permissionVisible);
             DenyCommand = new RelayCommand(() => Resolve(false), () => _permissionVisible);
+            RefreshAccountCommand = new RelayCommand(async () =>
+            {
+                if (Models.Count == 0) await LoadAccountAsync();
+                else await RefreshAccountAsync();
+            }, () => !_accountLoading && !_busy);
         }
 
         public ObservableCollection<TranscriptRow> Items { get; } = new ObservableCollection<TranscriptRow>();
-        public ObservableCollection<string> Modes { get; } = new ObservableCollection<string>();
         public ObservableCollection<CatalogModel> Models { get; } = new ObservableCollection<CatalogModel>();
         public ObservableCollection<ChatSummary> Chats { get; } = new ObservableCollection<ChatSummary>();
         public ObservableCollection<string> Folders { get; } = new ObservableCollection<string>();
@@ -115,6 +118,7 @@ namespace ArniLite
         public ICommand ChooseFolderCommand { get; }
         public ICommand AllowCommand { get; }
         public ICommand DenyCommand { get; }
+        public ICommand RefreshAccountCommand { get; }
         public bool AllowSideEffectsForSession => _trust;
         public bool IsBusy => _busy;
         public bool CanChangeContext => !_busy;
@@ -174,12 +178,6 @@ namespace ArniLite
             set { _draft = value; Notify(nameof(Draft)); (SendCommand as RelayCommand)?.Raise(); }
         }
 
-        public string SelectedMode
-        {
-            get => _selectedMode;
-            set { if (_busy) return; _selectedMode = value; Notify(nameof(SelectedMode)); }
-        }
-
         public CatalogModel SelectedCatalog
         {
             get => _selectedCatalog;
@@ -227,42 +225,27 @@ namespace ArniLite
             private set { _preview = value; Notify(nameof(Preview)); }
         }
 
-        public string AccountLine
-        {
-            get => _accountLine;
-            private set { _accountLine = value; Notify(nameof(AccountLine)); }
-        }
-
-        public string AccountEmail
-        {
-            get => _accountEmail;
-            private set { _accountEmail = value ?? string.Empty; Notify(nameof(AccountEmail)); }
-        }
-
-        public string AccountProvider
-        {
-            get => _accountProvider;
-            private set
-            {
-                _accountProvider = value ?? string.Empty;
-                Notify(nameof(AccountProvider));
-                Notify(nameof(IsYandex));
-                Notify(nameof(IsGoogle));
-                Notify(nameof(IsVk));
-                Notify(nameof(IsOtherProvider));
-            }
-        }
-
-        public bool IsYandex => _accountProvider == "yandex";
-        public bool IsGoogle => _accountProvider == "google";
-        public bool IsVk => _accountProvider == "vk";
-        public bool IsOtherProvider => _accountProvider != "yandex" && _accountProvider != "google" && _accountProvider != "vk";
+        public AccountInfo? Account => _account;
+        public string AccountTitle => !string.IsNullOrEmpty(_account?.Email) ? _account.Email : "Аккаунт Arni";
+        public string AccountError => _accountError;
+        public bool AccountLoading => _accountLoading;
+        public string ModelStatus => _modelStatus;
 
         public void ClearAccount()
         {
-            AccountEmail = string.Empty;
-            AccountProvider = string.Empty;
-            AccountLine = string.Empty;
+            _accountGeneration++;
+            _account = null;
+            _accountError = string.Empty;
+            _accountLoading = false;
+            _catalog.Clear();
+            Models.Clear();
+            _selectedCatalog = null;
+            _selectedModel = string.Empty;
+            _modelStatus = "Модель появится после входа";
+            Notify(nameof(SelectedCatalog));
+            Notify(nameof(SelectedModel));
+            Notify(nameof(ModelStatus));
+            NotifyAccount();
         }
 
         public bool PermissionVisible
@@ -340,22 +323,65 @@ namespace ArniLite
                 return;
             }
 
+            await Task.WhenAll(LoadModelsAsync(token, _accountGeneration), RefreshAccountAsync());
+        }
+
+        private async Task LoadModelsAsync(string token, int generation)
+        {
             try
             {
                 var models = await _api.ListModelsAsync(token, CancellationToken.None).ConfigureAwait(true);
+                if (generation != _accountGeneration) return;
                 _catalog.Clear();
                 _catalog.AddRange(models);
                 ApplyModelFilter();
+                _modelStatus = Models.Count == 0 ? "Нет доступных моделей" : string.Empty;
+            }
+            catch (Exception)
+            {
+                if (generation != _accountGeneration) return;
+                _modelStatus = "Не удалось загрузить модели. Нажмите «Обновить».";
+            }
+            Notify(nameof(ModelStatus));
+        }
 
+        public async Task RefreshAccountAsync()
+        {
+            var token = _tokens.Load();
+            if (_accountLoading || string.IsNullOrEmpty(token)) return;
+            var generation = _accountGeneration;
+            _accountLoading = true;
+            _accountError = string.Empty;
+            NotifyAccount();
+            try
+            {
                 var account = await _api.AccountAsync(token, CancellationToken.None).ConfigureAwait(true);
-                AccountEmail = account.Email;
-                AccountProvider = account.Provider;
-                AccountLine = account.Summary;
+                if (generation == _accountGeneration) _account = account;
             }
             catch (Exception ex)
             {
-                AccountLine = ex.Message;
+                if (generation == _accountGeneration)
+                    _accountError = ex is ApiCallException api && api.StatusCode == 401
+                        ? "Сессия истекла. Выйдите и войдите снова."
+                        : "Не удалось обновить лимиты. Нажмите «Обновить».";
             }
+            finally
+            {
+                if (generation == _accountGeneration)
+                {
+                    _accountLoading = false;
+                    NotifyAccount();
+                }
+            }
+        }
+
+        private void NotifyAccount()
+        {
+            Notify(nameof(Account));
+            Notify(nameof(AccountTitle));
+            Notify(nameof(AccountError));
+            Notify(nameof(AccountLoading));
+            (RefreshAccountCommand as RelayCommand)?.Raise();
         }
 
         public async Task<ModelTurn> CompleteAsync(IList<ChatMessage> messages, bool withTools, Action<string> onDelta, CancellationToken cancellationToken)
@@ -417,11 +443,12 @@ namespace ArniLite
                 Notify(nameof(ChatTitle));
                 BindCurrentChatFolder();
                 var orchestrator = new AgentOrchestrator(new SystemClock(), new AgentLimits { MaxModelRounds = 24 });
-                var result = await orchestrator.RunAsync(_history, NeedsTools(), this, new VisibleTools(this, _tools), AppendLive, _turnCancellation.Token).ConfigureAwait(true);
+                var result = await orchestrator.RunAsync(_history, true, this, new VisibleTools(this, _tools), AppendLive, _turnCancellation.Token).ConfigureAwait(true);
                 FlushPendingText();
                 PersistNewMessages();
                 if (!string.IsNullOrEmpty(result.Detail))
                 {
+                    RejectUnavailableModel(result.Detail);
                     Items.Add(new TranscriptRow("Состояние", Explain(result.Detail), false));
                 }
 
@@ -437,7 +464,8 @@ namespace ArniLite
             catch (Exception ex)
             {
                 PreservePartialReply();
-                Items.Add(new TranscriptRow("Ошибка", ex.Message, false));
+                RejectUnavailableModel(ex.Message);
+                Items.Add(new TranscriptRow("Ошибка", ApiErrorText.ForUser(ex.Message), false));
             }
             finally
             {
@@ -450,7 +478,23 @@ namespace ArniLite
                 PermissionVisible = false;
                 SetActivity(string.Empty, false);
                 RaiseAll();
+                RefreshLists();
+                _ = RefreshAccountAsync();
             }
+        }
+
+        private void RejectUnavailableModel(string message)
+        {
+            if (!ApiErrorText.IsHarnessRestriction(message)) return;
+            var id = _selectedModel;
+            _catalog.RemoveAll(model => model.Id == id);
+            for (var i = Models.Count - 1; i >= 0; i--) if (Models[i].Id == id) Models.RemoveAt(i);
+            _selectedCatalog = null;
+            _selectedModel = string.Empty;
+            _modelStatus = "Выберите другую модель";
+            Notify(nameof(SelectedCatalog));
+            Notify(nameof(SelectedModel));
+            Notify(nameof(ModelStatus));
         }
 
         private void PersistNewMessages()
@@ -522,6 +566,7 @@ namespace ArniLite
         {
             var project = string.IsNullOrEmpty(_workspace.Root) ? "не выбрана" : _workspace.Root;
             return "Ты Arni Lite на Windows " + _os.Description + ".\n"
+                + "Ты работаешь как агент. Если на вопрос можно ответить без инструментов, отвечай сразу. Для работы с файлами проекта нужна выбранная папка.\n"
                 + "Рабочая папка проекта: " + project + ". Инструменты файлов видят только её.\n"
                 + "Команды powershell и cmd выполняются от имени пользователя и могут читать другие папки, включая «Загрузки». Папка проекта их не ограничивает.\n"
                 + "Доступна Windows PowerShell. Не обещай PowerShell 7, bash, Python, Git или Node, пока это не показал вывод команды.\n"
@@ -557,24 +602,6 @@ namespace ArniLite
             }
 
             return "AGENTS.md:\n" + text.Trim() + "\n";
-        }
-
-        private bool NeedsTools()
-        {
-            if (SelectedMode == "Агент")
-            {
-                return true;
-            }
-
-            for (var i = 0; i < _history.Count; i++)
-            {
-                if (_history[i].Role == "tool" || (_history[i].ToolCalls != null && _history[i].ToolCalls.Count > 0))
-                {
-                    return true;
-                }
-            }
-
-            return false;
         }
 
         private void AppendLive(string text)
@@ -652,8 +679,6 @@ namespace ArniLite
             }
 
             _workspace.ClearRoot();
-            _selectedMode = "Чат";
-            Notify(nameof(SelectedMode));
             StartChat();
         }
 
@@ -674,8 +699,6 @@ namespace ArniLite
             try
             {
                 _workspace.SetRoot(path);
-                _selectedMode = "Агент";
-                Notify(nameof(SelectedMode));
                 _collapsedProjects.Remove(path);
                 StartChat();
             }
@@ -749,8 +772,6 @@ namespace ArniLite
             }
 
             ProjectLabel = HasProject ? "Проект: " + _workspace.Root : "Чат без доступа к проекту";
-            _selectedMode = HasProject ? "Агент" : "Чат";
-            Notify(nameof(SelectedMode));
             Notify(nameof(ProjectPath));
             Notify(nameof(ProjectName));
             Notify(nameof(HasProject));
@@ -1031,6 +1052,7 @@ namespace ArniLite
 
         private static string Explain(string detail)
         {
+            if (ApiErrorText.IsHarnessRestriction(detail)) return ApiErrorText.ForUser(detail);
             if (string.IsNullOrEmpty(detail))
             {
                 return string.Empty;
@@ -1138,6 +1160,7 @@ namespace ArniLite
         {
             Notify(nameof(IsBusy));
             Notify(nameof(CanChangeContext));
+            (RefreshAccountCommand as RelayCommand)?.Raise();
             (StopCommand as RelayCommand)?.Raise();
             (SendCommand as RelayCommand)?.Raise();
             (NewChatCommand as RelayCommand)?.Raise();
@@ -1161,7 +1184,18 @@ namespace ArniLite
         }
 
         public string Title { get; }
+        public string DisplayTitle => Title switch
+        {
+            "search_text" => "Поиск по проекту",
+            "read_file" => "Чтение файла",
+            "list_files" => "Просмотр файлов",
+            "run_command" => "Выполнение команды",
+            "propose_file_change" => "Изменение файла",
+            _ => Title,
+        };
         public bool IsCode { get; }
+        public bool IsTool => IsCode && Title != "Arni" && Title != "Вы";
+        public bool IsCodeBlock => IsCode && !IsTool;
         public bool IsUser => Title == "Вы";
         public bool PreferMono => IsCode || !IsUser;
         public ICommand CopyCommand { get; }

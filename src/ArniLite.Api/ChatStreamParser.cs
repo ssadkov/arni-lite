@@ -94,6 +94,14 @@ namespace ArniLite.Api
 
     public static class ApiErrorText
     {
+        public static bool IsHarnessRestriction(string message) =>
+            (message ?? string.Empty).IndexOf("only available on agentic harnesses", StringComparison.OrdinalIgnoreCase) >= 0
+            || (message ?? string.Empty).IndexOf("only available for use with agentic harnesses", StringComparison.OrdinalIgnoreCase) >= 0;
+
+        public static string ForUser(string message) => IsHarnessRestriction(message)
+            ? "Провайдер отклонил эту модель для Arni Lite. Выберите другую модель."
+            : message;
+
         public static string FromBody(string body, int statusCode)
         {
             var message = Read(body);

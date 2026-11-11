@@ -5,6 +5,11 @@ namespace ArniLite.Api
 {
     public sealed class CatalogModel
     {
+        // OpenRouter refused these free endpoints for Arni (2026-11-11).
+        public static bool IsAvailableForArni(string id) =>
+            !string.Equals(id, "thinkingmachines/inkling:free", StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(id, "thinkingmachines/inkling-2-small:free", StringComparison.OrdinalIgnoreCase);
+
         public string Id { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public string Provider { get; set; } = string.Empty;

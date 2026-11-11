@@ -26,10 +26,8 @@ namespace ArniLite.AppTests
             Assert.Equal(fixture.ProjectA, session.ProjectPath);
             session.NewChatCommand.Execute(null);
             Assert.False(session.HasProject);
-            Assert.Equal("Чат", session.SelectedMode);
             session.NewProjectChatCommand.Execute(fixture.ProjectB);
             Assert.Equal(fixture.ProjectB, session.ProjectPath);
-            Assert.Equal("Агент", session.SelectedMode);
             Assert.Contains(session.ChatRows, row => row.Title == "Новый чат" && row.ProjectPath == fixture.ProjectB);
             await Task.CompletedTask;
         });
@@ -68,7 +66,8 @@ namespace ArniLite.AppTests
         {
             using var fixture = new SessionFixture();
             var stream = new PausingStream();
-            using var client = new HttpClient(new StreamHandler(stream));
+            var handler = new StreamHandler(stream);
+            using var client = new HttpClient(handler);
             var session = fixture.CreateSession(client);
             session.SelectedCatalog = new CatalogModel { Id = "local-test" };
             session.NewChatCommand.Execute(null);
@@ -80,6 +79,7 @@ namespace ArniLite.AppTests
             };
             session.SendCommand.Execute(null);
             await WithTimeout(stream.Paused.Task);
+            Assert.True(handler.SawTools);
             Assert.True(session.IsBusy);
             Assert.True(session.StopCommand.CanExecute(null));
             session.StopCommand.Execute(null);
@@ -95,6 +95,70 @@ namespace ArniLite.AppTests
             Assert.Same(task, await Task.WhenAny(task, Task.Delay(5000)));
             await task;
         }
+
+        [Fact]
+        public Task AccountLoadsWhenCatalogFailsAndRemainsVisibleOnRefreshFailure() => OnDispatcher(async () =>
+        {
+            using var fixture = new SessionFixture();
+            var handler = new AccountHandler { FailCatalog = true };
+            using var client = new HttpClient(handler);
+            var session = fixture.CreateSession(client);
+            await session.LoadAccountAsync();
+            Assert.Equal("user@example.com", session.AccountTitle);
+            Assert.Contains("Бесплатные шаги: 9 из 150", session.Account!.LimitLines);
+            Assert.Empty(session.Models);
+            handler.FailAccount = true;
+            await session.RefreshAccountAsync();
+            Assert.Equal("user@example.com", session.AccountTitle);
+            Assert.Contains("Бесплатные шаги: 9 из 150", session.Account.LimitLines);
+            Assert.Equal("Не удалось обновить лимиты. Нажмите «Обновить».", session.AccountError);
+        });
+
+        [Fact]
+        public Task LimitsRefreshAfterTurnWithoutReloadingTheModelSelection() => OnDispatcher(async () =>
+        {
+            using var fixture = new SessionFixture();
+            var handler = new AccountHandler();
+            using var client = new HttpClient(handler);
+            var session = fixture.CreateSession(client);
+            await session.LoadAccountAsync();
+            var selected = session.SelectedCatalog;
+            var refreshed = new TaskCompletionSource<bool>();
+            session.PropertyChanged += (_, args) =>
+            {
+                if (args.PropertyName == nameof(ChatSession.Account) && session.Account!.LimitLines.Contains("Бесплатные шаги: 8 из 150")) refreshed.TrySetResult(true);
+            };
+            session.Draft = "Ответь коротко";
+            session.SendCommand.Execute(null);
+            await WithTimeout(refreshed.Task);
+            Assert.Same(selected, session.SelectedCatalog);
+            Assert.Equal(1, handler.CatalogRequests);
+            Assert.Equal(1, handler.ModelRequests);
+        });
+
+        [Fact]
+        public Task RejectedModelIsRemovedWithoutSilentlySwitchingOrRetrying() => OnDispatcher(async () =>
+        {
+            using var fixture = new SessionFixture();
+            var handler = new AccountHandler { RejectModel = true };
+            using var client = new HttpClient(handler);
+            var session = fixture.CreateSession(client);
+            await session.LoadAccountAsync();
+            var rejected = session.SelectedCatalog.Id;
+            var idle = new TaskCompletionSource<bool>();
+            session.PropertyChanged += (_, args) =>
+            {
+                if (args.PropertyName == nameof(ChatSession.IsBusy) && !session.IsBusy) idle.TrySetResult(true);
+            };
+            session.Draft = "Проверь";
+            session.SendCommand.Execute(null);
+            await WithTimeout(idle.Task);
+            Assert.Null(session.SelectedCatalog);
+            Assert.DoesNotContain(session.Models, model => model.Id == rejected);
+            Assert.Contains(session.Items, row => row.Body == "Провайдер отклонил эту модель для Arni Lite. Выберите другую модель.");
+            Assert.Equal(1, handler.ModelRequests);
+            Assert.NotEqual("Новый чат", session.ChatRows.Single(row => row == session.SelectedEntry).Title);
+        });
 
         [Fact]
         public Task ToolRoundDoesNotDuplicateStreamedMessages() => OnDispatcher(async () =>
@@ -187,13 +251,47 @@ namespace ArniLite.AppTests
         private sealed class StreamHandler : HttpMessageHandler
         {
             private readonly Stream _stream;
+            public bool SawTools { get; private set; }
             public StreamHandler(Stream stream) { _stream = stream; }
-            protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
             {
+                if (request.Method == HttpMethod.Post)
+                {
+                    var payload = Newtonsoft.Json.Linq.JObject.Parse(await request.Content.ReadAsStringAsync());
+                    SawTools = payload["tools"] is Newtonsoft.Json.Linq.JArray tools && tools.Count > 0;
+                }
                 var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(_stream) };
                 response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("text/event-stream");
-                return Task.FromResult(response);
+                return response;
             }
+        }
+
+        private sealed class AccountHandler : HttpMessageHandler
+        {
+            public bool FailCatalog { get; set; }
+            public bool FailAccount { get; set; }
+            public bool RejectModel { get; set; }
+            public int CatalogRequests { get; private set; }
+            public int ModelRequests { get; private set; }
+            private int _remaining = 9;
+
+            protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            {
+                if (request.RequestUri.AbsolutePath == "/api/account")
+                    return Json(FailAccount ? "{\"error\":\"unavailable\"}" : "{\"user\":{\"email\":\"user@example.com\",\"plan\":\"FREE\",\"budget\":null,\"freeSteps\":{\"remaining\":" + _remaining + ",\"limit\":150}}}", FailAccount ? HttpStatusCode.ServiceUnavailable : HttpStatusCode.OK);
+                if (request.RequestUri.AbsolutePath == "/api/models")
+                {
+                    CatalogRequests++;
+                    return Json(FailCatalog ? "{\"error\":\"unavailable\"}" : "{\"data\":[{\"id\":\"test/model-a\",\"arni_free\":true},{\"id\":\"test/model-b\",\"arni_free\":true}]}", FailCatalog ? HttpStatusCode.ServiceUnavailable : HttpStatusCode.OK);
+                }
+                ModelRequests++;
+                if (RejectModel) return Json("{\"error\":\"test/model-a is only available on agentic harnesses.\"}", HttpStatusCode.Forbidden);
+                _remaining--;
+                return Json("{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":\"Готово.\"},\"finish_reason\":\"stop\"}]}");
+            }
+
+            private static Task<HttpResponseMessage> Json(string body, HttpStatusCode status = HttpStatusCode.OK) => Task.FromResult(
+                new HttpResponseMessage(status) { Content = new StringContent(body, Encoding.UTF8, "application/json") });
         }
 
         private sealed class ToolRoundHandler : HttpMessageHandler

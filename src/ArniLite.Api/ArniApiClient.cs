@@ -326,7 +326,7 @@ namespace ArniLite.Api
             foreach (var item in data)
             {
                 var id = (string)item["id"] ?? string.Empty;
-                if (id.Length == 0)
+                if (id.Length == 0 || !CatalogModel.IsAvailableForArni(id))
                 {
                     continue;
                 }
@@ -395,61 +395,7 @@ namespace ArniLite.Api
                 throw new ApiCallException((int)response.StatusCode, ApiErrorText.FromBody(body, (int)response.StatusCode));
             }
 
-            var json = JObject.Parse(body);
-            var user = json["user"];
-            var email = (string?)user?["email"] ?? string.Empty;
-            var micros = (long?)user?["budget"]?["balanceMicros"];
-            var remaining = (int?)user?["freeSteps"]?["remaining"];
-            var limit = (int?)user?["freeSteps"]?["limit"];
-            var steps = remaining != null && limit != null ? "бесплатные шаги " + remaining + " из " + limit : string.Empty;
-            var summary = steps;
-            if (micros != null)
-            {
-                var negative = micros.Value < 0;
-                var absolute = negative ? -micros.Value : micros.Value;
-                var dollars = absolute / 1000000;
-                var cents = (absolute % 1000000) / 10000;
-                var money = (negative ? "-" : string.Empty) + "$" + dollars + "." + cents.ToString("00");
-                summary = string.IsNullOrEmpty(steps) ? money : money + " · " + steps;
-            }
-            else if (string.IsNullOrEmpty(summary))
-            {
-                summary = string.IsNullOrEmpty(email) ? "Аккаунт" : email;
-            }
-
-            return new AccountInfo
-            {
-                Email = email,
-                Provider = ProviderFromEmail(email),
-                Summary = summary,
-            };
-        }
-
-        private static string ProviderFromEmail(string email)
-        {
-            if (string.IsNullOrEmpty(email))
-            {
-                return "other";
-            }
-
-            var at = email.LastIndexOf('@');
-            var domain = at >= 0 ? email.Substring(at + 1).ToLowerInvariant() : string.Empty;
-            if (domain == "yandex.ru" || domain == "ya.ru" || domain == "yandex.com" || domain == "yandex.kz" || domain == "yandex.by")
-            {
-                return "yandex";
-            }
-
-            if (domain == "gmail.com" || domain == "googlemail.com")
-            {
-                return "google";
-            }
-
-            if (domain == "accounts.arni.invalid" && email.StartsWith("vk-", StringComparison.OrdinalIgnoreCase))
-            {
-                return "vk";
-            }
-
-            return "other";
+            return AccountInfo.Parse(body);
         }
 
         private static ModelTurn ParseFull(string body, Action<string> onDelta)
@@ -557,10 +503,4 @@ namespace ArniLite.Api
         }
     }
 
-    public sealed class AccountInfo
-    {
-        public string Email { get; set; } = string.Empty;
-        public string Provider { get; set; } = string.Empty;
-        public string Summary { get; set; } = string.Empty;
-    }
 }
