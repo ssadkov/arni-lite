@@ -6,6 +6,11 @@ using System.Windows.Media;
 
 namespace ArniLite
 {
+    public sealed class InvertBoolConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) => !(value is bool flag && flag);
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => !(value is bool flag && flag);
+    }
     public sealed class BoolVisibilityConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

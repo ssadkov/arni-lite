@@ -1,7 +1,12 @@
 ; Per-user Setup for the net48 Arni Lite build.
 ; Keep AppVersion in step with the numeric part of the application version.
 
+#ifndef AppVersion
 #define AppVersion "0.1.2"
+#endif
+#ifndef AppNumericVersion
+#define AppNumericVersion "0.1.2"
+#endif
 #ifndef Arch
 #define Arch "x64"
 #endif
@@ -22,7 +27,7 @@ AppPublisher=Arnion
 AppPublisherURL=https://github.com/ssadkov/arni-lite
 AppSupportURL=https://github.com/ssadkov/arni-lite/issues
 AppUpdatesURL=https://github.com/ssadkov/arni-lite/releases
-VersionInfoVersion={#AppVersion}.0
+VersionInfoVersion={#AppNumericVersion}.0
 VersionInfoCompany=Arnion
 VersionInfoDescription=Arni Lite Setup
 VersionInfoProductName=Arni Lite
@@ -74,13 +79,32 @@ Name: "{autoprograms}\Arni Lite"; Filename: "{app}\ArniLite.exe"
 Name: "{autodesktop}\Arni Lite"; Filename: "{app}\ArniLite.exe"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\ArniLite.exe"; Description: "{cm:Launch}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\ArniLite.exe"; Description: "{cm:Launch}"; Flags: nowait postinstall skipifsilent; Check: not IsAppUpdate
+Filename: "{app}\ArniLite.exe"; Flags: nowait; Check: IsAppUpdate
 
 [Code]
+function IsAppUpdate: Boolean;
+begin
+  Result := ExpandConstant('{param:ARNIUPDATE|0}') = '1';
+end;
+
 function InitializeSetup: Boolean;
 var
   Release: Cardinal;
+  WaitCount: Integer;
 begin
+  Result := False;
+  if IsAppUpdate then
+  begin
+    { The application saves its draft, starts Setup and exits normally. Never kill an agent turn. }
+    WaitCount := 0;
+    while CheckForMutexes('Local\ArniLite.SingleInstance') and (WaitCount < 300) do
+    begin
+      Sleep(200);
+      WaitCount := WaitCount + 1;
+    end;
+    if CheckForMutexes('Local\ArniLite.SingleInstance') then Exit;
+  end;
   Release := 0;
   if RegQueryDWordValue(HKLM, 'SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full', 'Release', Release) and (Release >= 528040) then
   begin

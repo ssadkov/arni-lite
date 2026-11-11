@@ -19,6 +19,28 @@ namespace ArniLite.AppTests
     public class ChatSessionTests
     {
         [Fact]
+        public Task RestartPreservesDraftAndDictationLocksChatNavigationAndSending() => OnDispatcher(async () =>
+        {
+            using var fixture = new SessionFixture();
+            var session = fixture.CreateSession();
+            session.SelectedCatalog = new CatalogModel { Id = "local-test" };
+            session.Draft = "Несохранённая голосовая задача";
+            session.SetInputLocked(true);
+            Assert.False(session.CanChangeContext);
+            Assert.False(session.SendCommand.CanExecute(null));
+            Assert.False(session.NewChatCommand.CanExecute(null));
+            session.OpenChatCommand.Execute(fixture.ChatA);
+            Assert.Equal(fixture.ProjectB, session.ProjectPath);
+            Assert.Throws<InvalidOperationException>(() => session.SaveDraftForRestart());
+            session.SetInputLocked(false);
+            session.SaveDraftForRestart();
+            var restored = fixture.CreateSession();
+            Assert.Equal("Несохранённая голосовая задача", restored.Draft);
+            Assert.Equal(fixture.ProjectB, restored.ProjectPath);
+            Assert.Empty(fixture.CreateSession().Draft); // one-time recovery; never resurrect a sent draft
+            await Task.CompletedTask;
+        });
+        [Fact]
         public Task SwitchingChatsRestoresTheirProjectAndGeneralChatClearsIt() => OnDispatcher(async () =>
         {
             using var fixture = new SessionFixture();

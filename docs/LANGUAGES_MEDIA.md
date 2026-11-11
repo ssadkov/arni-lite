@@ -1,6 +1,6 @@
 # Languages, diagnostics and media preview
 
-Development version: **0.1.2-preview**, following the published **0.1.1** release.
+Included in **0.1.2**, following the **0.1.1** release.
 
 ## Interface and preferences
 

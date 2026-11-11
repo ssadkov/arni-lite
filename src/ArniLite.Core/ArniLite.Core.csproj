@@ -4,4 +4,7 @@
     <RootNamespace>ArniLite.Core</RootNamespace>
     <AssemblyName>ArniLite.Core</AssemblyName>
   </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="UpdatesPublicKey.xml" />
+  </ItemGroup>
 </Project>

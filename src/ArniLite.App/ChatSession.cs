@@ -61,6 +61,7 @@ namespace ArniLite
         private string _permissionBody = string.Empty;
         private bool _trust = true;
         private bool _busy;
+        private bool _inputLocked;
         private string _activity = string.Empty;
         private bool _showLoader;
 
@@ -81,6 +82,7 @@ namespace ArniLite
             _tools = new LocalToolHost(_workspace, processes, _journal, this);
             _chatId = _historyStore.CurrentChatId();
             LoadCurrentChat();
+            RestoreRestartDraft();
             RefreshLists();
 
             OpenChatCommand = new ParamCommand(OpenChat);
@@ -89,11 +91,11 @@ namespace ArniLite
             NewProjectChatCommand = new ParamCommand(NewProjectChat);
             OpenInExplorerCommand = new RelayCommand(OpenInExplorer, () => !string.IsNullOrEmpty(_workspace.Root));
             OpenProjectFileCommand = new ParamCommand(OpenProjectFile);
-            SendCommand = new RelayCommand(async () => await SendAsync(), () => !_busy && _selectedCatalog != null && !string.IsNullOrWhiteSpace(Draft));
-            NewChatCommand = new RelayCommand(NewChat, () => !_busy);
+            SendCommand = new RelayCommand(async () => await SendAsync(), () => CanChangeContext && _selectedCatalog != null && !string.IsNullOrWhiteSpace(Draft));
+            NewChatCommand = new RelayCommand(NewChat, () => CanChangeContext);
             StopCommand = new RelayCommand(Stop, () => _busy);
             ClosePreviewCommand = new RelayCommand(ClosePreview);
-            ChooseFolderCommand = new RelayCommand(ChooseFolder, () => !_busy);
+            ChooseFolderCommand = new RelayCommand(ChooseFolder, () => CanChangeContext);
             AllowCommand = new RelayCommand(() => Resolve(true), () => _permissionVisible);
             DenyCommand = new RelayCommand(() => Resolve(false), () => _permissionVisible);
             RefreshAccountCommand = new RelayCommand(async () =>
@@ -125,7 +127,38 @@ namespace ArniLite
         public ICommand RefreshAccountCommand { get; }
         public bool AllowSideEffectsForSession => _trust;
         public bool IsBusy => _busy;
-        public bool CanChangeContext => !_busy;
+        public bool CanChangeContext => !_busy && !_inputLocked;
+        public void SetInputLocked(bool value)
+        {
+            _inputLocked = value;
+            Notify(nameof(CanChangeContext));
+            foreach (var command in new[] { SendCommand, NewChatCommand, ChooseFolderCommand }) (command as RelayCommand)?.Raise();
+        }
+        public void SaveDraftForRestart()
+        {
+            if (_busy || _inputLocked) throw new InvalidOperationException("Session is busy.");
+            _historyStore.Rewrite(_chatId, _history);
+            var path = Path.Combine(_dataDirectory, "restart-draft.json");
+            var temporary = path + ".tmp";
+            File.WriteAllText(temporary, new JObject { ["chat"] = _chatId, ["text"] = Draft }.ToString(), new UTF8Encoding(false));
+            if (File.Exists(path)) File.Replace(temporary, path, null); else File.Move(temporary, path);
+        }
+        private void RestoreRestartDraft()
+        {
+            var path = Path.Combine(_dataDirectory, "restart-draft.json");
+            try
+            {
+                if (!File.Exists(path)) return;
+                if (new FileInfo(path).Length <= 1024 * 1024)
+                {
+                    var draft = JObject.Parse(File.ReadAllText(path));
+                    if (draft.Value<string>("chat") == _chatId) _draft = draft.Value<string>("text") ?? "";
+                }
+                File.Delete(path);
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is Newtonsoft.Json.JsonException)
+            { _diagnostics.Write("restart_draft_failed", exception: ex); }
+        }
         public string ProjectPath => _workspace.Root;
         public bool HasProject => !string.IsNullOrEmpty(_workspace.Root);
         public string ProjectName => HasProject ? Path.GetFileName(_workspace.Root.TrimEnd('\\')) : StringCatalog.Get("NoProject");
@@ -214,7 +247,7 @@ namespace ArniLite
             get => _selectedCatalog;
             set
             {
-                if (_busy) return;
+                if (!CanChangeContext) return;
                 _selectedCatalog = value;
                 if (value != null)
                 {
@@ -454,7 +487,7 @@ namespace ArniLite
         private async Task SendAsync()
         {
             var text = (Draft ?? string.Empty).Trim();
-            if (text.Length == 0 || _busy)
+            if (text.Length == 0 || !CanChangeContext)
             {
                 return;
             }
@@ -709,7 +742,7 @@ namespace ArniLite
 
         private void NewChat()
         {
-            if (_busy)
+            if (!CanChangeContext)
             {
                 return;
             }
@@ -729,7 +762,7 @@ namespace ArniLite
 
         private void NewProjectChat(object parameter)
         {
-            if (_busy) return;
+            if (!CanChangeContext) return;
             var path = parameter as string;
             if (string.IsNullOrEmpty(path)) { NewChat(); return; }
             try
@@ -751,7 +784,7 @@ namespace ArniLite
         private void OpenChat(object parameter)
         {
             var id = parameter as string;
-            if (_busy || string.IsNullOrEmpty(id) || id == _chatId)
+            if (!CanChangeContext || string.IsNullOrEmpty(id) || id == _chatId)
             {
                 return;
             }
@@ -764,7 +797,7 @@ namespace ArniLite
 
         private void OpenFolder(object parameter)
         {
-            if (_busy) return;
+            if (!CanChangeContext) return;
             var path = parameter as string;
             if (string.IsNullOrEmpty(path) || !Directory.Exists(path))
             {

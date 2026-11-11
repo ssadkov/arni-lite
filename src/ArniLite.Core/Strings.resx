@@ -463,4 +463,53 @@
   <data name="PricePerMillion" xml:space="preserve">
     <value>{0} / {1} за 1M</value>
   </data>
+  <data name="Cancel" xml:space="preserve"><value>Отмена</value></data>
+  <data name="SecondsShort" xml:space="preserve"><value>с</value></data>
+  <data name="OperationCancelled" xml:space="preserve"><value>Операция отменена.</value></data>
+  <data name="Dictation" xml:space="preserve"><value>Диктовка</value></data>
+  <data name="SpeechDescription" xml:space="preserve"><value>Локальная диктовка: Whisper base и движок скачиваются по вашему выбору. Интернет нужен только для скачивания.</value></data>
+  <data name="SpeechAutomaticLanguage" xml:space="preserve"><value>Определять автоматически</value></data>
+  <data name="SpeechDefaultMicrophone" xml:space="preserve"><value>Системный микрофон по умолчанию</value></data>
+  <data name="SpeechLanguage" xml:space="preserve"><value>Язык диктовки</value></data>
+  <data name="SpeechMicrophone" xml:space="preserve"><value>Микрофон</value></data>
+  <data name="SpeechRefreshDevices" xml:space="preserve"><value>Обновить список микрофонов</value></data>
+  <data name="SpeechInstall" xml:space="preserve"><value>Скачать Whisper base · около 150 МБ</value></data>
+  <data name="SpeechRemove" xml:space="preserve"><value>Удалить модель и движок</value></data>
+  <data name="SpeechInstalled" xml:space="preserve"><value>Whisper base установлен · распознавание на компьютере</value></data>
+  <data name="SpeechNotInstalled" xml:space="preserve"><value>Модель не установлена.</value></data>
+  <data name="SpeechDownloading" xml:space="preserve"><value>Скачиваем и проверяем движок и модель. Это может занять несколько минут.</value></data>
+  <data name="SpeechReady" xml:space="preserve"><value>Готово. Нажмите «Диктовка» рядом с полем сообщения.</value></data>
+  <data name="SpeechStart" xml:space="preserve"><value>Диктовка</value></data>
+  <data name="SpeechFinish" xml:space="preserve"><value>Завершить запись</value></data>
+  <data name="SpeechTip" xml:space="preserve"><value>Записать речь и вставить распознанный текст в черновик сообщения</value></data>
+  <data name="SpeechInstallFirst" xml:space="preserve"><value>Установите Whisper base в настройках → Диктовка.</value></data>
+  <data name="SpeechRecording" xml:space="preserve"><value>Запись идёт. Нажмите «Завершить запись», чтобы распознать речь. До 2 минут.</value></data>
+  <data name="SpeechRecognizing" xml:space="preserve"><value>Распознаём речь на компьютере…</value></data>
+  <data name="SpeechInserted" xml:space="preserve"><value>Текст добавлен в черновик. Проверьте его перед отправкой.</value></data>
+  <data name="SpeechNoWords" xml:space="preserve"><value>Речь не обнаружена. Попробуйте говорить ближе к микрофону.</value></data>
+  <data name="SpeechMicrophoneFailed" xml:space="preserve"><value>Не удалось открыть микрофон. Проверьте устройство и разрешение на запись.</value></data>
+  <data name="SpeechDownloadFailed" xml:space="preserve"><value>Не удалось скачать или проверить Whisper. Проверьте соединение и свободное место, затем повторите.</value></data>
+  <data name="SpeechRemoveFailed" xml:space="preserve"><value>Не удалось удалить Whisper. Закройте другие процессы распознавания и повторите.</value></data>
+  <data name="SpeechRecognitionFailed" xml:space="preserve"><value>Распознавание не завершилось. Проверьте установку Whisper; старой Windows или процессору может потребоваться другая сборка движка. Подробности — в технических логах.</value></data>
+  <data name="SpeechPrivacy" xml:space="preserve"><value>Запись обрабатывается локально и удаляется после распознавания. В чат отправляется только текст, когда вы нажмёте «Отправить». На слабом процессоре распознавание может идти медленно.</value></data>
+  <data name="Updates" xml:space="preserve"><value>Обновления</value></data>
+  <data name="UpdateDescription" xml:space="preserve"><value>Проверка совместимых выпусков Arni Lite на GitHub. Установка начинается только по вашей кнопке.</value></data>
+  <data name="UpdateAutomatic" xml:space="preserve"><value>Проверять при запуске, не чаще раза в сутки</value></data>
+  <data name="UpdatePreview" xml:space="preserve"><value>Предлагать предварительные версии</value></data>
+  <data name="UpdateLastChecked" xml:space="preserve"><value>Последняя проверка:</value></data>
+  <data name="UpdateNeverChecked" xml:space="preserve"><value>Ещё не проверяли</value></data>
+  <data name="UpdateCheck" xml:space="preserve"><value>Проверить обновления</value></data>
+  <data name="UpdateChecking" xml:space="preserve"><value>Проверяем выпуски…</value></data>
+  <data name="UpdateCurrent" xml:space="preserve"><value>Более новых совместимых подписанных выпусков не найдено.</value></data>
+  <data name="UpdateAvailable" xml:space="preserve"><value>Доступна версия {0}</value></data>
+  <data name="UpdateCheckFailed" xml:space="preserve"><value>Не удалось проверить обновления. Проверьте соединение или откройте выпуски на GitHub. Приложение продолжит работать.</value></data>
+  <data name="UpdateDownloading" xml:space="preserve"><value>Скачиваем и проверяем установщик…</value></data>
+  <data name="UpdateDownload" xml:space="preserve"><value>Скачать обновление</value></data>
+  <data name="UpdateInstall" xml:space="preserve"><value>Установить и перезапустить</value></data>
+  <data name="UpdateReleaseNotes" xml:space="preserve"><value>Что нового</value></data>
+  <data name="UpdateReady" xml:space="preserve"><value>Обновление проверено. Можно установить и перезапустить приложение.</value></data>
+  <data name="UpdateDownloadFailed" xml:space="preserve"><value>Скачивание или проверка обновления не удались. Установка не началась; повторите позже.</value></data>
+  <data name="UpdateInstallFailed" xml:space="preserve"><value>Не удалось начать установку или сохранить черновик. Приложение остаётся открытым.</value></data>
+  <data name="UpdateIdleOnly" xml:space="preserve"><value>Для установки завершите работу агента и диктовку. Черновик сохранится перед перезапуском.</value></data>
+  <data name="UpdateGitHub" xml:space="preserve"><value>Все выпуски на GitHub</value></data>
 </root>

@@ -18,6 +18,7 @@ namespace ArniLite
         private readonly IProcessRunner _runner;
         private readonly ITokenStore _store;
         private readonly OsFacts _os;
+        private readonly HttpClient _publicDownloads = new HttpClient { Timeout = Timeout.InfiniteTimeSpan };
         private CancellationTokenSource _operation = new CancellationTokenSource();
         private string _deviceCode = string.Empty;
         private string _verificationUri = string.Empty;
@@ -42,10 +43,16 @@ namespace ArniLite
             PowerShellCommand = new RelayCommand(async () => await RunPowerShellAsync(), () => !_busy);
             StreamCommand = new RelayCommand(async () => await StreamAsync(), () => !_busy && HasToken());
             StopCommand = new RelayCommand(Stop, () => _busy);
-            SignOutCommand = new RelayCommand(SignOut);
+            SignOutCommand = new RelayCommand(SignOut, () => Dictation == null || !Dictation.IsActive);
             CloseCommand = new RelayCommand(() => Application.Current.Shutdown());
             _signedIn = HasToken();
             Chat = new ChatSession(_api, _store, _os, _runner);
+            _publicDownloads.DefaultRequestHeaders.UserAgent.ParseAdd("ArniLite/" + AppVersion.Display);
+            var downloads = new VerifiedDownload(_publicDownloads);
+            Dictation = new DictationViewModel(Preferences.Store, downloads, text => Chat.Draft = string.IsNullOrWhiteSpace(Chat.Draft) ? text : Chat.Draft.TrimEnd() + " " + text, () => !Chat.IsBusy);
+            Updates = new UpdatesViewModel(Preferences.Store, downloads, os, () => !Chat.IsBusy && !Dictation.IsActive && !_busy, Chat.SaveDraftForRestart);
+            Dictation.StateChanged += (_, _) => { Chat.SetInputLocked(Dictation.BlocksInput); Updates.Changed(); (SignOutCommand as RelayCommand)?.Raise(); };
+            Chat.PropertyChanged += (_, args) => { if (args.PropertyName == nameof(Chat.IsBusy)) { Dictation.Changed(); Updates.Changed(); } };
             Append("Окно открыто. Диагностика сети выполняется в фоне.");
             _ = DiagnoseAsync();
             _ = Chat.LoadAccountAsync();
@@ -93,6 +100,9 @@ namespace ArniLite
         public ICommand CloseCommand { get; }
         public ChatSession Chat { get; }
         public PreferencesViewModel Preferences { get; }
+        public DictationViewModel Dictation { get; }
+        public UpdatesViewModel Updates { get; }
+        public void DisposeFeatures() { Dictation.Dispose(); Updates.Dispose(); _publicDownloads.Dispose(); }
 
         private bool HasToken()
         {
