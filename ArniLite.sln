@@ -12,6 +12,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArniLite.App", "src\ArniLit
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArniLite.UnitTests", "tests\ArniLite.UnitTests\ArniLite.UnitTests.csproj", "{A1B1C1D1-6666-4111-8666-666666666666}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArniLite.AppTests", "tests\ArniLite.AppTests\ArniLite.AppTests.csproj", "{9713401B-0EFE-4826-873B-D4C36321D876}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,5 +44,9 @@ Global
 		{A1B1C1D1-6666-4111-8666-666666666666}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A1B1C1D1-6666-4111-8666-666666666666}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A1B1C1D1-6666-4111-8666-666666666666}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9713401B-0EFE-4826-873B-D4C36321D876}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9713401B-0EFE-4826-873B-D4C36321D876}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9713401B-0EFE-4826-873B-D4C36321D876}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9713401B-0EFE-4826-873B-D4C36321D876}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -1,7 +1,7 @@
 ; Per-user Setup for the net48 Arni Lite build.
 ; Keep AppVersion in step with src/ArniLite.App/ArniLite.App.csproj.
 
-#define AppVersion "0.1.0"
+#define AppVersion "0.1.1"
 #ifndef Arch
 #define Arch "x64"
 #endif
@@ -9,7 +9,7 @@
 #define BuildDir "..\dist\publish\x86"
 #define SetupSuffix "-x86"
 #else
-#define BuildDir "..\src\ArniLite.App\bin\Release\net48"
+#define BuildDir "..\dist\publish\x64"
 #define SetupSuffix "-x64"
 #endif
 

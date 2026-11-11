@@ -14,6 +14,11 @@ namespace ArniLite.Windows
         public const int MaxReadChars = 64 * 1024;
         public string Root { get; private set; } = string.Empty;
 
+        public void ClearRoot()
+        {
+            Root = string.Empty;
+        }
+
         public void SetRoot(string path)
         {
             if (!Directory.Exists(path))

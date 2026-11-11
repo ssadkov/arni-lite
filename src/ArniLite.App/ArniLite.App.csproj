@@ -7,7 +7,7 @@
     <ApplicationIcon>ArniLite.ico</ApplicationIcon>
     <RootNamespace>ArniLite</RootNamespace>
     <AssemblyName>ArniLite</AssemblyName>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="AvalonEdit" Version="6.3.1.120" />

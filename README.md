@@ -1,6 +1,6 @@
 # Arni Lite
 
-Lightweight Windows client for Arni. This repository currently contains the G0 prototype: a .NET Framework 4.8 WPF window, diagnostics, the desktop sign-in client, a streaming text probe, and a non-interactive PowerShell runner.
+Lightweight Windows client for Arni, built with WPF and .NET Framework 4.8. It includes project-based conversations, a local agent, streaming responses, account limits, file previews and per-user x86/x64 installers.
 
 The product specification is in `docs/ARNI_LITE_WINDOWS_SPEC.md`. Windows 7 SP1 and Windows Server 2012 have not been tested yet.
 
@@ -11,8 +11,8 @@ The product specification is in `docs/ARNI_LITE_WINDOWS_SPEC.md`. Windows 7 SP1 
 - Windows x64
 
 ```powershell
-dotnet test ArniLite.sln -c Release
-dotnet build ArniLite.sln -c Release
+dotnet test ArniLite.sln -c Release -m:1 -nr:false
+dotnet build ArniLite.sln -c Release -m:1 -nr:false
 src\ArniLite.App\bin\Release\net48\ArniLite.exe --self-check docs\g0-self-check.txt
 ```
 
@@ -20,9 +20,11 @@ The self-check writes OS, Framework, TLS, DPAPI, PowerShell, and process-stop re
 
 ## Sign-in
 
-The client calls `POST /api/desktop/auth/start` on `https://api.arnion.ru` and opens the returned page in the external browser. That bridge lives in the backend and is not deployed with this commit. Until it is, the Yandex and Google buttons open the existing web sign-in pages so the browser path can still be checked.
+The single sign-in button calls `POST /api/desktop/auth/start` on `https://api.arnion.ru` and opens the returned page in the external browser. Select a provider there and enter the code shown in Arni Lite. The client receives the session through the desktop sign-in bridge.
 
 The session token is stored with DPAPI for the current Windows user. It is not written to the on-screen log or the self-check report.
+
+See [the workspace interface](docs/WORKSPACE_UI.md) for navigation, keyboard shortcuts and validation details, and [release 0.1.1](docs/releases/0.1.1.md) for this release's changes.
 
 ## Boundaries
 

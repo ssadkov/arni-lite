@@ -265,6 +265,7 @@ namespace ArniLite
 
         private void SignOut()
         {
+            Chat.Stop();
             Stop();
             _store.Clear();
             _deviceCode = string.Empty;
