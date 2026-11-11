@@ -40,7 +40,7 @@ The existing public 0.1.1 release has no signed update metadata and is intention
 
 ## Validation
 
-- Tests cover signed release acceptance, tampering/wrong keys, version/tag matching, SemVer/channel/OS/architecture policy, bounded/hash-verified downloads, cancellation/cleanup, migrated preferences, restart drafts and dictation's context lock.
+- 50 Core/Api/Storage tests and 15 WPF tests passed. Coverage includes signed release acceptance, tampering/wrong keys, version/tag matching, SemVer/channel/OS/architecture policy, bounded/hash-verified downloads, cancellation/cleanup, migrated preferences, restart drafts and dictation's context lock.
 - Speech tests cover WAV headers, extraction allowlisting, local CLI arguments, language selection, silence avoidance and cleanup on success/cancellation.
 - A native net48 smoke test downloaded/verified/extracted the pinned engine, verified the model, transcribed the public upstream JFK sample through `WhisperRecognizer` and `ProcessRunner`, and observed zero temporary recordings afterward. It also verified a manifest produced by the release signing script against the application's embedded key.
-- UI checks and installer compilation are recorded with the completed implementation. Live microphone capture and a full replacement/restart of an installed client remain separate acceptance checks.
+- Computer Use verified that Settings opens and renders the Dictation section with download controls, language and microphone selection. The update-enabled Inno script compiled. Live microphone capture, an interactive update check, and a full replacement/restart of an installed client remain separate acceptance checks.
