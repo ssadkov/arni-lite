@@ -26,6 +26,8 @@ The session token is stored with DPAPI for the current Windows user. It is not w
 
 See [the workspace interface](docs/WORKSPACE_UI.md) for navigation, keyboard shortcuts and validation details, and [release 0.1.1](docs/releases/0.1.1.md) for this release's changes.
 
+The `0.1.2-preview` development version adds [language switching, support logs and native media previews](docs/LANGUAGES_MEDIA.md). The published `0.1.1` installers remain the previous stable snapshot.
+
 ## Boundaries
 
 `ArniLite.Core`, `ArniLite.Api`, and `ArniLite.Storage` do not reference WPF, the registry, DPAPI, or P/Invoke. Process launch, DPAPI, and OS detection are in `ArniLite.Windows`.

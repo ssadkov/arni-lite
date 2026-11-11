@@ -1,0 +1,29 @@
+<UserControl x:Class="ArniLite.MediaPreviewControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:ArniLite">
+    <Grid>
+        <Grid.RowDefinitions><RowDefinition Height="*" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+        <Grid MinHeight="90" MaxHeight="320" Background="#1C211B">
+            <MediaElement x:Name="Player" LoadedBehavior="Manual" UnloadedBehavior="Close" Stretch="Uniform" Volume="0.7"
+                          MediaOpened="Player_OnOpened" MediaEnded="Player_OnEnded" MediaFailed="Player_OnFailed" />
+            <TextBlock x:Name="AudioLabel" Text="{local:Loc Audio}" Foreground="#E7EDE0" FontSize="24" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed" />
+        </Grid>
+        <StackPanel Grid.Row="1" Margin="0,12,0,0">
+            <Slider x:Name="Timeline" Minimum="0" Maximum="1" IsEnabled="False" ValueChanged="Timeline_OnValueChanged" AutomationProperties.Name="{local:Loc Seek}" />
+            <TextBlock x:Name="TimeLabel" Text="0:00 / --:--" HorizontalAlignment="Right" FontSize="11" Foreground="#758071" Margin="0,4,0,8" />
+        </StackPanel>
+        <WrapPanel Grid.Row="2" Margin="0,0,0,10">
+            <Button x:Name="PlayButton" Content="{local:Loc Play}" Click="Play_OnClick" Margin="0,0,8,0" />
+            <Button Content="{local:Loc Stop}" Click="Stop_OnClick" />
+        </WrapPanel>
+        <DockPanel Grid.Row="3" Margin="0,0,0,12">
+            <TextBlock Text="{local:Loc Volume}" FontSize="11" Foreground="#758071" Margin="0,0,12,0" VerticalAlignment="Center" />
+            <Slider x:Name="VolumeSlider" Minimum="0" Maximum="1" Value="0.7" ValueChanged="Volume_OnValueChanged" AutomationProperties.Name="{local:Loc Volume}" />
+        </DockPanel>
+        <StackPanel Grid.Row="4">
+            <TextBlock x:Name="MediaStatus" TextWrapping="Wrap" FontSize="11" Foreground="#758071" Margin="0,0,0,12" />
+            <Button Content="{local:Loc OpenExternal}" Click="External_OnClick" FontSize="11" />
+        </StackPanel>
+    </Grid>
+</UserControl>

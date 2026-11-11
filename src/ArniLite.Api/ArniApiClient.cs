@@ -340,9 +340,10 @@ namespace ArniLite.Api
                     Id = id,
                     Name = string.IsNullOrWhiteSpace(name) ? id : name,
                     Provider = CatalogModel.ProviderLabel((string)item["arni_provider"] ?? string.Empty),
+                    PromptPerToken = prompt,
+                    CompletionPerToken = completion,
                     Free = markedFree || (prompt != null && completion != null && decimal.TryParse(prompt, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var promptValue) && promptValue == 0m && decimal.TryParse(completion, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var completionValue) && completionValue == 0m),
                 };
-                model.PriceLabel = CatalogModel.FormatPrice(model.Free, prompt, completion);
                 models.Add(model);
             }
 

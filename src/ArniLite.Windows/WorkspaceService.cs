@@ -19,6 +19,14 @@ namespace ArniLite.Windows
             Root = string.Empty;
         }
 
+        public string ResolveFile(string relative)
+        {
+            if (!WorkspacePath.TryCombine(Root, relative, out var full, out var error)) throw new IOException(error);
+            EnsureNoReparse(full);
+            if (!File.Exists(full)) throw new FileNotFoundException("File not found.");
+            return full;
+        }
+
         public void SetRoot(string path)
         {
             if (!Directory.Exists(path))

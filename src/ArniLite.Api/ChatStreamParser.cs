@@ -99,7 +99,7 @@ namespace ArniLite.Api
             || (message ?? string.Empty).IndexOf("only available for use with agentic harnesses", StringComparison.OrdinalIgnoreCase) >= 0;
 
         public static string ForUser(string message) => IsHarnessRestriction(message)
-            ? "Провайдер отклонил эту модель для Arni Lite. Выберите другую модель."
+            ? ArniLite.Core.StringCatalog.Get("ModelRefused")
             : message;
 
         public static string FromBody(string body, int statusCode)
@@ -117,8 +117,8 @@ namespace ArniLite.Api
             }
 
             return snippet.Length == 0
-                ? "Сервер ответил " + statusCode + " без текста."
-                : "Сервер ответил " + statusCode + ": " + snippet;
+                ? ArniLite.Core.StringCatalog.Get("ServerNoText", statusCode)
+                : ArniLite.Core.StringCatalog.Get("ServerError", statusCode, snippet);
         }
 
         private static string Read(string body)

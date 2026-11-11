@@ -12,6 +12,8 @@ using ArniLite.Core;
 using ArniLite.Storage;
 using Xunit;
 
+[assembly: CollectionBehavior(DisableTestParallelization = true)]
+
 namespace ArniLite.AppTests
 {
     public class ChatSessionTests
@@ -95,6 +97,60 @@ namespace ArniLite.AppTests
             Assert.Same(task, await Task.WhenAny(task, Task.Delay(5000)));
             await task;
         }
+
+        [Fact]
+        public Task LanguageSwitchUpdatesLiveBindingsAndAccountWithoutNetworkRequests() => OnDispatcher(async () =>
+        {
+            using var fixture = new SessionFixture();
+            var handler = new AccountHandler();
+            using var client = new HttpClient(handler);
+            var session = fixture.CreateSession(client);
+            await session.LoadAccountAsync();
+            var label = (System.Windows.Controls.TextBlock)System.Windows.Markup.XamlReader.Parse(
+                "<TextBlock xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' xmlns:local='clr-namespace:ArniLite;assembly=ArniLite' Text='{local:Loc Settings}' />");
+            try
+            {
+                StringCatalog.SetLanguage("en");
+                session.RefreshLocalization();
+                await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+                Assert.Equal("Settings", label.Text);
+                Assert.Equal("Free account", session.Account!.AccountType);
+                Assert.Equal("free", session.Models[0].PriceLabel);
+                StringCatalog.SetLanguage("kk");
+                session.RefreshLocalization();
+                await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+                Assert.Equal("Баптаулар", label.Text);
+                Assert.Equal("Тегін аккаунт", session.Account!.AccountType);
+                Assert.Equal("тегін", session.Models[0].PriceLabel);
+                Assert.Equal("Задача бета", session.ChatTitle);
+                Assert.Equal(1, handler.CatalogRequests);
+                Assert.Equal(0, handler.ModelRequests);
+            }
+            finally { StringCatalog.SetLanguage("ru"); }
+        });
+
+        [Fact]
+        public Task MediaPreviewDoesNotReadLargeFilesAsTextOrStartPlaybackAutomatically() => OnDispatcher(async () =>
+        {
+            using var fixture = new SessionFixture();
+            var path = Path.Combine(fixture.ProjectB, "large.wav");
+            using (var file = File.Create(path)) file.SetLength(2 * 1024 * 1024);
+            var session = fixture.CreateSession();
+            session.OpenProjectFileCommand.Execute("large.wav");
+            Assert.True(session.HasMediaPreview);
+            Assert.True(session.IsAudioPreview);
+            Assert.False(session.HasTextPreview);
+            Assert.Equal(string.Empty, session.FilePreviewBody);
+            var view = new MediaPreviewControl { SourcePath = session.FilePreviewPath, IsAudio = true };
+            var player = (System.Windows.Controls.MediaElement)view.FindName("Player");
+            Assert.Null(player.Source);
+            view.Release();
+            Assert.Null(player.Source);
+            session.ClosePreviewCommand.Execute(null);
+            Assert.False(session.HasMediaPreview);
+            Assert.Equal(string.Empty, session.FilePreviewPath);
+            await Task.CompletedTask;
+        });
 
         [Fact]
         public Task AccountLoadsWhenCatalogFailsAndRemainsVisibleOnRefreshFailure() => OnDispatcher(async () =>
