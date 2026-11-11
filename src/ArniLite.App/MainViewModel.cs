@@ -8,6 +8,7 @@ using System.Windows.Input;
 using ArniLite.Api;
 using ArniLite.Core;
 using ArniLite.Windows;
+using ArniLite.Storage;
 
 namespace ArniLite
 {
@@ -27,8 +28,9 @@ namespace ArniLite
         private bool _signedIn;
         private bool _hasSignInLink;
 
-        public MainViewModel(OsFacts os)
+        public MainViewModel(OsFacts os, PreferencesStore? preferences = null)
         {
+            Preferences = new PreferencesViewModel(preferences ?? new PreferencesStore());
             _os = os ?? throw new ArgumentNullException(nameof(os));
             _api = new ArniApiClient(new HttpClient { Timeout = Timeout.InfiniteTimeSpan });
             _runner = new ProcessRunner();
@@ -90,6 +92,7 @@ namespace ArniLite
         public ICommand SignOutCommand { get; }
         public ICommand CloseCommand { get; }
         public ChatSession Chat { get; }
+        public PreferencesViewModel Preferences { get; }
 
         private bool HasToken()
         {
@@ -109,6 +112,7 @@ namespace ArniLite
             {
                 using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
                 var tls = await _api.ProbeTlsAsync(timeout.Token).ConfigureAwait(true);
+                DiagnosticLog.Current.Write("tls_probe", phase: tls.Status == "pass" ? "pass" : "fail");
                 Append(tls.Status == "pass" ? "HTTPS к api.arnion.ru установлен." : "HTTPS не установлен: " + tls.Detail);
                 var policy = TlsBootstrap.Configure(_os);
                 Append(policy);
@@ -121,6 +125,7 @@ namespace ArniLite
 
         private async Task SignInAsync()
         {
+            DiagnosticLog.Current.Write("auth_start");
             var operation = Begin();
             try
             {
@@ -152,6 +157,7 @@ namespace ArniLite
                         HasSignInLink = false;
                         UserCode = string.Empty;
                         IsSignedIn = true;
+                        DiagnosticLog.Current.Write("auth_approved");
                         Append("Вход выполнен. Токен сохранён через DPAPI и в журнал не пишется.");
                         RefreshCommands();
                         _ = Chat.LoadAccountAsync();
@@ -166,11 +172,13 @@ namespace ArniLite
             catch (OperationCanceledException)
             {
                 _deviceCode = string.Empty;
+                DiagnosticLog.Current.Write("auth_cancelled");
                 Append("Вход остановлен.");
             }
             catch (Exception ex)
             {
                 _deviceCode = string.Empty;
+                DiagnosticLog.Current.Write("auth_failed", exception: ex, httpStatus: (ex as ApiCallException)?.StatusCode);
                 Append(Redact(ex.Message));
             }
             finally
@@ -265,6 +273,7 @@ namespace ArniLite
 
         private void SignOut()
         {
+            DiagnosticLog.Current.Write("auth_signed_out");
             Chat.Stop();
             Stop();
             _store.Clear();

@@ -1,0 +1,466 @@
+<?xml version='1.0' encoding='utf-8'?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms</value>
+  </resheader>
+  <data name="Copy" xml:space="preserve">
+    <value>Көшіру</value>
+  </data>
+  <data name="NewProjectChat" xml:space="preserve">
+    <value>Жобадағы жаңа чат</value>
+  </data>
+  <data name="NewChat" xml:space="preserve">
+    <value>Жаңа чат</value>
+  </data>
+  <data name="NewChatTip" xml:space="preserve">
+    <value>Жаңа әңгіме · Ctrl+N</value>
+  </data>
+  <data name="SearchChats" xml:space="preserve">
+    <value>Чаттарды іздеу</value>
+  </data>
+  <data name="AddProjectEllipsis" xml:space="preserve">
+    <value>Жоба қосу…</value>
+  </data>
+  <data name="Refresh" xml:space="preserve">
+    <value>Жаңарту</value>
+  </data>
+  <data name="Account" xml:space="preserve">
+    <value>АККАУНТ</value>
+  </data>
+  <data name="AccountArni" xml:space="preserve">
+    <value>Arni аккаунты</value>
+  </data>
+  <data name="Refreshing" xml:space="preserve">
+    <value>Деректер жаңартылуда…</value>
+  </data>
+  <data name="LocalHistory" xml:space="preserve">
+    <value>Чаттарыңыз осы компьютерде сақталады</value>
+  </data>
+  <data name="SignIn" xml:space="preserve">
+    <value>Arni жүйесіне кіру</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
+    <value>Баптаулар</value>
+  </data>
+  <data name="FreeModelsOnly" xml:space="preserve">
+    <value>Тек тегін модельдер</value>
+  </data>
+  <data name="SessionTrust" xml:space="preserve">
+    <value>Осы сеанста әрекеттерді растаусыз орындау</value>
+  </data>
+  <data name="OpenProjectExplorer" xml:space="preserve">
+    <value>Жобаны файл шолғышында ашу</value>
+  </data>
+  <data name="SignOut" xml:space="preserve">
+    <value>Аккаунттан шығу</value>
+  </data>
+  <data name="CloseApp" xml:space="preserve">
+    <value>Arni Lite қолданбасын жабу</value>
+  </data>
+  <data name="CopyCode" xml:space="preserve">
+    <value>Кодты көшіру</value>
+  </data>
+  <data name="Projects" xml:space="preserve">
+    <value>Жобалар</value>
+  </data>
+  <data name="ProjectsTip" xml:space="preserve">
+    <value>Жобаларды көрсету не жасыру · Ctrl+B</value>
+  </data>
+  <data name="Files" xml:space="preserve">
+    <value>Файлдар</value>
+  </data>
+  <data name="FilesTip" xml:space="preserve">
+    <value>Жоба файлдары · Ctrl+Shift+E</value>
+  </data>
+  <data name="ProjectsAndChats" xml:space="preserve">
+    <value>Жобалар мен чаттар</value>
+  </data>
+  <data name="Conversation" xml:space="preserve">
+    <value>Әңгіме</value>
+  </data>
+  <data name="CopyMessage" xml:space="preserve">
+    <value>Хабарламаны көшіру</value>
+  </data>
+  <data name="ToolDetails" xml:space="preserve">
+    <value>Әрекет мәліметтері</value>
+  </data>
+  <data name="EmptyTitle" xml:space="preserve">
+    <value>Неден бастаймыз?</value>
+  </data>
+  <data name="EmptyIntro" xml:space="preserve">
+    <value>Сұрақ қойыңыз немесе Arni көмегімен
+файлдармен жұмыс істеу үшін жобаны таңдаңыз.</value>
+  </data>
+  <data name="OpenProject" xml:space="preserve">
+    <value>Жобаны ашу</value>
+  </data>
+  <data name="SignInHint" xml:space="preserve">
+    <value>Жаңа сұрау жіберу үшін аккаунтқа кіріңіз</value>
+  </data>
+  <data name="LatestReply" xml:space="preserve">
+    <value>Соңғы жауапқа өту</value>
+  </data>
+  <data name="FinishSignIn" xml:space="preserve">
+    <value>Браузерде кіруді аяқтаңыз</value>
+  </data>
+  <data name="CancelSignIn" xml:space="preserve">
+    <value>Кіруден бас тарту</value>
+  </data>
+  <data name="CopyCodeAction" xml:space="preserve">
+    <value>Кодты көшіру</value>
+  </data>
+  <data name="CopySignInLink" xml:space="preserve">
+    <value>Кіру сілтемесін көшіру</value>
+  </data>
+  <data name="Allow" xml:space="preserve">
+    <value>Рұқсат беру</value>
+  </data>
+  <data name="Deny" xml:space="preserve">
+    <value>Қабылдамау</value>
+  </data>
+  <data name="MessageArni" xml:space="preserve">
+    <value>Arni хабарламасы</value>
+  </data>
+  <data name="DraftHint" xml:space="preserve">
+    <value>Тапсырманы жазыңыз…</value>
+  </data>
+  <data name="Send" xml:space="preserve">
+    <value>Жіберу</value>
+  </data>
+  <data name="StopAction" xml:space="preserve">
+    <value>Тоқтату</value>
+  </data>
+  <data name="Agent" xml:space="preserve">
+    <value>Агент</value>
+  </data>
+  <data name="AgentTip" xml:space="preserve">
+    <value>Arni сұрақтарға жауап береді және қажет кезде құралдарды қолданады</value>
+  </data>
+  <data name="ModelTip" xml:space="preserve">
+    <value>Модель · тегін модельдер сүзгісі баптауларда</value>
+  </data>
+  <data name="Model" xml:space="preserve">
+    <value>Модель</value>
+  </data>
+  <data name="EnterHint" xml:space="preserve">
+    <value>Enter — жіберу · Shift+Enter — жаңа жол</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Жабу</value>
+  </data>
+  <data name="ProjectFiles" xml:space="preserve">
+    <value>Жоба файлдары</value>
+  </data>
+  <data name="LocalPreviewHint" xml:space="preserve">
+    <value>Алдын ала қарау файлдарды модельге жібермейді</value>
+  </data>
+  <data name="OpenExplorer" xml:space="preserve">
+    <value>Файл шолғышында ашу</value>
+  </data>
+  <data name="PreviewTextLimit" xml:space="preserve">
+    <value>Мәтінді қарау: 500 жолға дейін · 1 МиБ</value>
+  </data>
+  <data name="NoProjectTitle" xml:space="preserve">
+    <value>Бұл чатта жоба жоқ</value>
+  </data>
+  <data name="NoProjectHelp" xml:space="preserve">
+    <value>Файлдарына қолжетімді жаңа чат ашу үшін қалта қосыңыз.</value>
+  </data>
+  <data name="AddProject" xml:space="preserve">
+    <value>Жоба қосу</value>
+  </data>
+  <data name="BackToFiles" xml:space="preserve">
+    <value>Файлдар тізіміне оралу</value>
+  </data>
+  <data name="ResizeFiles" xml:space="preserve">
+    <value>Файлдар тақтасының енін өзгерту</value>
+  </data>
+  <data name="NoProject" xml:space="preserve">
+    <value>Жобасыз</value>
+  </data>
+  <data name="GeneralChats" xml:space="preserve">
+    <value>Жалпы чаттар</value>
+  </data>
+  <data name="Project" xml:space="preserve">
+    <value>Жоба</value>
+  </data>
+  <data name="File" xml:space="preserve">
+    <value>Файл</value>
+  </data>
+  <data name="You" xml:space="preserve">
+    <value>Сіз</value>
+  </data>
+  <data name="Result" xml:space="preserve">
+    <value>Нәтиже</value>
+  </data>
+  <data name="Status" xml:space="preserve">
+    <value>Күй</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>Қате</value>
+  </data>
+  <data name="Stopped" xml:space="preserve">
+    <value>Тоқтатылды</value>
+  </data>
+  <data name="SearchProject" xml:space="preserve">
+    <value>Жобадан іздеу</value>
+  </data>
+  <data name="ReadFile" xml:space="preserve">
+    <value>Файлды оқу</value>
+  </data>
+  <data name="ListFiles" xml:space="preserve">
+    <value>Файлдарды қарау</value>
+  </data>
+  <data name="RunCommand" xml:space="preserve">
+    <value>Пәрменді орындау</value>
+  </data>
+  <data name="ChangeFile" xml:space="preserve">
+    <value>Файлды өзгерту</value>
+  </data>
+  <data name="Thinking" xml:space="preserve">
+    <value>Модель ойлануда…</value>
+  </data>
+  <data name="Streaming" xml:space="preserve">
+    <value>Жауап келіп жатыр…</value>
+  </data>
+  <data name="WaitingApproval" xml:space="preserve">
+    <value>Растауды күтуде…</value>
+  </data>
+  <data name="AllowedRunning" xml:space="preserve">
+    <value>Рұқсат берілді. Орындалуда…</value>
+  </data>
+  <data name="TurnStopped" xml:space="preserve">
+    <value>Сұрау тоқтатылды. Алынған мәтін сақталды.</value>
+  </data>
+  <data name="HistoryNotSaved" xml:space="preserve">
+    <value>Тарих сақталмады</value>
+  </data>
+  <data name="ProjectUnavailable" xml:space="preserve">
+    <value>Жоба қолжетімсіз</value>
+  </data>
+  <data name="ProjectUnavailableDetail" xml:space="preserve">
+    <value>Бұл чаттың қалтасы қолжетімсіз: {0}</value>
+  </data>
+  <data name="FilesUnavailable" xml:space="preserve">
+    <value>Файлдар қолжетімсіз</value>
+  </data>
+  <data name="NoFileAccess" xml:space="preserve">
+    <value>Файлдарға қолжетімділік жоқ</value>
+  </data>
+  <data name="FolderPreviewHelp" xml:space="preserve">
+    <value>Бұл қалта. Ішіндегі файлдарды көру үшін жобаны файл шолғышында ашыңыз.</value>
+  </data>
+  <data name="FileTooLarge" xml:space="preserve">
+    <value>Мәтіндік файл 1 МиБ-тан үлкен. Оны файл шолғышынан ашыңыз.</value>
+  </data>
+  <data name="PreviewFailed" xml:space="preserve">
+    <value>Алдын ала қарау қолжетімсіз: {0}</value>
+  </data>
+  <data name="FolderDialog" xml:space="preserve">
+    <value>Жоба қалтасын таңдаңыз</value>
+  </data>
+  <data name="ToolRunning" xml:space="preserve">
+    <value>{0} орындалуда…</value>
+  </data>
+  <data name="ToolDone" xml:space="preserve">
+    <value>Дайын. Модель нәтижені оқып жатыр…</value>
+  </data>
+  <data name="ToolFinished" xml:space="preserve">
+    <value>Құрал аяқталды: {0}</value>
+  </data>
+  <data name="RoundLimit" xml:space="preserve">
+    <value>Модель қадамдарының шегіне жетті. Есеп аяқталмаған болуы мүмкін.</value>
+  </data>
+  <data name="TimeLimit" xml:space="preserve">
+    <value>Орындау уақытының шегіне жетті.</value>
+  </data>
+  <data name="ToolLimit" xml:space="preserve">
+    <value>Құралдарды шақыру шегіне жетті.</value>
+  </data>
+  <data name="InvalidAccount" xml:space="preserve">
+    <value>Сервер аккаунттың қате деректерін қайтарды.</value>
+  </data>
+  <data name="BudgetAccess" xml:space="preserve">
+    <value>Бюджеттік қолжетімділік</value>
+  </data>
+  <data name="FreeAccount" xml:space="preserve">
+    <value>Тегін аккаунт</value>
+  </data>
+  <data name="PlanFormat" xml:space="preserve">
+    <value>Тариф: {0}</value>
+  </data>
+  <data name="NotSpecified" xml:space="preserve">
+    <value>көрсетілмеген</value>
+  </data>
+  <data name="BalanceFormat" xml:space="preserve">
+    <value>Баланс: {0}</value>
+  </data>
+  <data name="PaidExpired" xml:space="preserve">
+    <value>Ақылы қолжетімділік мерзімі аяқталды</value>
+  </data>
+  <data name="PaidPaused" xml:space="preserve">
+    <value>Ақылы қолжетімділік тоқтатылған</value>
+  </data>
+  <data name="PaidUntil" xml:space="preserve">
+    <value>Ақылы қолжетімділік {0} дейін</value>
+  </data>
+  <data name="FreeStepsFormat" xml:space="preserve">
+    <value>Тегін қадамдар: {1} ішінен {0} қалды</value>
+  </data>
+  <data name="FreeResetFormat" xml:space="preserve">
+    <value>Тегін қадамдар {0} жаңартылады</value>
+  </data>
+  <data name="NoLimits" xml:space="preserve">
+    <value>Лимиттер туралы деректер берілмеген</value>
+  </data>
+  <data name="FiveHours" xml:space="preserve">
+    <value>5 сағат</value>
+  </data>
+  <data name="SevenDays" xml:space="preserve">
+    <value>7 күн</value>
+  </data>
+  <data name="WindowRemaining" xml:space="preserve">
+    <value>{0}: {1} қалды</value>
+  </data>
+  <data name="RequestsRemaining" xml:space="preserve">
+    <value>{1} сұраудан {0}</value>
+  </data>
+  <data name="AuthExpired" xml:space="preserve">
+    <value>Сеанс аяқталды. Шығып, қайта кіріңіз.</value>
+  </data>
+  <data name="AccountRefreshFailed" xml:space="preserve">
+    <value>Лимиттерді жаңарту мүмкін болмады. «Жаңарту» түймесін басыңыз.</value>
+  </data>
+  <data name="ModelsUnavailable" xml:space="preserve">
+    <value>Модельдерді жүктеу мүмкін болмады. «Жаңарту» түймесін басыңыз.</value>
+  </data>
+  <data name="NoModels" xml:space="preserve">
+    <value>Қолжетімді модельдер жоқ</value>
+  </data>
+  <data name="SelectModel" xml:space="preserve">
+    <value>Модельді таңдаңыз.</value>
+  </data>
+  <data name="SelectAnotherModel" xml:space="preserve">
+    <value>Басқа модельді таңдаңыз</value>
+  </data>
+  <data name="ModelAfterSignIn" xml:space="preserve">
+    <value>Модельді таңдау үшін кіріңіз</value>
+  </data>
+  <data name="ModelRefused" xml:space="preserve">
+    <value>Провайдер Arni Lite үшін бұл модельді қабылдамады. Басқа модельді таңдаңыз.</value>
+  </data>
+  <data name="SignInFirst" xml:space="preserve">
+    <value>Алдымен жүйеге кіріңіз.</value>
+  </data>
+  <data name="ServerNoText" xml:space="preserve">
+    <value>Сервер {0} жауабын мәтінсіз қайтарды.</value>
+  </data>
+  <data name="ServerError" xml:space="preserve">
+    <value>Сервер {0} жауабын қайтарды: {1}</value>
+  </data>
+  <data name="AlreadyRunning" xml:space="preserve">
+    <value>Arni Lite іске қосылған.</value>
+  </data>
+  <data name="General" xml:space="preserve">
+    <value>Жалпы</value>
+  </data>
+  <data name="Language" xml:space="preserve">
+    <value>Интерфейс тілі</value>
+  </data>
+  <data name="Preview" xml:space="preserve">
+    <value>Алдын ала қарау</value>
+  </data>
+  <data name="WrapText" xml:space="preserve">
+    <value>Жолдарды тасымалдау</value>
+  </data>
+  <data name="About" xml:space="preserve">
+    <value>Бағдарлама туралы</value>
+  </data>
+  <data name="Version" xml:space="preserve">
+    <value>Нұсқа</value>
+  </data>
+  <data name="Diagnostics" xml:space="preserve">
+    <value>Журналдар</value>
+  </data>
+  <data name="ExportLogs" xml:space="preserve">
+    <value>Журналдарды сақтау…</value>
+  </data>
+  <data name="RefreshLogs" xml:space="preserve">
+    <value>Журналды жаңарту</value>
+  </data>
+  <data name="DiagnosticsPrivacy" xml:space="preserve">
+    <value>Мұрағатқа нұсқа, Windows туралы мәліметтер және техникалық оқиғалар кіреді. Чат тарихы, файл мазмұны мен токендер қосылмайды.</value>
+  </data>
+  <data name="LogsEmpty" xml:space="preserve">
+    <value>Журнал әзірге бос.</value>
+  </data>
+  <data name="LogsSaved" xml:space="preserve">
+    <value>Журналдар сақталды. Осы ZIP файлын қолдау қызметіне жіберуге болады.</value>
+  </data>
+  <data name="LogsFailed" xml:space="preserve">
+    <value>Журналдарды сақтау мүмкін болмады. Басқа қалтаны таңдаңыз.</value>
+  </data>
+  <data name="PreferencesFailed" xml:space="preserve">
+    <value>Баптауларды сақтау мүмкін болмады.</value>
+  </data>
+  <data name="Platform" xml:space="preserve">
+    <value>Платформа</value>
+  </data>
+  <data name="Audio" xml:space="preserve">
+    <value>Аудио</value>
+  </data>
+  <data name="Video" xml:space="preserve">
+    <value>Бейне</value>
+  </data>
+  <data name="Play" xml:space="preserve">
+    <value>Ойнату</value>
+  </data>
+  <data name="Pause" xml:space="preserve">
+    <value>Кідірту</value>
+  </data>
+  <data name="Stop" xml:space="preserve">
+    <value>Тоқтату</value>
+  </data>
+  <data name="Volume" xml:space="preserve">
+    <value>Дыбыс деңгейі</value>
+  </data>
+  <data name="Seek" xml:space="preserve">
+    <value>Ойнату орны</value>
+  </data>
+  <data name="OpenExternal" xml:space="preserve">
+    <value>Сыртқы ойнатқышта ашу</value>
+  </data>
+  <data name="MediaReady" xml:space="preserve">
+    <value>Алдын ала қарау үшін «Ойнату» түймесін басыңыз.</value>
+  </data>
+  <data name="MediaOpening" xml:space="preserve">
+    <value>Медиафайл ашылуда…</value>
+  </data>
+  <data name="MediaFailed" xml:space="preserve">
+    <value>Windows бұл пішімді ойната алмады. Файлды сыртқы ойнатқышта ашуға болады.</value>
+  </data>
+  <data name="MediaMissing" xml:space="preserve">
+    <value>Медиафайл қолжетімсіз.</value>
+  </data>
+  <data name="MediaLocalHint" xml:space="preserve">
+    <value>Медиа жергілікті ойнатылады және модельге жіберілмейді.</value>
+  </data>
+  <data name="PriceFree" xml:space="preserve">
+    <value>тегін</value>
+  </data>
+  <data name="PriceMissing" xml:space="preserve">
+    <value>бағасы көрсетілмеген</value>
+  </data>
+  <data name="PricePerMillion" xml:space="preserve">
+    <value>{0} / {1} · 1M токенге</value>
+  </data>
+</root>

@@ -28,6 +28,7 @@ namespace ArniLite
         private readonly List<ChatMessage> _history = new List<ChatMessage>();
         private readonly SynchronizationContext _ui;
         private readonly string _dataDirectory;
+        private readonly DiagnosticLog _diagnostics;
         private readonly DispatcherTimer _streamTimer;
         private readonly object _streamGate = new object();
         private readonly StringBuilder _pendingText = new StringBuilder();
@@ -38,6 +39,8 @@ namespace ArniLite
         private SideEntry? _selectedEntry;
         private string _filePreviewTitle = string.Empty;
         private string _filePreviewBody = string.Empty;
+        private string _filePreviewPath = string.Empty;
+        private PreviewKind _previewKind;
         private TaskCompletionSource<bool> _approval;
         private TranscriptRow _liveRow;
         private string _chatId;
@@ -48,7 +51,7 @@ namespace ArniLite
         private string _accountError = string.Empty;
         private bool _accountLoading;
         private int _accountGeneration;
-        private string _modelStatus = "Модель появится после входа";
+        private string _modelStatus = "ModelAfterSignIn";
         private readonly List<CatalogModel> _catalog = new List<CatalogModel>();
         private CatalogModel _selectedCatalog;
         private string _selectedModel = string.Empty;
@@ -70,6 +73,7 @@ namespace ArniLite
             _streamTimer = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(60) };
             _streamTimer.Tick += (_, _) => FlushPendingText();
             _dataDirectory = dataDirectory ?? AppPaths.DataDirectory;
+            _diagnostics = dataDirectory == null ? DiagnosticLog.Current : new DiagnosticLog(Path.Combine(_dataDirectory, "logs"));
             Directory.CreateDirectory(_dataDirectory);
             _journal = new JsonlJournal(Path.Combine(_dataDirectory, "side-effects.jsonl"));
             _journal.MarkExecutingAsUnknown();
@@ -124,7 +128,7 @@ namespace ArniLite
         public bool CanChangeContext => !_busy;
         public string ProjectPath => _workspace.Root;
         public bool HasProject => !string.IsNullOrEmpty(_workspace.Root);
-        public string ProjectName => HasProject ? Path.GetFileName(_workspace.Root.TrimEnd('\\')) : "Без проекта";
+        public string ProjectName => HasProject ? Path.GetFileName(_workspace.Root.TrimEnd('\\')) : StringCatalog.Get("NoProject");
         public string ChatTitle
         {
             get
@@ -138,7 +142,7 @@ namespace ArniLite
                     }
                 }
 
-                return "Новый чат";
+                return StringCatalog.Get("NewChat");
             }
         }
 
@@ -162,14 +166,41 @@ namespace ArniLite
         public string FilePreviewTitle => _filePreviewTitle;
         public string FilePreviewBody => _filePreviewBody;
         public bool HasFilePreview => _filePreviewTitle.Length > 0;
+        public bool HasTextPreview => HasFilePreview && _previewKind == PreviewKind.Text;
+        public bool HasMediaPreview => HasFilePreview && _previewKind != PreviewKind.Text;
+        public bool IsAudioPreview => _previewKind == PreviewKind.Audio;
+        public string FilePreviewPath => _filePreviewPath;
 
         private void ClosePreview()
         {
             _filePreviewTitle = string.Empty;
             _filePreviewBody = string.Empty;
+            _filePreviewPath = string.Empty;
+            _previewKind = PreviewKind.Text;
             Notify(nameof(FilePreviewTitle));
             Notify(nameof(FilePreviewBody));
             Notify(nameof(HasFilePreview));
+            NotifyPreview();
+        }
+
+        private void NotifyPreview()
+        {
+            Notify(nameof(HasTextPreview));
+            Notify(nameof(HasMediaPreview));
+            Notify(nameof(IsAudioPreview));
+            Notify(nameof(FilePreviewPath));
+        }
+
+        public void RefreshLocalization()
+        {
+            if (_account != null) _account = _account.Relocalize();
+            NotifyAccount();
+            Notify(nameof(ModelStatus));
+            Notify(nameof(ChatTitle));
+            Notify(nameof(ProjectName));
+            foreach (var model in Models) model.RefreshLocalization();
+            foreach (var row in Items) row.RefreshLocalization();
+            RefreshLists();
         }
 
         public string Draft
@@ -226,10 +257,10 @@ namespace ArniLite
         }
 
         public AccountInfo? Account => _account;
-        public string AccountTitle => !string.IsNullOrEmpty(_account?.Email) ? _account.Email : "Аккаунт Arni";
-        public string AccountError => _accountError;
+        public string AccountTitle => !string.IsNullOrEmpty(_account?.Email) ? _account.Email : StringCatalog.Get("AccountArni");
+        public string AccountError => _accountError.Length == 0 ? string.Empty : StringCatalog.Get(_accountError);
         public bool AccountLoading => _accountLoading;
-        public string ModelStatus => _modelStatus;
+        public string ModelStatus => _modelStatus.Length == 0 ? string.Empty : StringCatalog.Get(_modelStatus);
 
         public void ClearAccount()
         {
@@ -241,7 +272,7 @@ namespace ArniLite
             Models.Clear();
             _selectedCatalog = null;
             _selectedModel = string.Empty;
-            _modelStatus = "Модель появится после входа";
+            _modelStatus = "ModelAfterSignIn";
             Notify(nameof(SelectedCatalog));
             Notify(nameof(SelectedModel));
             Notify(nameof(ModelStatus));
@@ -335,12 +366,12 @@ namespace ArniLite
                 _catalog.Clear();
                 _catalog.AddRange(models);
                 ApplyModelFilter();
-                _modelStatus = Models.Count == 0 ? "Нет доступных моделей" : string.Empty;
+                _modelStatus = Models.Count == 0 ? "NoModels" : string.Empty;
             }
             catch (Exception)
             {
                 if (generation != _accountGeneration) return;
-                _modelStatus = "Не удалось загрузить модели. Нажмите «Обновить».";
+                _modelStatus = "ModelsUnavailable";
             }
             Notify(nameof(ModelStatus));
         }
@@ -360,10 +391,11 @@ namespace ArniLite
             }
             catch (Exception ex)
             {
+                _diagnostics.Write("account_refresh_failed", exception: ex, httpStatus: (ex as ApiCallException)?.StatusCode);
                 if (generation == _accountGeneration)
                     _accountError = ex is ApiCallException api && api.StatusCode == 401
-                        ? "Сессия истекла. Выйдите и войдите снова."
-                        : "Не удалось обновить лимиты. Нажмите «Обновить».";
+                        ? "AuthExpired"
+                        : "AccountRefreshFailed";
             }
             finally
             {
@@ -389,14 +421,14 @@ namespace ArniLite
             var token = _tokens.Load();
             if (string.IsNullOrEmpty(token))
             {
-                return new ModelTurn { Error = "Sign in first.", Done = true, FinishReason = "error" };
+                return new ModelTurn { Error = StringCatalog.Get("SignInFirst"), Done = true, FinishReason = "error" };
             }
 
-            Post(() => SetActivity("Модель думает…", true));
+            Post(() => SetActivity(StringCatalog.Get("Thinking"), true));
             var model = string.IsNullOrEmpty(_selectedModel) ? (_selectedCatalog == null ? string.Empty : _selectedCatalog.Id) : _selectedModel;
             if (string.IsNullOrEmpty(model))
             {
-                return new ModelTurn { Error = "Выберите модель.", Done = true, FinishReason = "error" };
+                return new ModelTurn { Error = StringCatalog.Get("SelectModel"), Done = true, FinishReason = "error" };
             }
 
             return await _api.CompleteAsync(token, model, "arni-lite:" + _chatId, messages, withTools, onDelta, cancellationToken).ConfigureAwait(true);
@@ -407,7 +439,7 @@ namespace ArniLite
             var source = new TaskCompletionSource<bool>();
             Post(() =>
             {
-                SetActivity("Жду подтверждения…", false);
+                SetActivity(StringCatalog.Get("WaitingApproval"), false);
                 PermissionTitle = title;
                 PermissionBody = body;
                 PermissionVisible = true;
@@ -428,9 +460,10 @@ namespace ArniLite
             }
 
             _busy = true;
+            _diagnostics.Write("turn_start", phase: HasProject ? "project" : "general");
             _turnCancellation = new CancellationTokenSource();
             _streamTimer.Start();
-            SetActivity("Модель думает…", true);
+            SetActivity(StringCatalog.Get("Thinking"), true);
             Draft = string.Empty;
             RaiseAll();
             try
@@ -444,6 +477,7 @@ namespace ArniLite
                 BindCurrentChatFolder();
                 var orchestrator = new AgentOrchestrator(new SystemClock(), new AgentLimits { MaxModelRounds = 24 });
                 var result = await orchestrator.RunAsync(_history, true, this, new VisibleTools(this, _tools), AppendLive, _turnCancellation.Token).ConfigureAwait(true);
+                _diagnostics.Write("turn_complete", phase: result.Status);
                 FlushPendingText();
                 PersistNewMessages();
                 if (!string.IsNullOrEmpty(result.Detail))
@@ -457,12 +491,14 @@ namespace ArniLite
             }
             catch (OperationCanceledException)
             {
+                _diagnostics.Write("turn_cancelled");
                 PreservePartialReply();
-                Items.Add(new TranscriptRow("Остановлено", "Запрос остановлен. Полученный текст сохранён.", false));
+                Items.Add(new TranscriptRow("Остановлено", StringCatalog.Get("TurnStopped"), false));
                 RefreshLists();
             }
             catch (Exception ex)
             {
+                _diagnostics.Write("turn_failed", exception: ex, httpStatus: (ex as ApiCallException)?.StatusCode);
                 PreservePartialReply();
                 RejectUnavailableModel(ex.Message);
                 Items.Add(new TranscriptRow("Ошибка", ApiErrorText.ForUser(ex.Message), false));
@@ -491,7 +527,7 @@ namespace ArniLite
             for (var i = Models.Count - 1; i >= 0; i--) if (Models[i].Id == id) Models.RemoveAt(i);
             _selectedCatalog = null;
             _selectedModel = string.Empty;
-            _modelStatus = "Выберите другую модель";
+            _modelStatus = "SelectAnotherModel";
             Notify(nameof(SelectedCatalog));
             Notify(nameof(SelectedModel));
             Notify(nameof(ModelStatus));
@@ -627,7 +663,7 @@ namespace ArniLite
             }
 
             _liveRow.Append(text);
-            SetActivity("Ответ поступает…", true);
+            SetActivity(StringCatalog.Get("Streaming"), true);
             TextGrew?.Invoke();
         }
 
@@ -768,7 +804,7 @@ namespace ArniLite
             if (map.TryGetValue(_chatId, out var folder))
             {
                 try { _workspace.SetRoot(folder); }
-                catch (Exception) { Items.Add(new TranscriptRow("Проект недоступен", "Папка этого чата недоступна: " + folder, false)); }
+                catch (Exception) { Items.Add(new TranscriptRow("Проект недоступен", StringCatalog.Get("ProjectUnavailableDetail", folder), false)); }
             }
 
             ProjectLabel = HasProject ? "Проект: " + _workspace.Root : "Чат без доступа к проекту";
@@ -795,7 +831,7 @@ namespace ArniLite
             }
             var hasCurrent = false;
             foreach (var chat in Chats) if (chat.Id == _chatId) hasCurrent = true;
-            if (!hasCurrent) Chats.Insert(0, new ChatSummary { Id = _chatId, Title = "Новый чат", Updated = DateTime.Now });
+            if (!hasCurrent) Chats.Insert(0, new ChatSummary { Id = _chatId, Title = StringCatalog.Get("NewChat"), Updated = DateTime.Now });
 
             Folders.Clear();
             var folderFile = Path.Combine(_dataDirectory, "folders.txt");
@@ -855,7 +891,7 @@ namespace ArniLite
                 ChatRows.Add(new SideEntry
                 {
                     IsHeader = true,
-                    Title = key.Length == 0 ? "Общие чаты" : Path.GetFileName(key.TrimEnd('\\')),
+                    Title = key.Length == 0 ? StringCatalog.Get("GeneralChats") : Path.GetFileName(key.TrimEnd('\\')),
                     ProjectPath = key,
                     IsExpanded = _search.Length > 0 || !_collapsedProjects.Contains(key),
                 });
@@ -976,19 +1012,31 @@ namespace ArniLite
             try
             {
                 _filePreviewTitle = name;
-                _filePreviewBody = Directory.Exists(full)
-                    ? "Это папка. Откройте проект в проводнике для просмотра вложенных файлов."
-                    : new FileInfo(full).Length > 1024 * 1024
-                        ? "Файл больше 1 МиБ. Откройте его из проводника."
-                        : _workspace.Read(name, 1, 500).Text;
+                _filePreviewPath = string.Empty;
+                _previewKind = PreviewKind.Text;
+                _filePreviewBody = string.Empty;
+                if (Directory.Exists(full)) _filePreviewBody = StringCatalog.Get("FolderPreviewHelp");
+                else
+                {
+                    full = _workspace.ResolveFile(name);
+                    _previewKind = PreviewPolicy.Classify(full);
+                    if (_previewKind != PreviewKind.Text) _filePreviewPath = full;
+                    else _filePreviewBody = new FileInfo(full).Length > 1024 * 1024
+                        ? StringCatalog.Get("FileTooLarge") : _workspace.Read(name, 1, 500).Text;
+                }
+                _diagnostics.Write("preview_open", phase: _previewKind.ToString());
             }
             catch (Exception ex)
             {
-                _filePreviewBody = "Предпросмотр недоступен: " + ex.Message;
+                _previewKind = PreviewKind.Text;
+                _filePreviewPath = string.Empty;
+                _filePreviewBody = StringCatalog.Get("PreviewFailed", ex.Message);
+                _diagnostics.Write("preview_failed", exception: ex);
             }
             Notify(nameof(FilePreviewTitle));
             Notify(nameof(FilePreviewBody));
             Notify(nameof(HasFilePreview));
+            NotifyPreview();
         }
 
         private void RememberFolder(string path)
@@ -1011,7 +1059,7 @@ namespace ArniLite
 
         private void ChooseFolder()
         {
-            using (var dialog = new FolderBrowserDialog { Description = "Папка проекта для режима «Агент»" })
+            using (var dialog = new FolderBrowserDialog { Description = StringCatalog.Get("FolderDialog") })
             {
                 if (dialog.ShowDialog() != DialogResult.OK)
                 {
@@ -1035,7 +1083,7 @@ namespace ArniLite
             PermissionVisible = false;
             if (allowed)
             {
-                SetActivity("Разрешено. Выполняю…", true);
+                SetActivity(StringCatalog.Get("AllowedRunning"), true);
             }
 
             _approval?.TrySetResult(allowed);
@@ -1060,17 +1108,17 @@ namespace ArniLite
 
             if (detail.IndexOf("model-round", StringComparison.Ordinal) >= 0)
             {
-                return "Ход остановлен: лимит шагов модели. Отчёт мог остаться незаконченным.";
+                return StringCatalog.Get("RoundLimit");
             }
 
             if (detail.IndexOf("time limit", StringComparison.Ordinal) >= 0)
             {
-                return "Ход остановлен по времени.";
+                return StringCatalog.Get("TimeLimit");
             }
 
             if (detail.IndexOf("tool-call", StringComparison.Ordinal) >= 0)
             {
-                return "Ход остановлен: слишком много вызовов инструментов.";
+                return StringCatalog.Get("ToolLimit");
             }
 
             return detail;
@@ -1118,7 +1166,7 @@ namespace ArniLite
         {
             FlushPendingText();
             _liveRow = null;
-            SetActivity(result.Status == "completed" ? "Готово, модель читает результат…" : "Инструмент завершился: " + result.Status, true);
+            SetActivity(result.Status == "completed" ? StringCatalog.Get("ToolDone") : StringCatalog.Get("ToolFinished", result.Status), true);
             Items.Add(new TranscriptRow(call.Name, PresentTool(result.ContentJson), true));
             RefreshProjectFiles();
             TextGrew?.Invoke();
@@ -1137,7 +1185,7 @@ namespace ArniLite
 
             public async Task<ToolExecution> ExecuteAsync(string turnId, int round, ToolCallRecord call, CancellationToken cancellationToken)
             {
-                _session.Post(() => _session.SetActivity("Выполняю " + call.Name + "…", true));
+                _session.Post(() => _session.SetActivity(StringCatalog.Get("ToolRunning", call.Name), true));
                 var result = await _inner.ExecuteAsync(turnId, round, call, cancellationToken).ConfigureAwait(false);
                 _session.Post(() => _session.ShowTool(call, result));
                 return result;
@@ -1186,13 +1234,25 @@ namespace ArniLite
         public string Title { get; }
         public string DisplayTitle => Title switch
         {
-            "search_text" => "Поиск по проекту",
-            "read_file" => "Чтение файла",
-            "list_files" => "Просмотр файлов",
-            "run_command" => "Выполнение команды",
-            "propose_file_change" => "Изменение файла",
+            "search_text" => StringCatalog.Get("SearchProject"),
+            "read_file" => StringCatalog.Get("ReadFile"),
+            "list_files" => StringCatalog.Get("ListFiles"),
+            "run_command" => StringCatalog.Get("RunCommand"),
+            "propose_file_change" => StringCatalog.Get("ChangeFile"),
+            "Вы" => StringCatalog.Get("You"),
+            "Результат" => StringCatalog.Get("Result"),
+            "Ошибка" => StringCatalog.Get("Error"),
+            "Состояние" => StringCatalog.Get("Status"),
+            "Остановлено" => StringCatalog.Get("Stopped"),
+            "Проект" => StringCatalog.Get("Project"),
+            "Файл" => StringCatalog.Get("File"),
+            "История не сохранена" => StringCatalog.Get("HistoryNotSaved"),
+            "Проект недоступен" => StringCatalog.Get("ProjectUnavailable"),
+            "Файлы недоступны" => StringCatalog.Get("FilesUnavailable"),
+            "Нет доступа к файлам" => StringCatalog.Get("NoFileAccess"),
             _ => Title,
         };
+        public void RefreshLocalization() => Notify(nameof(DisplayTitle));
         public bool IsCode { get; }
         public bool IsTool => IsCode && Title != "Arni" && Title != "Вы";
         public bool IsCodeBlock => IsCode && !IsTool;

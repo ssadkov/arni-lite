@@ -1,0 +1,466 @@
+<?xml version='1.0' encoding='utf-8'?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms</value>
+  </resheader>
+  <data name="Copy" xml:space="preserve">
+    <value>Копировать</value>
+  </data>
+  <data name="NewProjectChat" xml:space="preserve">
+    <value>Новый чат в проекте</value>
+  </data>
+  <data name="NewChat" xml:space="preserve">
+    <value>Новый чат</value>
+  </data>
+  <data name="NewChatTip" xml:space="preserve">
+    <value>Новый общий чат · Ctrl+N</value>
+  </data>
+  <data name="SearchChats" xml:space="preserve">
+    <value>Поиск чатов</value>
+  </data>
+  <data name="AddProjectEllipsis" xml:space="preserve">
+    <value>Добавить проект…</value>
+  </data>
+  <data name="Refresh" xml:space="preserve">
+    <value>Обновить</value>
+  </data>
+  <data name="Account" xml:space="preserve">
+    <value>АККАУНТ</value>
+  </data>
+  <data name="AccountArni" xml:space="preserve">
+    <value>Аккаунт Arni</value>
+  </data>
+  <data name="Refreshing" xml:space="preserve">
+    <value>Обновляем данные…</value>
+  </data>
+  <data name="LocalHistory" xml:space="preserve">
+    <value>Ваши чаты — на этом компьютере</value>
+  </data>
+  <data name="SignIn" xml:space="preserve">
+    <value>Войти в Arni</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
+    <value>Настройки</value>
+  </data>
+  <data name="FreeModelsOnly" xml:space="preserve">
+    <value>Только бесплатные модели</value>
+  </data>
+  <data name="SessionTrust" xml:space="preserve">
+    <value>Действия без подтверждения в сеансе</value>
+  </data>
+  <data name="OpenProjectExplorer" xml:space="preserve">
+    <value>Открыть проект в проводнике</value>
+  </data>
+  <data name="SignOut" xml:space="preserve">
+    <value>Выйти из аккаунта</value>
+  </data>
+  <data name="CloseApp" xml:space="preserve">
+    <value>Закрыть Arni Lite</value>
+  </data>
+  <data name="CopyCode" xml:space="preserve">
+    <value>Копировать код</value>
+  </data>
+  <data name="Projects" xml:space="preserve">
+    <value>Проекты</value>
+  </data>
+  <data name="ProjectsTip" xml:space="preserve">
+    <value>Показать или скрыть проекты · Ctrl+B</value>
+  </data>
+  <data name="Files" xml:space="preserve">
+    <value>Файлы</value>
+  </data>
+  <data name="FilesTip" xml:space="preserve">
+    <value>Файлы проекта · Ctrl+Shift+E</value>
+  </data>
+  <data name="ProjectsAndChats" xml:space="preserve">
+    <value>Проекты и чаты</value>
+  </data>
+  <data name="Conversation" xml:space="preserve">
+    <value>Переписка</value>
+  </data>
+  <data name="CopyMessage" xml:space="preserve">
+    <value>Копировать сообщение</value>
+  </data>
+  <data name="ToolDetails" xml:space="preserve">
+    <value>Подробности действия</value>
+  </data>
+  <data name="EmptyTitle" xml:space="preserve">
+    <value>С чего начнём?</value>
+  </data>
+  <data name="EmptyIntro" xml:space="preserve">
+    <value>Задайте вопрос или выберите проект,
+чтобы работать с файлами вместе с Arni.</value>
+  </data>
+  <data name="OpenProject" xml:space="preserve">
+    <value>Открыть проект</value>
+  </data>
+  <data name="SignInHint" xml:space="preserve">
+    <value>Для новых запросов войдите в аккаунт</value>
+  </data>
+  <data name="LatestReply" xml:space="preserve">
+    <value>К последнему ответу</value>
+  </data>
+  <data name="FinishSignIn" xml:space="preserve">
+    <value>Завершите вход в браузере</value>
+  </data>
+  <data name="CancelSignIn" xml:space="preserve">
+    <value>Остановить вход</value>
+  </data>
+  <data name="CopyCodeAction" xml:space="preserve">
+    <value>Скопировать код</value>
+  </data>
+  <data name="CopySignInLink" xml:space="preserve">
+    <value>Скопировать ссылку для входа</value>
+  </data>
+  <data name="Allow" xml:space="preserve">
+    <value>Разрешить</value>
+  </data>
+  <data name="Deny" xml:space="preserve">
+    <value>Отклонить</value>
+  </data>
+  <data name="MessageArni" xml:space="preserve">
+    <value>Сообщение Arni</value>
+  </data>
+  <data name="DraftHint" xml:space="preserve">
+    <value>Напишите задачу…</value>
+  </data>
+  <data name="Send" xml:space="preserve">
+    <value>Отправить</value>
+  </data>
+  <data name="StopAction" xml:space="preserve">
+    <value>Остановить</value>
+  </data>
+  <data name="Agent" xml:space="preserve">
+    <value>Агент</value>
+  </data>
+  <data name="AgentTip" xml:space="preserve">
+    <value>Arni отвечает на вопросы и использует инструменты, когда это нужно</value>
+  </data>
+  <data name="ModelTip" xml:space="preserve">
+    <value>Модель · фильтр бесплатных моделей в настройках</value>
+  </data>
+  <data name="Model" xml:space="preserve">
+    <value>Модель</value>
+  </data>
+  <data name="EnterHint" xml:space="preserve">
+    <value>Enter — отправить · Shift+Enter — новая строка</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Закрыть</value>
+  </data>
+  <data name="ProjectFiles" xml:space="preserve">
+    <value>Файлы проекта</value>
+  </data>
+  <data name="LocalPreviewHint" xml:space="preserve">
+    <value>Просмотр не отправляет файлы модели</value>
+  </data>
+  <data name="OpenExplorer" xml:space="preserve">
+    <value>Открыть в проводнике</value>
+  </data>
+  <data name="PreviewTextLimit" xml:space="preserve">
+    <value>Предпросмотр: до 500 строк · до 1 МиБ</value>
+  </data>
+  <data name="NoProjectTitle" xml:space="preserve">
+    <value>У этого чата нет проекта</value>
+  </data>
+  <data name="NoProjectHelp" xml:space="preserve">
+    <value>Добавьте папку, чтобы открыть новый чат с доступом к её файлам.</value>
+  </data>
+  <data name="AddProject" xml:space="preserve">
+    <value>Добавить проект</value>
+  </data>
+  <data name="BackToFiles" xml:space="preserve">
+    <value>К списку файлов</value>
+  </data>
+  <data name="ResizeFiles" xml:space="preserve">
+    <value>Изменить ширину панели файлов</value>
+  </data>
+  <data name="NoProject" xml:space="preserve">
+    <value>Без проекта</value>
+  </data>
+  <data name="GeneralChats" xml:space="preserve">
+    <value>Общие чаты</value>
+  </data>
+  <data name="Project" xml:space="preserve">
+    <value>Проект</value>
+  </data>
+  <data name="File" xml:space="preserve">
+    <value>Файл</value>
+  </data>
+  <data name="You" xml:space="preserve">
+    <value>Вы</value>
+  </data>
+  <data name="Result" xml:space="preserve">
+    <value>Результат</value>
+  </data>
+  <data name="Status" xml:space="preserve">
+    <value>Состояние</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>Ошибка</value>
+  </data>
+  <data name="Stopped" xml:space="preserve">
+    <value>Остановлено</value>
+  </data>
+  <data name="SearchProject" xml:space="preserve">
+    <value>Поиск по проекту</value>
+  </data>
+  <data name="ReadFile" xml:space="preserve">
+    <value>Чтение файла</value>
+  </data>
+  <data name="ListFiles" xml:space="preserve">
+    <value>Просмотр файлов</value>
+  </data>
+  <data name="RunCommand" xml:space="preserve">
+    <value>Выполнение команды</value>
+  </data>
+  <data name="ChangeFile" xml:space="preserve">
+    <value>Изменение файла</value>
+  </data>
+  <data name="Thinking" xml:space="preserve">
+    <value>Модель думает…</value>
+  </data>
+  <data name="Streaming" xml:space="preserve">
+    <value>Ответ поступает…</value>
+  </data>
+  <data name="WaitingApproval" xml:space="preserve">
+    <value>Жду подтверждения…</value>
+  </data>
+  <data name="AllowedRunning" xml:space="preserve">
+    <value>Разрешено. Выполняю…</value>
+  </data>
+  <data name="TurnStopped" xml:space="preserve">
+    <value>Запрос остановлен. Полученный текст сохранён.</value>
+  </data>
+  <data name="HistoryNotSaved" xml:space="preserve">
+    <value>История не сохранена</value>
+  </data>
+  <data name="ProjectUnavailable" xml:space="preserve">
+    <value>Проект недоступен</value>
+  </data>
+  <data name="ProjectUnavailableDetail" xml:space="preserve">
+    <value>Папка этого чата недоступна: {0}</value>
+  </data>
+  <data name="FilesUnavailable" xml:space="preserve">
+    <value>Файлы недоступны</value>
+  </data>
+  <data name="NoFileAccess" xml:space="preserve">
+    <value>Нет доступа к файлам</value>
+  </data>
+  <data name="FolderPreviewHelp" xml:space="preserve">
+    <value>Это папка. Откройте проект в проводнике для просмотра вложенных файлов.</value>
+  </data>
+  <data name="FileTooLarge" xml:space="preserve">
+    <value>Файл больше 1 МиБ. Откройте его из проводника.</value>
+  </data>
+  <data name="PreviewFailed" xml:space="preserve">
+    <value>Предпросмотр недоступен: {0}</value>
+  </data>
+  <data name="FolderDialog" xml:space="preserve">
+    <value>Папка проекта для режима «Агент»</value>
+  </data>
+  <data name="ToolRunning" xml:space="preserve">
+    <value>Выполняю {0}…</value>
+  </data>
+  <data name="ToolDone" xml:space="preserve">
+    <value>Готово, модель читает результат…</value>
+  </data>
+  <data name="ToolFinished" xml:space="preserve">
+    <value>Инструмент завершился: {0}</value>
+  </data>
+  <data name="RoundLimit" xml:space="preserve">
+    <value>Ход остановлен: лимит шагов модели. Отчёт мог остаться незаконченным.</value>
+  </data>
+  <data name="TimeLimit" xml:space="preserve">
+    <value>Ход остановлен по времени.</value>
+  </data>
+  <data name="ToolLimit" xml:space="preserve">
+    <value>Ход остановлен: слишком много вызовов инструментов.</value>
+  </data>
+  <data name="InvalidAccount" xml:space="preserve">
+    <value>Сервер вернул некорректные данные аккаунта.</value>
+  </data>
+  <data name="BudgetAccess" xml:space="preserve">
+    <value>Доступ по бюджету</value>
+  </data>
+  <data name="FreeAccount" xml:space="preserve">
+    <value>Бесплатный аккаунт</value>
+  </data>
+  <data name="PlanFormat" xml:space="preserve">
+    <value>Тариф: {0}</value>
+  </data>
+  <data name="NotSpecified" xml:space="preserve">
+    <value>не указан</value>
+  </data>
+  <data name="BalanceFormat" xml:space="preserve">
+    <value>Баланс: {0}</value>
+  </data>
+  <data name="PaidExpired" xml:space="preserve">
+    <value>Срок платного доступа истёк</value>
+  </data>
+  <data name="PaidPaused" xml:space="preserve">
+    <value>Платный доступ приостановлен</value>
+  </data>
+  <data name="PaidUntil" xml:space="preserve">
+    <value>Платный доступ до {0}</value>
+  </data>
+  <data name="FreeStepsFormat" xml:space="preserve">
+    <value>Бесплатные шаги: {0} из {1}</value>
+  </data>
+  <data name="FreeResetFormat" xml:space="preserve">
+    <value>Бесплатные шаги обновятся {0}</value>
+  </data>
+  <data name="NoLimits" xml:space="preserve">
+    <value>Данные о лимитах не предоставлены</value>
+  </data>
+  <data name="FiveHours" xml:space="preserve">
+    <value>5 часов</value>
+  </data>
+  <data name="SevenDays" xml:space="preserve">
+    <value>7 дней</value>
+  </data>
+  <data name="WindowRemaining" xml:space="preserve">
+    <value>{0}: осталось {1}</value>
+  </data>
+  <data name="RequestsRemaining" xml:space="preserve">
+    <value>{0} из {1} запросов</value>
+  </data>
+  <data name="AuthExpired" xml:space="preserve">
+    <value>Сессия истекла. Выйдите и войдите снова.</value>
+  </data>
+  <data name="AccountRefreshFailed" xml:space="preserve">
+    <value>Не удалось обновить лимиты. Нажмите «Обновить».</value>
+  </data>
+  <data name="ModelsUnavailable" xml:space="preserve">
+    <value>Не удалось загрузить модели. Нажмите «Обновить».</value>
+  </data>
+  <data name="NoModels" xml:space="preserve">
+    <value>Нет доступных моделей</value>
+  </data>
+  <data name="SelectModel" xml:space="preserve">
+    <value>Выберите модель.</value>
+  </data>
+  <data name="SelectAnotherModel" xml:space="preserve">
+    <value>Выберите другую модель</value>
+  </data>
+  <data name="ModelAfterSignIn" xml:space="preserve">
+    <value>Модель появится после входа</value>
+  </data>
+  <data name="ModelRefused" xml:space="preserve">
+    <value>Провайдер отклонил эту модель для Arni Lite. Выберите другую модель.</value>
+  </data>
+  <data name="SignInFirst" xml:space="preserve">
+    <value>Сначала войдите.</value>
+  </data>
+  <data name="ServerNoText" xml:space="preserve">
+    <value>Сервер ответил {0} без текста.</value>
+  </data>
+  <data name="ServerError" xml:space="preserve">
+    <value>Сервер ответил {0}: {1}</value>
+  </data>
+  <data name="AlreadyRunning" xml:space="preserve">
+    <value>Arni Lite уже запущен.</value>
+  </data>
+  <data name="General" xml:space="preserve">
+    <value>Общие</value>
+  </data>
+  <data name="Language" xml:space="preserve">
+    <value>Язык интерфейса</value>
+  </data>
+  <data name="Preview" xml:space="preserve">
+    <value>Предпросмотр</value>
+  </data>
+  <data name="WrapText" xml:space="preserve">
+    <value>Перенос строк</value>
+  </data>
+  <data name="About" xml:space="preserve">
+    <value>О программе</value>
+  </data>
+  <data name="Version" xml:space="preserve">
+    <value>Версия</value>
+  </data>
+  <data name="Diagnostics" xml:space="preserve">
+    <value>Логи</value>
+  </data>
+  <data name="ExportLogs" xml:space="preserve">
+    <value>Сохранить логи…</value>
+  </data>
+  <data name="RefreshLogs" xml:space="preserve">
+    <value>Обновить журнал</value>
+  </data>
+  <data name="DiagnosticsPrivacy" xml:space="preserve">
+    <value>В архив входят версия, сведения о Windows и технические события. История чатов, содержимое файлов и токены не включаются.</value>
+  </data>
+  <data name="LogsEmpty" xml:space="preserve">
+    <value>Журнал пока пуст.</value>
+  </data>
+  <data name="LogsSaved" xml:space="preserve">
+    <value>Логи сохранены. Этот ZIP можно отправить в поддержку.</value>
+  </data>
+  <data name="LogsFailed" xml:space="preserve">
+    <value>Не удалось сохранить логи. Выберите другую папку.</value>
+  </data>
+  <data name="PreferencesFailed" xml:space="preserve">
+    <value>Не удалось сохранить настройки.</value>
+  </data>
+  <data name="Platform" xml:space="preserve">
+    <value>Платформа</value>
+  </data>
+  <data name="Audio" xml:space="preserve">
+    <value>Аудио</value>
+  </data>
+  <data name="Video" xml:space="preserve">
+    <value>Видео</value>
+  </data>
+  <data name="Play" xml:space="preserve">
+    <value>Воспроизвести</value>
+  </data>
+  <data name="Pause" xml:space="preserve">
+    <value>Пауза</value>
+  </data>
+  <data name="Stop" xml:space="preserve">
+    <value>Стоп</value>
+  </data>
+  <data name="Volume" xml:space="preserve">
+    <value>Громкость</value>
+  </data>
+  <data name="Seek" xml:space="preserve">
+    <value>Позиция воспроизведения</value>
+  </data>
+  <data name="OpenExternal" xml:space="preserve">
+    <value>Открыть во внешнем плеере</value>
+  </data>
+  <data name="MediaReady" xml:space="preserve">
+    <value>Нажмите «Воспроизвести» для просмотра.</value>
+  </data>
+  <data name="MediaOpening" xml:space="preserve">
+    <value>Открываю медиафайл…</value>
+  </data>
+  <data name="MediaFailed" xml:space="preserve">
+    <value>Windows не смогла воспроизвести этот формат. Можно открыть файл во внешнем плеере.</value>
+  </data>
+  <data name="MediaMissing" xml:space="preserve">
+    <value>Медиафайл недоступен.</value>
+  </data>
+  <data name="MediaLocalHint" xml:space="preserve">
+    <value>Медиа воспроизводится локально и не отправляется модели.</value>
+  </data>
+  <data name="PriceFree" xml:space="preserve">
+    <value>бесплатно</value>
+  </data>
+  <data name="PriceMissing" xml:space="preserve">
+    <value>цена не указана</value>
+  </data>
+  <data name="PricePerMillion" xml:space="preserve">
+    <value>{0} / {1} за 1M</value>
+  </data>
+</root>

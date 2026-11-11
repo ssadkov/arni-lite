@@ -183,7 +183,7 @@ namespace ArniLite.Storage
             foreach (var file in Directory.GetFiles(_directory, "*.jsonl"))
             {
                 var id = Path.GetFileNameWithoutExtension(file);
-                var title = "Новый диалог";
+                var title = StringCatalog.Get("NewChat");
                 foreach (var message in Load(id))
                 {
                     if (message.Role == "user" && !string.IsNullOrWhiteSpace(message.Content))

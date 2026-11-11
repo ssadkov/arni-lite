@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading;
 using System.Windows;
 using ArniLite.Windows;
+using ArniLite.Core;
+using ArniLite.Storage;
 
 namespace ArniLite
 {
@@ -14,6 +16,9 @@ namespace ArniLite
         protected override void OnStartup(StartupEventArgs e)
         {
             DispatcherUnhandledException += OnDispatcherUnhandledException;
+            var preferences = new PreferencesStore();
+            StringCatalog.SetLanguage(preferences.Value.Language);
+            DiagnosticLog.Current.Write("app_start", phase: AppVersion.Display + "-" + AppVersion.Platform);
             var os = new OsProbe().Detect();
             TlsBootstrap.Configure(os);
             base.OnStartup(e);
@@ -28,17 +33,18 @@ namespace ArniLite
             _instance = new Mutex(true, @"Local\ArniLite.SingleInstance", out var created);
             if (!created)
             {
-                MessageBox.Show("Arni Lite уже запущен.");
+                MessageBox.Show(StringCatalog.Get("AlreadyRunning"));
                 Shutdown(0);
                 return;
             }
 
-            var window = new MainWindow(os);
+            var window = new MainWindow(os, preferences);
             window.Show();
         }
 
         private static void OnDispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs args)
         {
+            DiagnosticLog.Current.Write("unhandled_exception", exception: args.Exception);
             try
             {
                 var directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Arnion", "ArniLite");

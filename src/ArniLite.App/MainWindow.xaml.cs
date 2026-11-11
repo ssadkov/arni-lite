@@ -5,6 +5,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using ArniLite.Core;
+using ArniLite.Storage;
 
 namespace ArniLite
 {
@@ -17,7 +18,7 @@ namespace ArniLite
         private bool _inspectorVisible;
         private readonly MainViewModel _model;
 
-        public MainWindow(OsFacts os)
+        public MainWindow(OsFacts os, PreferencesStore? preferences = null)
         {
             InitializeComponent();
             Width = System.Math.Min(Width, SystemParameters.WorkArea.Width);
@@ -39,17 +40,31 @@ namespace ArniLite
             catch (System.Exception)
             {
             }
-            _model = new MainViewModel(os);
+            _model = new MainViewModel(os, preferences);
             DataContext = _model;
             _model.Chat.Items.CollectionChanged += ItemsOnCollectionChanged;
             _model.Chat.TextGrew += OnTextGrew;
+            StringCatalog.LanguageChanged += OnLanguageChanged;
             Loaded += (_, _) => { ScrollTranscriptToEnd(); Draft.Focus(); };
             Closed += (_, _) =>
             {
                 _model.Chat.Stop();
                 _model.Chat.Items.CollectionChanged -= ItemsOnCollectionChanged;
                 _model.Chat.TextGrew -= OnTextGrew;
+                StringCatalog.LanguageChanged -= OnLanguageChanged;
+                PreviewPlayer.Release();
             };
+        }
+
+        private void OnLanguageChanged(object? sender, System.EventArgs e)
+        {
+            _model.Chat.RefreshLocalization();
+            PreviewPlayer.RefreshLocalization();
+        }
+
+        private void Settings_OnClick(object sender, RoutedEventArgs e)
+        {
+            new SettingsWindow(_model) { Owner = this }.ShowDialog();
         }
 
         private void OnTextGrew()
@@ -133,6 +148,7 @@ namespace ArniLite
             Navigation.Visibility = showNavigation ? Visibility.Visible : Visibility.Collapsed;
             InspectorColumn.Width = new GridLength(_inspectorVisible ? (ActualWidth >= 1120 ? 340 : 300) : 0);
             Inspector.Visibility = _inspectorVisible ? Visibility.Visible : Visibility.Collapsed;
+            if (!_inspectorVisible) PreviewPlayer.Release();
             PanelSplitter.Visibility = Inspector.Visibility;
             FilesButton.Background = _inspectorVisible ? new SolidColorBrush(Color.FromRgb(0xE7, 0xED, 0xE0)) : Brushes.Transparent;
         }

@@ -1,7 +1,7 @@
 ; Per-user Setup for the net48 Arni Lite build.
-; Keep AppVersion in step with src/ArniLite.App/ArniLite.App.csproj.
+; Keep AppVersion in step with the numeric part of the application version.
 
-#define AppVersion "0.1.1"
+#define AppVersion "0.1.2"
 #ifndef Arch
 #define Arch "x64"
 #endif
@@ -66,6 +66,8 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "{#BuildDir}\*.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#BuildDir}\*.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#BuildDir}\*.config"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#BuildDir}\en\*.resources.dll"; DestDir: "{app}\en"; Flags: ignoreversion skipifsourcedoesntexist
+Source: "{#BuildDir}\kk\*.resources.dll"; DestDir: "{app}\kk"; Flags: ignoreversion skipifsourcedoesntexist
 
 [Icons]
 Name: "{autoprograms}\Arni Lite"; Filename: "{app}\ArniLite.exe"
