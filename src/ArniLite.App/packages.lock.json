@@ -48,11 +48,13 @@
       "arnilite.windows": {
         "type": "Project",
         "dependencies": {
+          "ArniLite.Api": "[1.0.0, )",
           "ArniLite.Core": "[1.0.0, )",
           "ArniLite.Storage": "[1.0.0, )"
         }
       }
     },
+    ".NETFramework,Version=v4.8/win7-x64": {},
     ".NETFramework,Version=v4.8/win7-x86": {}
   }
 }

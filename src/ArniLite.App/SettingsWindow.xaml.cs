@@ -11,13 +11,16 @@ namespace ArniLite
     {
         private string _exportStatusKey = string.Empty;
         private string _logStatusKey = string.Empty;
-        public SettingsWindow(MainViewModel model)
+        public SettingsWindow(MainViewModel model, bool updates = false, bool speech = false)
         {
             InitializeComponent();
             DataContext = model;
             Width = Math.Min(Width, SystemParameters.WorkArea.Width);
             Height = Math.Min(Height, SystemParameters.WorkArea.Height);
             RefreshLog();
+            model.Dictation.RefreshDevices();
+            if (updates) SettingsTabs.SelectedIndex = 2;
+            else if (speech) SettingsTabs.SelectedIndex = 1;
             StringCatalog.LanguageChanged += LanguageChanged;
             Closed += (_, _) => StringCatalog.LanguageChanged -= LanguageChanged;
         }
@@ -30,6 +33,7 @@ namespace ArniLite
         }
 
         private void Close_OnClick(object sender, RoutedEventArgs e) => Close();
+        private void Releases_OnClick(object sender, RoutedEventArgs e) => ArniLite.Windows.ExternalBrowser.Open("https://github.com/ssadkov/arni-lite/releases");
         private void Refresh_OnClick(object sender, RoutedEventArgs e) => RefreshLog();
         private void RefreshLog()
         {

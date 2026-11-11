@@ -8,9 +8,14 @@
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net48" Version="1.0.3" PrivateAssets="all" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Security" />
+    <Reference Include="System.IO.Compression" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Licenses\*.txt" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ArniLite.Core\ArniLite.Core.csproj" />
     <ProjectReference Include="..\ArniLite.Storage\ArniLite.Storage.csproj" />
+    <ProjectReference Include="..\ArniLite.Api\ArniLite.Api.csproj" />
   </ItemGroup>
 </Project>

@@ -1,6 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:local="clr-namespace:ArniLite" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <local:BoolVisibilityConverter x:Key="BoolVis" />
+    <local:InvertBoolConverter x:Key="InvertBool" />
     <local:CodeFontConverter x:Key="CodeFont" />
     <local:FolderNameConverter x:Key="FolderName" />
     <Style TargetType="Button">

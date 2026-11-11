@@ -463,4 +463,53 @@
   <data name="PricePerMillion" xml:space="preserve">
     <value>{0} / {1} · 1M токенге</value>
   </data>
+  <data name="Cancel" xml:space="preserve"><value>Бас тарту</value></data>
+  <data name="SecondsShort" xml:space="preserve"><value>с</value></data>
+  <data name="OperationCancelled" xml:space="preserve"><value>Әрекет тоқтатылды.</value></data>
+  <data name="Dictation" xml:space="preserve"><value>Диктант</value></data>
+  <data name="SpeechDescription" xml:space="preserve"><value>Жергілікті диктант: Whisper base пен қозғалтқышты қалауыңыз бойынша жүктеңіз. Интернет тек жүктеу үшін қажет.</value></data>
+  <data name="SpeechAutomaticLanguage" xml:space="preserve"><value>Автоматты анықтау</value></data>
+  <data name="SpeechDefaultMicrophone" xml:space="preserve"><value>Жүйенің әдепкі микрофоны</value></data>
+  <data name="SpeechLanguage" xml:space="preserve"><value>Диктант тілі</value></data>
+  <data name="SpeechMicrophone" xml:space="preserve"><value>Микрофон</value></data>
+  <data name="SpeechRefreshDevices" xml:space="preserve"><value>Микрофондар тізімін жаңарту</value></data>
+  <data name="SpeechInstall" xml:space="preserve"><value>Whisper base жүктеу · шамамен 150 МБ</value></data>
+  <data name="SpeechRemove" xml:space="preserve"><value>Модель мен қозғалтқышты жою</value></data>
+  <data name="SpeechInstalled" xml:space="preserve"><value>Whisper base орнатылған · тану осы компьютерде орындалады</value></data>
+  <data name="SpeechNotInstalled" xml:space="preserve"><value>Модель орнатылмаған.</value></data>
+  <data name="SpeechDownloading" xml:space="preserve"><value>Қозғалтқыш пен модель жүктеліп, тексерілуде. Бірнеше минут кетуі мүмкін.</value></data>
+  <data name="SpeechReady" xml:space="preserve"><value>Дайын. Хабарлама өрісінің жанындағы «Диктант» түймесін басыңыз.</value></data>
+  <data name="SpeechStart" xml:space="preserve"><value>Диктант</value></data>
+  <data name="SpeechFinish" xml:space="preserve"><value>Жазуды аяқтау</value></data>
+  <data name="SpeechTip" xml:space="preserve"><value>Сөйлеуді жазып, танылған мәтінді хабарлама жобасына енгізу</value></data>
+  <data name="SpeechInstallFirst" xml:space="preserve"><value>Whisper base моделін Баптаулар → Диктант бөлімінде орнатыңыз.</value></data>
+  <data name="SpeechRecording" xml:space="preserve"><value>Жазылуда. Сөйлеуді тану үшін «Жазуды аяқтау» түймесін басыңыз. Ең көбі 2 минут.</value></data>
+  <data name="SpeechRecognizing" xml:space="preserve"><value>Сөйлеу осы компьютерде танылуда…</value></data>
+  <data name="SpeechInserted" xml:space="preserve"><value>Мәтін жобаға қосылды. Жібермес бұрын тексеріңіз.</value></data>
+  <data name="SpeechNoWords" xml:space="preserve"><value>Сөйлеу анықталмады. Микрофонға жақынырақ сөйлеп көріңіз.</value></data>
+  <data name="SpeechMicrophoneFailed" xml:space="preserve"><value>Микрофон ашылмады. Құрылғыны және жазуға берілген рұқсатты тексеріңіз.</value></data>
+  <data name="SpeechDownloadFailed" xml:space="preserve"><value>Whisper жүктелмеді немесе тексерілмеді. Қосылымды және бос орынды тексеріп, қайталаңыз.</value></data>
+  <data name="SpeechRemoveFailed" xml:space="preserve"><value>Whisper жойылмады. Басқа тану үдерістерін жауып, қайталаңыз.</value></data>
+  <data name="SpeechRecognitionFailed" xml:space="preserve"><value>Тану аяқталмады. Whisper орнатылуын тексеріңіз; ескі Windows немесе процессорға басқа жинақ қажет болуы мүмкін. Техникалық журналды қараңыз.</value></data>
+  <data name="SpeechPrivacy" xml:space="preserve"><value>Жазба жергілікті өңделіп, танудан кейін жойылады. «Жіберу» түймесін басқанда чатқа тек мәтін жіберіледі. Ескі процессорда тану баяу болуы мүмкін.</value></data>
+  <data name="Updates" xml:space="preserve"><value>Жаңартулар</value></data>
+  <data name="UpdateDescription" xml:space="preserve"><value>GitHub-тағы үйлесімді Arni Lite шығарылымдарын тексеру. Орнату тек сіз таңдағанда басталады.</value></data>
+  <data name="UpdateAutomatic" xml:space="preserve"><value>Іске қосылғанда тексеру, тәулігіне бір реттен жиі емес</value></data>
+  <data name="UpdatePreview" xml:space="preserve"><value>Алдын ала шығарылымдарды ұсыну</value></data>
+  <data name="UpdateLastChecked" xml:space="preserve"><value>Соңғы тексеру:</value></data>
+  <data name="UpdateNeverChecked" xml:space="preserve"><value>Әлі тексерілген жоқ</value></data>
+  <data name="UpdateCheck" xml:space="preserve"><value>Жаңартуларды тексеру</value></data>
+  <data name="UpdateChecking" xml:space="preserve"><value>Шығарылымдар тексерілуде…</value></data>
+  <data name="UpdateCurrent" xml:space="preserve"><value>Жаңарақ үйлесімді қолтаңбалы шығарылым табылмады.</value></data>
+  <data name="UpdateAvailable" xml:space="preserve"><value>{0} нұсқасы қолжетімді</value></data>
+  <data name="UpdateCheckFailed" xml:space="preserve"><value>Жаңартулар тексерілмеді. Қосылымды тексеріңіз немесе GitHub шығарылымдарын ашыңыз. Қолданба жұмысын жалғастырады.</value></data>
+  <data name="UpdateDownloading" xml:space="preserve"><value>Орнатқыш жүктеліп, тексерілуде…</value></data>
+  <data name="UpdateDownload" xml:space="preserve"><value>Жаңартуды жүктеу</value></data>
+  <data name="UpdateInstall" xml:space="preserve"><value>Орнату және қайта іске қосу</value></data>
+  <data name="UpdateReleaseNotes" xml:space="preserve"><value>Не жаңалық</value></data>
+  <data name="UpdateReady" xml:space="preserve"><value>Жаңарту тексерілді. Оны орнатып, қолданбаны қайта іске қосуға болады.</value></data>
+  <data name="UpdateDownloadFailed" xml:space="preserve"><value>Жүктеу немесе тексеру орындалмады. Орнату басталған жоқ; кейінірек қайталаңыз.</value></data>
+  <data name="UpdateInstallFailed" xml:space="preserve"><value>Орнату басталмады немесе жоба сақталмады. Қолданба ашық қалады.</value></data>
+  <data name="UpdateIdleOnly" xml:space="preserve"><value>Орнату алдында агент жұмысын және диктантты аяқтаңыз. Қайта іске қосу алдында жоба сақталады.</value></data>
+  <data name="UpdateGitHub" xml:space="preserve"><value>GitHub-тағы барлық шығарылымдар</value></data>
 </root>

@@ -58,8 +58,8 @@
       },
       "Microsoft.TestPlatform.ObjectModel": {
         "type": "Transitive",
-        "resolved": "17.11.1",
-        "contentHash": "E2jZqAU6JeWEVsyOEOrSW1o1bpHLgb25ypvKNB/moBXPVsFYBPd/Jwi7OrYahG50J83LfHzezYI+GaEkpAotiA==",
+        "resolved": "17.10.0",
+        "contentHash": "KkwhjQevuDj0aBRoPLY6OLAhGqbPUEBuKLbaCs0kUVw29qiOYncdORd4mLVJbn9vGZ7/iFGQ/+AoJl0Tu5Umdg==",
         "dependencies": {
           "System.Reflection.Metadata": "1.6.0"
         }
@@ -152,6 +152,7 @@
       "arnilite.windows": {
         "type": "Project",
         "dependencies": {
+          "ArniLite.Api": "[1.0.0, )",
           "ArniLite.Core": "[1.0.0, )",
           "ArniLite.Storage": "[1.0.0, )"
         }

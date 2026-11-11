@@ -45,10 +45,11 @@ namespace ArniLite
             _model.Chat.Items.CollectionChanged += ItemsOnCollectionChanged;
             _model.Chat.TextGrew += OnTextGrew;
             StringCatalog.LanguageChanged += OnLanguageChanged;
-            Loaded += (_, _) => { ScrollTranscriptToEnd(); Draft.Focus(); };
+            Loaded += (_, _) => { ScrollTranscriptToEnd(); Draft.Focus(); _ = _model.Updates.CheckAutomaticallyAsync(); };
             Closed += (_, _) =>
             {
                 _model.Chat.Stop();
+                _model.DisposeFeatures();
                 _model.Chat.Items.CollectionChanged -= ItemsOnCollectionChanged;
                 _model.Chat.TextGrew -= OnTextGrew;
                 StringCatalog.LanguageChanged -= OnLanguageChanged;
@@ -65,6 +66,16 @@ namespace ArniLite
         private void Settings_OnClick(object sender, RoutedEventArgs e)
         {
             new SettingsWindow(_model) { Owner = this }.ShowDialog();
+        }
+        private void Updates_OnClick(object sender, RoutedEventArgs e)
+        {
+            new SettingsWindow(_model, true) { Owner = this }.ShowDialog();
+        }
+        private void Dictate_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (!_model.Dictation.IsInstalled && !_model.Dictation.IsActive)
+                new SettingsWindow(_model, speech: true) { Owner = this }.ShowDialog();
+            else if (_model.Dictation.ToggleCommand.CanExecute(null)) _model.Dictation.ToggleCommand.Execute(null);
         }
 
         private void OnTextGrew()
