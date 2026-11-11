@@ -28,6 +28,8 @@ See [the workspace interface](docs/WORKSPACE_UI.md) for navigation, keyboard sho
 
 The `0.1.2-preview` development version adds [language switching, support logs and native media previews](docs/LANGUAGES_MEDIA.md). The published `0.1.1` installers remain the previous stable snapshot.
 
+It also includes [optional local Whisper base dictation and signed update checks](docs/DICTATION_UPDATES.md). The speech model/engine download only when requested; installation of an application update requires the user's Install and restart button. Future macOS work on Avalonia is tracked in [tasks](docs/TASKS.md).
+
 ## Boundaries
 
 `ArniLite.Core`, `ArniLite.Api`, and `ArniLite.Storage` do not reference WPF, the registry, DPAPI, or P/Invoke. Process launch, DPAPI, and OS detection are in `ArniLite.Windows`.

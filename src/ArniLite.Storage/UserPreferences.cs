@@ -9,6 +9,11 @@ namespace ArniLite.Storage
     {
         public string Language { get; set; } = "ru";
         public bool WrapText { get; set; } = true;
+        public bool CheckUpdatesAutomatically { get; set; } = true;
+        public bool PreviewUpdates { get; set; }
+        public DateTime? LastUpdateCheckUtc { get; set; }
+        public string DictationLanguage { get; set; } = "ru";
+        public int MicrophoneId { get; set; } = -1;
     }
 
     public sealed class PreferencesStore
@@ -22,6 +27,7 @@ namespace ArniLite.Storage
             try { Value = File.Exists(_path) ? JsonConvert.DeserializeObject<UserPreferences>(File.ReadAllText(_path)) ?? new UserPreferences() : new UserPreferences(); }
             catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is JsonException) { Value = new UserPreferences(); }
             if (Value.Language != "en" && Value.Language != "kk") Value.Language = "ru";
+            if (Value.DictationLanguage != "ru" && Value.DictationLanguage != "en" && Value.DictationLanguage != "kk" && Value.DictationLanguage != "auto") Value.DictationLanguage = "ru";
         }
 
         public void Save()

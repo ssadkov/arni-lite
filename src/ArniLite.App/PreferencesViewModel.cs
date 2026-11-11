@@ -16,6 +16,7 @@ namespace ArniLite
     public sealed class PreferencesViewModel : ViewModelBase
     {
         private readonly PreferencesStore _store;
+        public PreferencesStore Store => _store;
         private bool _saveFailed;
         public PreferencesViewModel(PreferencesStore store) { _store = store; }
         public IList<LanguageChoice> Languages { get; } = new[]

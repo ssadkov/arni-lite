@@ -182,6 +182,9 @@
                         </StackPanel>
                     </StackPanel>
                 </Border>
+                <Button Content="{Binding Updates.AvailableLabel}" Click="Updates_OnClick" HorizontalAlignment="Left" Margin="0,0,0,8" Visibility="{Binding Updates.HasUpdate, Converter={StaticResource BoolVis}}" />
+                <TextBlock Text="{Binding Dictation.Status}" TextWrapping="Wrap" Foreground="#64765A" FontSize="12" Margin="4,0,0,8" Visibility="{Binding Dictation.HasStatus, Converter={StaticResource BoolVis}}" />
+                <TextBlock Text="{Binding Dictation.RecordingTime}" Foreground="#93622D" FontSize="12" Margin="4,0,0,8" Visibility="{Binding Dictation.IsRecording, Converter={StaticResource BoolVis}}" />
                 <TextBlock Text="{Binding Chat.Activity}" Foreground="#64765A" FontSize="12" Margin="4,0,0,8" Visibility="{Binding Chat.HasActivity, Converter={StaticResource BoolVis}}" />
                 <Border Background="White" BorderBrush="#DDE2D6" BorderThickness="1" CornerRadius="14" Padding="14,12">
                     <Grid>
@@ -207,6 +210,8 @@
                         <DockPanel Grid.Row="1" Margin="0,10,0,0">
                             <Button DockPanel.Dock="Right" Content="{local:Loc Send}" Style="{StaticResource PrimaryButton}" Command="{Binding Chat.SendCommand}" Visibility="{Binding Chat.IsBusy, Converter={StaticResource BoolVis}, ConverterParameter=invert}" />
                             <Button DockPanel.Dock="Right" Content="{local:Loc StopAction}" Command="{Binding Chat.StopCommand}" Visibility="{Binding Chat.IsBusy, Converter={StaticResource BoolVis}}" />
+                            <Button DockPanel.Dock="Right" Content="{Binding Dictation.ToggleLabel}" Click="Dictate_OnClick" Margin="0,0,8,0" ToolTip="{local:Loc SpeechTip}" AutomationProperties.Name="{local:Loc Dictation}" />
+                            <Button DockPanel.Dock="Right" Content="{local:Loc Cancel}" Command="{Binding Dictation.CancelCommand}" Visibility="{Binding Dictation.IsBusy, Converter={StaticResource BoolVis}}" Margin="0,0,8,0" />
                             <Grid Margin="0,0,10,0" IsEnabled="{Binding Chat.CanChangeContext}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />

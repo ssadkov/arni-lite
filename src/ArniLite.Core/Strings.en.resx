@@ -463,4 +463,53 @@ to work on files with Arni.</value>
   <data name="PricePerMillion" xml:space="preserve">
     <value>{0} / {1} per 1M</value>
   </data>
+  <data name="Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="SecondsShort" xml:space="preserve"><value>s</value></data>
+  <data name="OperationCancelled" xml:space="preserve"><value>Operation cancelled.</value></data>
+  <data name="Dictation" xml:space="preserve"><value>Dictation</value></data>
+  <data name="SpeechDescription" xml:space="preserve"><value>Local dictation: download Whisper base and its engine when you choose. Internet is needed only for the download.</value></data>
+  <data name="SpeechAutomaticLanguage" xml:space="preserve"><value>Detect automatically</value></data>
+  <data name="SpeechDefaultMicrophone" xml:space="preserve"><value>Default system microphone</value></data>
+  <data name="SpeechLanguage" xml:space="preserve"><value>Dictation language</value></data>
+  <data name="SpeechMicrophone" xml:space="preserve"><value>Microphone</value></data>
+  <data name="SpeechRefreshDevices" xml:space="preserve"><value>Refresh microphones</value></data>
+  <data name="SpeechInstall" xml:space="preserve"><value>Download Whisper base · about 150 MB</value></data>
+  <data name="SpeechRemove" xml:space="preserve"><value>Remove model and engine</value></data>
+  <data name="SpeechInstalled" xml:space="preserve"><value>Whisper base installed · recognition on this computer</value></data>
+  <data name="SpeechNotInstalled" xml:space="preserve"><value>Model is not installed.</value></data>
+  <data name="SpeechDownloading" xml:space="preserve"><value>Downloading and verifying the engine and model. This may take a few minutes.</value></data>
+  <data name="SpeechReady" xml:space="preserve"><value>Ready. Click Dictate beside the message field.</value></data>
+  <data name="SpeechStart" xml:space="preserve"><value>Dictate</value></data>
+  <data name="SpeechFinish" xml:space="preserve"><value>Finish recording</value></data>
+  <data name="SpeechTip" xml:space="preserve"><value>Record speech and insert recognized text into the message draft</value></data>
+  <data name="SpeechInstallFirst" xml:space="preserve"><value>Install Whisper base in Settings → Dictation.</value></data>
+  <data name="SpeechRecording" xml:space="preserve"><value>Recording. Click Finish recording to recognize speech. Up to 2 minutes.</value></data>
+  <data name="SpeechRecognizing" xml:space="preserve"><value>Recognizing speech on this computer…</value></data>
+  <data name="SpeechInserted" xml:space="preserve"><value>Text added to the draft. Review it before sending.</value></data>
+  <data name="SpeechNoWords" xml:space="preserve"><value>No speech detected. Try speaking closer to the microphone.</value></data>
+  <data name="SpeechMicrophoneFailed" xml:space="preserve"><value>Could not open the microphone. Check the device and recording permission.</value></data>
+  <data name="SpeechDownloadFailed" xml:space="preserve"><value>Could not download or verify Whisper. Check your connection and free disk space, then retry.</value></data>
+  <data name="SpeechRemoveFailed" xml:space="preserve"><value>Could not remove Whisper. Close other recognition processes and retry.</value></data>
+  <data name="SpeechRecognitionFailed" xml:space="preserve"><value>Recognition failed. Check the Whisper installation; older Windows or CPUs may need another engine build. See technical logs.</value></data>
+  <data name="SpeechPrivacy" xml:space="preserve"><value>Recording is processed locally and deleted after recognition. Only text is sent to chat when you click Send. Recognition may be slow on older CPUs.</value></data>
+  <data name="Updates" xml:space="preserve"><value>Updates</value></data>
+  <data name="UpdateDescription" xml:space="preserve"><value>Check compatible Arni Lite releases on GitHub. Installation starts only when you choose.</value></data>
+  <data name="UpdateAutomatic" xml:space="preserve"><value>Check at startup, at most once a day</value></data>
+  <data name="UpdatePreview" xml:space="preserve"><value>Include preview releases</value></data>
+  <data name="UpdateLastChecked" xml:space="preserve"><value>Last checked:</value></data>
+  <data name="UpdateNeverChecked" xml:space="preserve"><value>Not checked yet</value></data>
+  <data name="UpdateCheck" xml:space="preserve"><value>Check for updates</value></data>
+  <data name="UpdateChecking" xml:space="preserve"><value>Checking releases…</value></data>
+  <data name="UpdateCurrent" xml:space="preserve"><value>No newer compatible signed releases found.</value></data>
+  <data name="UpdateAvailable" xml:space="preserve"><value>Version {0} is available</value></data>
+  <data name="UpdateCheckFailed" xml:space="preserve"><value>Could not check for updates. Check your connection or view releases on GitHub. The app will keep working.</value></data>
+  <data name="UpdateDownloading" xml:space="preserve"><value>Downloading and verifying the installer…</value></data>
+  <data name="UpdateDownload" xml:space="preserve"><value>Download update</value></data>
+  <data name="UpdateInstall" xml:space="preserve"><value>Install and restart</value></data>
+  <data name="UpdateReleaseNotes" xml:space="preserve"><value>Release notes</value></data>
+  <data name="UpdateReady" xml:space="preserve"><value>Update verified. You can install it and restart the app.</value></data>
+  <data name="UpdateDownloadFailed" xml:space="preserve"><value>Download or verification failed. Installation did not start; retry later.</value></data>
+  <data name="UpdateInstallFailed" xml:space="preserve"><value>Could not start installation or save the draft. The app stays open.</value></data>
+  <data name="UpdateIdleOnly" xml:space="preserve"><value>Finish the agent task and dictation before installing. The draft is saved before restarting.</value></data>
+  <data name="UpdateGitHub" xml:space="preserve"><value>All releases on GitHub</value></data>
 </root>
