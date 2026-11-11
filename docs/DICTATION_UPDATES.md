@@ -1,6 +1,6 @@
 # Local dictation and signed updates
 
-Development: `0.1.2-preview`. These changes are not in the published `0.1.1` installers.
+Included in `0.1.2`. These changes are not in the `0.1.1` installers.
 
 ## Dictation
 
