@@ -1,14 +1,46 @@
-# Arni Lite
+# Arni (0.1.3)
 
-Lightweight Windows client for Arni, built with WPF and .NET Framework 4.8. It includes project-based conversations, a local agent, streaming responses, account limits, file previews and per-user x86/x64 installers.
+Лёгкое приложение для Windows 7 SP1 и новее. Чаты с моделями Arni, агент в папке проекта и установка отдельно для 32- и 64-битной Windows. Нужен .NET Framework 4.8.
 
-The product specification is in `docs/ARNI_LITE_WINDOWS_SPEC.md`. Windows 7 SP1 and Windows Server 2012 have not been tested yet.
+## Возможности
 
-## Build
+- Чаты по выбранной папке проекта и потоковый ответ модели.
+- Вход через Яндекс или Google в браузере. Сессия хранится только у текущего пользователя Windows.
+- Счёт и лимиты аккаунта, список моделей.
+- Агент читает и ищет файлы проекта, предлагает правки и выполняет команды после подтверждения.
+- Поиск в интернете. В ответ попадают заголовок, адрес и короткий фрагмент, без открытия страницы.
+- Несколько MCP-серверов: адрес и необязательный ключ. Подключение проверяется при добавлении.
+- Правила проекта из `AGENTS.md` и навыки: встроенные и свои в `.github/skills`.
+- Генерация одного изображения PNG в папку проекта.
+- Вложения в чат: выбор файлов, перетаскивание, вставка файла и картинки из буфера.
+- Просмотр текста, кода и картинок проекта.
+- Диктовка с микрофона на русском, английском и казахском. Запись вставляется в черновик и сама не отправляется.
+- Язык интерфейса: русский, английский, казахский.
+- Проверка обновлений и установка только по кнопке.
+- Журнал диагностики без токенов и ключей. Его можно сохранить в ZIP.
 
-- .NET SDK 8 or newer
-- .NET Framework 4.8 targeting pack
-- Windows x64
+## Features
+
+Lightweight client for Windows 7 SP1 and newer. Arni chats, a project agent, and separate 32-bit and 64-bit installers. Requires .NET Framework 4.8.
+
+- Project chats with a streaming model response.
+- Sign-in with Yandex or Google in the browser. The session stays with the current Windows user.
+- Account balance, limits, and the model list.
+- The agent reads and searches project files, proposes edits, and runs commands after confirmation.
+- Web search. A result is a title, address, and short snippet. The page itself is not opened.
+- Several MCP servers: an address and an optional key. The connection is checked when a server is added.
+- Project rules from `AGENTS.md`, plus built-in skills and project skills in `.github/skills`.
+- Generation of one PNG image inside the project folder.
+- Chat attachments: file picker, drag and drop, and paste of a file or image from the clipboard.
+- Preview of project text, code, and images.
+- Microphone dictation in Russian, English, and Kazakh. The text is inserted into the draft and is not sent by itself.
+- Interface language: Russian, English, and Kazakh.
+- Update check, with installation only after the install button.
+- A diagnostic log without tokens or keys. It can be saved as a ZIP file.
+
+## Сборка / Build
+
+.NET SDK 8 или новее, пакет .NET Framework 4.8, Windows x64.
 
 ```powershell
 dotnet test ArniLite.sln -c Release -m:1 -nr:false
@@ -16,20 +48,4 @@ dotnet build ArniLite.sln -c Release -m:1 -nr:false
 src\ArniLite.App\bin\Release\net48\ArniLite.exe --self-check docs\g0-self-check.txt
 ```
 
-The self-check writes OS, Framework, TLS, DPAPI, PowerShell, and process-stop results. It does not print tokens.
-
-## Sign-in
-
-The single sign-in button calls `POST /api/desktop/auth/start` on `https://api.arnion.ru` and opens the returned page in the external browser. Select a provider there and enter the code shown in Arni Lite. The client receives the session through the desktop sign-in bridge.
-
-The session token is stored with DPAPI for the current Windows user. It is not written to the on-screen log or the self-check report.
-
-See [the workspace interface](docs/WORKSPACE_UI.md) for navigation, keyboard shortcuts and validation details, and [release 0.1.2](docs/releases/0.1.2.md) for this release's changes.
-
-Version `0.1.2` adds [language switching, support logs and native media previews](docs/LANGUAGES_MEDIA.md).
-
-It also includes [optional local Whisper base dictation and signed update checks](docs/DICTATION_UPDATES.md). The speech model/engine download only when requested; installation of an application update requires the user's Install and restart button. Future macOS work on Avalonia is tracked in [tasks](docs/TASKS.md).
-
-## Boundaries
-
-`ArniLite.Core`, `ArniLite.Api`, and `ArniLite.Storage` do not reference WPF, the registry, DPAPI, or P/Invoke. Process launch, DPAPI, and OS detection are in `ArniLite.Windows`.
+`ArniLite.Core`, `ArniLite.Api` и `ArniLite.Storage` не обращаются к WPF, реестру, DPAPI и P/Invoke. Запуск процессов, DPAPI и определение системы находятся в `ArniLite.Windows`.
