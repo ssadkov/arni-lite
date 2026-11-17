@@ -1,11 +1,11 @@
-; Per-user Setup for the net48 Arni Lite build.
+; Per-user Setup for the net48 Arni build.
 ; Keep AppVersion in step with the numeric part of the application version.
 
 #ifndef AppVersion
-#define AppVersion "0.1.2"
+#define AppVersion "0.1.3"
 #endif
 #ifndef AppNumericVersion
-#define AppNumericVersion "0.1.2"
+#define AppNumericVersion "0.1.3"
 #endif
 #ifndef Arch
 #define Arch "x64"
@@ -20,23 +20,23 @@
 
 [Setup]
 AppId={{9A38DA0B-ECAE-473E-A798-85B32D3D0F0B}
-AppName=Arni Lite
+AppName=Arni
 AppVersion={#AppVersion}
-AppVerName=Arni Lite {#AppVersion}
+AppVerName=Arni {#AppVersion}
 AppPublisher=Arnion
 AppPublisherURL=https://github.com/ssadkov/arni-lite
 AppSupportURL=https://github.com/ssadkov/arni-lite/issues
 AppUpdatesURL=https://github.com/ssadkov/arni-lite/releases
 VersionInfoVersion={#AppNumericVersion}.0
 VersionInfoCompany=Arnion
-VersionInfoDescription=Arni Lite Setup
-VersionInfoProductName=Arni Lite
-DefaultDirName={localappdata}\Programs\Arni Lite
-DefaultGroupName=Arni Lite
+VersionInfoDescription=Arni Setup
+VersionInfoProductName=Arni
+DefaultDirName={localappdata}\Programs\Arni
+DefaultGroupName=Arni
 DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
 OutputDir=..\dist
-OutputBaseFilename=ArniLiteSetup-{#AppVersion}{#SetupSuffix}
+OutputBaseFilename=ArniSetup-{#AppVersion}{#SetupSuffix}
 SetupIconFile=..\src\ArniLite.App\ArniLite.ico
 UninstallDisplayIcon={app}\ArniLite.exe
 Compression=lzma2
@@ -59,10 +59,10 @@ Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [CustomMessages]
-russian.Launch=Запустить Arni Lite
-english.Launch=Launch Arni Lite
-russian.NeedNet48=Для Arni Lite нужен .NET Framework 4.8 или новее. Установите его с сайта Microsoft и запустите Setup ещё раз.%n%nhttps://dotnet.microsoft.com/download/dotnet-framework/net48
-english.NeedNet48=Arni Lite needs .NET Framework 4.8 or newer. Install it from Microsoft, then run Setup again.%n%nhttps://dotnet.microsoft.com/download/dotnet-framework/net48
+russian.Launch=Запустить Arni
+english.Launch=Launch Arni
+russian.NeedNet48=Для Arni нужен .NET Framework 4.8 или новее. Установите его с сайта Microsoft и запустите Setup ещё раз.%n%nhttps://dotnet.microsoft.com/download/dotnet-framework/net48
+english.NeedNet48=Arni needs .NET Framework 4.8 or newer. Install it from Microsoft, then run Setup again.%n%nhttps://dotnet.microsoft.com/download/dotnet-framework/net48
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
@@ -75,8 +75,8 @@ Source: "{#BuildDir}\en\*.resources.dll"; DestDir: "{app}\en"; Flags: ignorevers
 Source: "{#BuildDir}\kk\*.resources.dll"; DestDir: "{app}\kk"; Flags: ignoreversion skipifsourcedoesntexist
 
 [Icons]
-Name: "{autoprograms}\Arni Lite"; Filename: "{app}\ArniLite.exe"
-Name: "{autodesktop}\Arni Lite"; Filename: "{app}\ArniLite.exe"; Tasks: desktopicon
+Name: "{autoprograms}\Arni"; Filename: "{app}\ArniLite.exe"
+Name: "{autodesktop}\Arni"; Filename: "{app}\ArniLite.exe"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\ArniLite.exe"; Description: "{cm:Launch}"; Flags: nowait postinstall skipifsilent; Check: not IsAppUpdate

@@ -64,7 +64,7 @@
     <value>Аккаунттан шығу</value>
   </data>
   <data name="CloseApp" xml:space="preserve">
-    <value>Arni Lite қолданбасын жабу</value>
+    <value>Arni қолданбасын жабу</value>
   </data>
   <data name="CopyCode" xml:space="preserve">
     <value>Кодты көшіру</value>
@@ -135,6 +135,42 @@
   </data>
   <data name="Send" xml:space="preserve">
     <value>Жіберу</value>
+  </data>
+  <data name="Attach" xml:space="preserve">
+    <value>Тіркеу</value>
+  </data>
+  <data name="AddContext" xml:space="preserve">
+    <value>Контекст қосу...</value>
+  </data>
+  <data name="AttachTip" xml:space="preserve">
+    <value>Файл немесе буферден көшірілген файл мен сурет</value>
+  </data>
+  <data name="AttachFilter" xml:space="preserve">
+    <value>Мәтін және суреттер|*.txt;*.md;*.json;*.csv;*.xml;*.log;*.cs;*.py;*.js;*.ts;*.html;*.css;*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff|Барлық файлдар|*.*</value>
+  </data>
+  <data name="RemoveAttachment" xml:space="preserve">
+    <value>Алу</value>
+  </data>
+  <data name="PastedImage" xml:space="preserve">
+    <value>Қойылған сурет</value>
+  </data>
+  <data name="AttachmentMissing" xml:space="preserve">
+    <value>Файл табылмады.</value>
+  </data>
+  <data name="AttachmentBinary" xml:space="preserve">
+    <value>Бұл файлды мәтін ретінде қоюға болмайды. Мәтін және PNG, JPEG, BMP, GIF суреттері жарайды.</value>
+  </data>
+  <data name="AttachmentTooLarge" xml:space="preserve">
+    <value>Сурет 30 МБ-тан үлкен.</value>
+  </data>
+  <data name="AttachmentFolder" xml:space="preserve">
+    <value>Файлды тіркеңіз, буманы емес.</value>
+  </data>
+  <data name="AttachmentLimit" xml:space="preserve">
+    <value>20 файлдан артық тіркеуге болмайды.</value>
+  </data>
+  <data name="AttachmentImageFailed" xml:space="preserve">
+    <value>Суретті оқу мүмкін болмады.</value>
   </data>
   <data name="StopAction" xml:space="preserve">
     <value>Тоқтату</value>
@@ -214,6 +250,57 @@
   <data name="SearchProject" xml:space="preserve">
     <value>Жобадан іздеу</value>
   </data>
+  <data name="WebSearch" xml:space="preserve">
+    <value>Интернеттен іздеу</value>
+  </data>
+  <data name="ReadSkill" xml:space="preserve">
+    <value>Дағдыны оқу</value>
+  </data>
+  <data name="Mcp" xml:space="preserve">
+    <value>MCP</value>
+  </data>
+  <data name="McpHint" xml:space="preserve">
+    <value>Бірнеше streamable-http сервері. ВкусВилл тексеруі: https://mcp.vkusvill.ru/mcp. Токен міндетті емес. Ол бөлек сақталады және журналға да, экспортқа да кірмейді.</value>
+  </data>
+  <data name="McpUrl" xml:space="preserve">
+    <value>Сілтеме</value>
+  </data>
+  <data name="McpAuthorization" xml:space="preserve">
+    <value>Authorization</value>
+  </data>
+  <data name="McpSaved" xml:space="preserve">
+    <value>Токен сақталды</value>
+  </data>
+  <data name="McpClear" xml:space="preserve">
+    <value>Токенді жою</value>
+  </data>
+  <data name="McpUrlInvalid" xml:space="preserve">
+    <value>Мекенжайда логинсіз https сілтемесі керек.</value>
+  </data>
+  <data name="McpConnecting" xml:space="preserve">
+    <value>MCP қосылуда…</value>
+  </data>
+  <data name="McpAdd" xml:space="preserve">
+    <value>Қосу</value>
+  </data>
+  <data name="McpRemove" xml:space="preserve">
+    <value>Жою</value>
+  </data>
+  <data name="McpConnectedTip" xml:space="preserve">
+    <value>Қосылым орнатылды</value>
+  </data>
+  <data name="McpDisconnectedTip" xml:space="preserve">
+    <value>Қосылым орнатылмады</value>
+  </data>
+  <data name="McpChecking" xml:space="preserve">
+    <value>Қосылым тексерілуде…</value>
+  </data>
+  <data name="McpDuplicate" xml:space="preserve">
+    <value>Бұл сервер тізімде бар.</value>
+  </data>
+  <data name="McpLimit" xml:space="preserve">
+    <value>8 серверден артық сақтауға болмайды.</value>
+  </data>
   <data name="ReadFile" xml:space="preserve">
     <value>Файлды оқу</value>
   </data>
@@ -225,6 +312,9 @@
   </data>
   <data name="ChangeFile" xml:space="preserve">
     <value>Файлды өзгерту</value>
+  </data>
+  <data name="GenerateImage" xml:space="preserve">
+    <value>Жасалған сурет</value>
   </data>
   <data name="Thinking" xml:space="preserve">
     <value>Модель ойлануда…</value>
@@ -356,7 +446,7 @@
     <value>Модельді таңдау үшін кіріңіз</value>
   </data>
   <data name="ModelRefused" xml:space="preserve">
-    <value>Провайдер Arni Lite үшін бұл модельді қабылдамады. Басқа модельді таңдаңыз.</value>
+    <value>Провайдер Arni үшін бұл модельді қабылдамады. Басқа модельді таңдаңыз.</value>
   </data>
   <data name="SignInFirst" xml:space="preserve">
     <value>Алдымен жүйеге кіріңіз.</value>
@@ -368,7 +458,7 @@
     <value>Сервер {0} жауабын қайтарды: {1}</value>
   </data>
   <data name="AlreadyRunning" xml:space="preserve">
-    <value>Arni Lite іске қосылған.</value>
+    <value>Arni іске қосылған.</value>
   </data>
   <data name="General" xml:space="preserve">
     <value>Жалпы</value>
@@ -384,6 +474,9 @@
   </data>
   <data name="About" xml:space="preserve">
     <value>Бағдарлама туралы</value>
+  </data>
+  <data name="AboutReadme" xml:space="preserve">
+    <value>Сипаттама</value>
   </data>
   <data name="Version" xml:space="preserve">
     <value>Нұсқа</value>
@@ -493,7 +586,7 @@
   <data name="SpeechRecognitionFailed" xml:space="preserve"><value>Тану аяқталмады. Whisper орнатылуын тексеріңіз; ескі Windows немесе процессорға басқа жинақ қажет болуы мүмкін. Техникалық журналды қараңыз.</value></data>
   <data name="SpeechPrivacy" xml:space="preserve"><value>Жазба жергілікті өңделіп, танудан кейін жойылады. «Жіберу» түймесін басқанда чатқа тек мәтін жіберіледі. Ескі процессорда тану баяу болуы мүмкін.</value></data>
   <data name="Updates" xml:space="preserve"><value>Жаңартулар</value></data>
-  <data name="UpdateDescription" xml:space="preserve"><value>GitHub-тағы үйлесімді Arni Lite шығарылымдарын тексеру. Орнату тек сіз таңдағанда басталады.</value></data>
+  <data name="UpdateDescription" xml:space="preserve"><value>GitHub-тағы үйлесімді Arni шығарылымдарын тексеру. Орнату тек сіз таңдағанда басталады.</value></data>
   <data name="UpdateAutomatic" xml:space="preserve"><value>Іске қосылғанда тексеру, тәулігіне бір реттен жиі емес</value></data>
   <data name="UpdatePreview" xml:space="preserve"><value>Алдын ала шығарылымдарды ұсыну</value></data>
   <data name="UpdateLastChecked" xml:space="preserve"><value>Соңғы тексеру:</value></data>

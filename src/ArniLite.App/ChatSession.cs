@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -55,7 +56,7 @@ namespace ArniLite
         private readonly List<CatalogModel> _catalog = new List<CatalogModel>();
         private CatalogModel _selectedCatalog;
         private string _selectedModel = string.Empty;
-        private bool _freeOnly = true;
+        private bool _freeOnly;
         private bool _permissionVisible;
         private string _permissionTitle = string.Empty;
         private string _permissionBody = string.Empty;
@@ -64,6 +65,11 @@ namespace ArniLite
         private bool _inputLocked;
         private string _activity = string.Empty;
         private bool _showLoader;
+        private readonly HttpClient _mcpHttp = new HttpClient { Timeout = Timeout.InfiniteTimeSpan };
+        private McpBundle _mcp;
+        private Func<IReadOnlyList<McpEndpoint>> _mcpEndpoints = () => Array.Empty<McpEndpoint>();
+        private string _attachmentError = string.Empty;
+        private int _pastedImages;
 
         public ChatSession(ArniApiClient api, ITokenStore tokens, OsFacts os, IProcessRunner processes, string? dataDirectory = null)
         {
@@ -79,7 +85,7 @@ namespace ArniLite
             _journal = new JsonlJournal(Path.Combine(_dataDirectory, "side-effects.jsonl"));
             _journal.MarkExecutingAsUnknown();
             _historyStore = new ChatHistory(Path.Combine(_dataDirectory, "chats"));
-            _tools = new LocalToolHost(_workspace, processes, _journal, this);
+            _tools = new LocalToolHost(_workspace, processes, _journal, this, _api, () => _tokens.Load());
             _chatId = _historyStore.CurrentChatId();
             LoadCurrentChat();
             RestoreRestartDraft();
@@ -91,7 +97,8 @@ namespace ArniLite
             NewProjectChatCommand = new ParamCommand(NewProjectChat);
             OpenInExplorerCommand = new RelayCommand(OpenInExplorer, () => !string.IsNullOrEmpty(_workspace.Root));
             OpenProjectFileCommand = new ParamCommand(OpenProjectFile);
-            SendCommand = new RelayCommand(async () => await SendAsync(), () => CanChangeContext && _selectedCatalog != null && !string.IsNullOrWhiteSpace(Draft));
+            Attachments.CollectionChanged += (_, _) => { Notify(nameof(HasAttachments)); (SendCommand as RelayCommand)?.Raise(); };
+            SendCommand = new RelayCommand(async () => await SendAsync(), () => CanChangeContext && _selectedCatalog != null && (!string.IsNullOrWhiteSpace(Draft) || Attachments.Count > 0));
             NewChatCommand = new RelayCommand(NewChat, () => CanChangeContext);
             StopCommand = new RelayCommand(Stop, () => _busy);
             ClosePreviewCommand = new RelayCommand(ClosePreview);
@@ -106,6 +113,9 @@ namespace ArniLite
         }
 
         public ObservableCollection<TranscriptRow> Items { get; } = new ObservableCollection<TranscriptRow>();
+        public ObservableCollection<ComposerAttachment> Attachments { get; } = new ObservableCollection<ComposerAttachment>();
+        public bool HasAttachments => Attachments.Count > 0;
+        public string AttachmentError => _attachmentError.Length == 0 ? string.Empty : StringCatalog.Get(_attachmentError);
         public ObservableCollection<CatalogModel> Models { get; } = new ObservableCollection<CatalogModel>();
         public ObservableCollection<ChatSummary> Chats { get; } = new ObservableCollection<ChatSummary>();
         public ObservableCollection<string> Folders { get; } = new ObservableCollection<string>();
@@ -161,7 +171,14 @@ namespace ArniLite
         }
         public string ProjectPath => _workspace.Root;
         public bool HasProject => !string.IsNullOrEmpty(_workspace.Root);
-        public string ProjectName => HasProject ? Path.GetFileName(_workspace.Root.TrimEnd('\\')) : StringCatalog.Get("NoProject");
+        public string ProjectName => HasProject
+            ? Path.GetFileName(_workspace.Root.TrimEnd('\\')) + (AgentRules.Exists(_workspace.Root) ? " · AGENTS.md" : string.Empty)
+            : StringCatalog.Get("NoProject");
+
+        public void ConfigureMcp(Func<IReadOnlyList<McpEndpoint>> endpoints)
+        {
+            _mcpEndpoints = endpoints ?? (() => Array.Empty<McpEndpoint>());
+        }
         public string ChatTitle
         {
             get
@@ -233,6 +250,7 @@ namespace ArniLite
             Notify(nameof(ProjectName));
             foreach (var model in Models) model.RefreshLocalization();
             foreach (var row in Items) row.RefreshLocalization();
+            Notify(nameof(AttachmentError));
             RefreshLists();
         }
 
@@ -240,6 +258,76 @@ namespace ArniLite
         {
             get => _draft;
             set { _draft = value; Notify(nameof(Draft)); (SendCommand as RelayCommand)?.Raise(); }
+        }
+
+        public void AttachPaths(System.Collections.Generic.IList<string> paths)
+        {
+            if (!CanChangeContext || paths == null)
+            {
+                return;
+            }
+
+            SetAttachmentError(string.Empty);
+            for (var i = 0; i < paths.Count; i++)
+            {
+                if (Attachments.Count >= AttachmentText.MaxFiles)
+                {
+                    SetAttachmentError("AttachmentLimit");
+                    return;
+                }
+
+                try
+                {
+                    Attachments.Add(ComposerAttachments.ReadFile(paths[i], RemoveAttachment));
+                }
+                catch (Exception ex) when (ex is InvalidDataException || ex is IOException || ex is UnauthorizedAccessException)
+                {
+                    SetAttachmentError(ex is InvalidDataException ? ex.Message : "AttachmentMissing");
+                }
+            }
+        }
+
+        public void AttachImage(System.Windows.Media.Imaging.BitmapSource source)
+        {
+            if (!CanChangeContext || source == null)
+            {
+                return;
+            }
+
+            if (Attachments.Count >= AttachmentText.MaxFiles)
+            {
+                SetAttachmentError("AttachmentLimit");
+                return;
+            }
+
+            _pastedImages++;
+            var name = _pastedImages == 1
+                ? StringCatalog.Get("PastedImage")
+                : StringCatalog.Get("PastedImage") + " " + _pastedImages;
+            try
+            {
+                Attachments.Add(ComposerAttachments.FromImage(source, name, RemoveAttachment));
+                SetAttachmentError(string.Empty);
+            }
+            catch (InvalidDataException ex)
+            {
+                SetAttachmentError(ex.Message);
+            }
+        }
+
+        private void RemoveAttachment(ComposerAttachment attachment)
+        {
+            Attachments.Remove(attachment);
+            if (Attachments.Count == 0)
+            {
+                _pastedImages = 0;
+            }
+        }
+
+        private void SetAttachmentError(string key)
+        {
+            _attachmentError = key ?? string.Empty;
+            Notify(nameof(AttachmentError));
         }
 
         public CatalogModel SelectedCatalog
@@ -464,7 +552,7 @@ namespace ArniLite
                 return new ModelTurn { Error = StringCatalog.Get("SelectModel"), Done = true, FinishReason = "error" };
             }
 
-            return await _api.CompleteAsync(token, model, "arni-lite:" + _chatId, messages, withTools, onDelta, cancellationToken).ConfigureAwait(true);
+            return await _api.CompleteAsync(token, model, "arni-lite:" + _chatId, messages, withTools, onDelta, cancellationToken, _mcp?.ToOpenAiTools()).ConfigureAwait(true);
         }
 
         public Task<bool> ApproveAsync(string title, string body, CancellationToken cancellationToken)
@@ -487,7 +575,7 @@ namespace ArniLite
         private async Task SendAsync()
         {
             var text = (Draft ?? string.Empty).Trim();
-            if (text.Length == 0 || !CanChangeContext)
+            if ((text.Length == 0 && Attachments.Count == 0) || !CanChangeContext)
             {
                 return;
             }
@@ -498,11 +586,29 @@ namespace ArniLite
             _streamTimer.Start();
             SetActivity(StringCatalog.Get("Thinking"), true);
             Draft = string.Empty;
+            var images = new List<ChatImagePart>();
+            foreach (var attachment in Attachments)
+            {
+                if (attachment.Image != null)
+                {
+                    images.Add(attachment.Image);
+                    text = string.IsNullOrWhiteSpace(text) ? attachment.Name : text + "\n" + attachment.Name;
+                }
+                else
+                {
+                    text = AttachmentText.Compose(text, attachment.Name, attachment.Text, attachment.Truncated);
+                }
+            }
+
+            Attachments.Clear();
+            _pastedImages = 0;
             RaiseAll();
             try
             {
+                await OpenMcpAsync(_turnCancellation.Token).ConfigureAwait(true);
+                _tools.UseRemote(_mcp);
                 EnsureSystem();
-                var user = new ChatMessage { Role = "user", Content = text };
+                var user = new ChatMessage { Role = "user", Content = text, Images = images.Count == 0 ? null : images };
                 _history.Add(user);
                 _historyStore.Append(_chatId, user);
                 AddRow(user);
@@ -538,6 +644,8 @@ namespace ArniLite
             }
             finally
             {
+                _tools.UseRemote(null);
+                CloseMcp();
                 _streamTimer.Stop();
                 lock (_streamGate) _pendingText.Clear();
                 _turnCancellation?.Dispose();
@@ -634,8 +742,8 @@ namespace ArniLite
         private string SystemText()
         {
             var project = string.IsNullOrEmpty(_workspace.Root) ? "не выбрана" : _workspace.Root;
-            return "Ты Arni Lite на Windows " + _os.Description + ".\n"
-                + "Ты работаешь как агент. Если на вопрос можно ответить без инструментов, отвечай сразу. Для работы с файлами проекта нужна выбранная папка.\n"
+            return "Ты Arni на Windows " + _os.Description + ".\n"
+                + "Ты работаешь как агент. Если на вопрос можно ответить без инструментов, отвечай сразу. Подключённые функции MCP — это уже доступные инструменты: вызывай их, а не отказывайся и не ищи протокол MCP через интернет или powershell. Для работы с файлами проекта нужна выбранная папка.\n"
                 + "Рабочая папка проекта: " + project + ". Инструменты файлов видят только её.\n"
                 + "Команды powershell и cmd выполняются от имени пользователя и могут читать другие папки, включая «Загрузки». Папка проекта их не ограничивает.\n"
                 + "Доступна Windows PowerShell. Не обещай PowerShell 7, bash, Python, Git или Node, пока это не показал вывод команды.\n"
@@ -643,34 +751,94 @@ namespace ArniLite
                 + "Называй только числа из вывода инструмента. Если вывод обрезан, не читай сохранённый файл и повтори команду с более узким фильтром.\n"
                 + "Не перемещай, не переименовывай, не удаляй и не распаковывай файлы, пока пользователь прямо не попросил это сделать.\n"
                 + "Новый файл в проекте создавай через propose_file_change с must_not_exist=true. Не пиши, что файл создан, пока инструмент не вернул completed.\n"
+                + "Картинку создавай только через generate_image: описание на английском, save_path — новый относительный путь с окончанием .png. После completed вставь в ответ Markdown-ссылку на поле path. Неудачную генерацию не повторяй с другими аргументами.\n"
+                + "Изображение и текст файла, которые пользователь прикрепил, уже есть в его сообщении. Не проси прислать их ещё раз.\n"
+                + "Свежие факты ищи через web_search. Сниппет — не страница. Адрес из результата не открывай и не дочитывай.\n"
                 + "Если шаблон документа уже есть в сообщении пользователя, используй его и не ищи файл урока на диске.\n"
                 + "Если своих данных для заполнения нет, оставь пометку «уточнить», не выдумывай биографию.\n"
                 + "Когда пользователь просит остановиться после отчёта, остановись.\n"
                 + "Если в корне проекта есть AGENTS.md, эти правила обязательны.\n"
                 + ReadAgents()
+                + SkillCatalog.Prompt(_workspace.Root)
+                + (_mcp == null ? string.Empty : _mcp.PromptLine())
                 + "Для свободного места на диске и файлов вне проекта используй powershell. Системные папки Windows не анализируй. Ничего не удаляй и не перемещай в таком отчёте.";
         }
 
         private string ReadAgents()
         {
-            if (string.IsNullOrEmpty(_workspace.Root))
+            return AgentRules.Read(_workspace.Root);
+        }
+
+        private async Task OpenMcpAsync(CancellationToken cancellationToken)
+        {
+            CloseMcp();
+            IReadOnlyList<McpEndpoint> endpoints;
+            try
             {
-                return string.Empty;
+                endpoints = _mcpEndpoints() ?? Array.Empty<McpEndpoint>();
+            }
+            catch (Exception)
+            {
+                endpoints = Array.Empty<McpEndpoint>();
             }
 
-            var path = Path.Combine(_workspace.Root, "AGENTS.md");
-            if (!File.Exists(path))
+            if (endpoints.Count == 0)
             {
-                return string.Empty;
+                return;
             }
 
-            var text = File.ReadAllText(path);
-            if (text.Length > 6000)
+            var sessions = new List<McpSession>();
+            try
             {
-                text = text.Substring(0, 6000);
+                for (var i = 0; i < endpoints.Count; i++)
+                {
+                    var endpoint = endpoints[i];
+                    var host = McpAddress.Host(endpoint?.Url);
+                    if (host.Length == 0)
+                    {
+                        continue;
+                    }
+
+                    try
+                    {
+                        sessions.Add(await McpClient.OpenAsync(_mcpHttp, endpoint.Url, endpoint.Authorization ?? string.Empty, cancellationToken).ConfigureAwait(true));
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
+                    }
+                    catch (Exception ex)
+                    {
+                        DiagnosticLog.Current.Write("mcp_open_failed", host, ex);
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                for (var i = 0; i < sessions.Count; i++)
+                {
+                    _ = sessions[i].CloseAsync();
+                }
+
+                throw;
             }
 
-            return "AGENTS.md:\n" + text.Trim() + "\n";
+            if (sessions.Count > 0)
+            {
+                _mcp = McpBundle.Combine(sessions);
+            }
+        }
+
+        private void CloseMcp()
+        {
+            var session = _mcp;
+            _mcp = null;
+            if (session == null)
+            {
+                return;
+            }
+
+            _ = session.CloseAsync();
         }
 
         private void AppendLive(string text)
@@ -714,6 +882,20 @@ namespace ArniLite
 
             if (message.Role == "tool")
             {
+                var imagePath = SavedImagePath(message.Content);
+                if (imagePath.Length > 0)
+                {
+                    Items.Add(new TranscriptRow("generate_image", "[" + Path.GetFileName(imagePath) + "](" + imagePath + ")", false));
+                    return;
+                }
+
+                var webResults = WebResultText(message.Content);
+                if (webResults.Length > 0)
+                {
+                    Items.Add(new TranscriptRow("web_search", webResults, false));
+                    return;
+                }
+
                 Items.Add(new TranscriptRow("Результат", PresentTool(message.Content), true));
                 return;
             }
@@ -829,6 +1011,9 @@ namespace ArniLite
             _history.Clear();
             _streamRows.Clear();
             Items.Clear();
+            Attachments.Clear();
+            _pastedImages = 0;
+            SetAttachmentError(string.Empty);
             _liveRow = null;
             Preview = string.Empty;
             ClosePreview();
@@ -1157,6 +1342,66 @@ namespace ArniLite
             return detail;
         }
 
+        private static string WebResultText(string json)
+        {
+            try
+            {
+                var results = JObject.Parse(json)["result"]?["results"] as JArray;
+                if (results == null || results.Count == 0)
+                {
+                    return string.Empty;
+                }
+
+                var text = new StringBuilder();
+                foreach (var item in results)
+                {
+                    var url = ((string)item["url"] ?? string.Empty).Trim();
+                    if (url.IndexOf(' ') >= 0 || url.IndexOf(')') >= 0 || url.IndexOf('\n') >= 0)
+                    {
+                        continue;
+                    }
+
+                    var title = ((string)item["title"] ?? url).Replace("[", string.Empty).Replace("]", string.Empty).Replace("\r", " ").Replace("\n", " ");
+                    if (text.Length > 0)
+                    {
+                        text.AppendLine().AppendLine();
+                    }
+
+                    text.Append('[').Append(title).Append("](").Append(url).Append(')');
+                    var snippet = ((string)item["snippet"] ?? string.Empty).Trim();
+                    if (snippet.Length > 0)
+                    {
+                        text.AppendLine().Append(snippet);
+                    }
+                }
+
+                return text.ToString();
+            }
+            catch (Exception)
+            {
+                return string.Empty;
+            }
+        }
+
+        private static string SavedImagePath(string json)
+        {
+            try
+            {
+                var result = JObject.Parse(json)["result"] as JObject;
+                if (result == null || result["model"] == null)
+                {
+                    return string.Empty;
+                }
+
+                var path = (string)result["path"] ?? string.Empty;
+                return path;
+            }
+            catch (Exception)
+            {
+                return string.Empty;
+            }
+        }
+
         private static string PresentTool(string json)
         {
             try
@@ -1200,7 +1445,20 @@ namespace ArniLite
             FlushPendingText();
             _liveRow = null;
             SetActivity(result.Status == "completed" ? StringCatalog.Get("ToolDone") : StringCatalog.Get("ToolFinished", result.Status), true);
-            Items.Add(new TranscriptRow(call.Name, PresentTool(result.ContentJson), true));
+            var imagePath = SavedImagePath(result.ContentJson);
+            var webResults = call.Name == "web_search" ? WebResultText(result.ContentJson) : string.Empty;
+            if (call.Name == "generate_image" && result.Status == "completed" && imagePath.Length > 0)
+            {
+                Items.Add(new TranscriptRow(call.Name, "[" + Path.GetFileName(imagePath) + "](" + imagePath + ")", false));
+            }
+            else if (webResults.Length > 0)
+            {
+                Items.Add(new TranscriptRow(call.Name, webResults, false));
+            }
+            else
+            {
+                Items.Add(new TranscriptRow(call.Name, PresentTool(result.ContentJson), true));
+            }
             RefreshProjectFiles();
             TextGrew?.Invoke();
         }
@@ -1268,10 +1526,13 @@ namespace ArniLite
         public string DisplayTitle => Title switch
         {
             "search_text" => StringCatalog.Get("SearchProject"),
+            "read_skill" => StringCatalog.Get("ReadSkill"),
+            "web_search" => StringCatalog.Get("WebSearch"),
             "read_file" => StringCatalog.Get("ReadFile"),
             "list_files" => StringCatalog.Get("ListFiles"),
             "run_command" => StringCatalog.Get("RunCommand"),
             "propose_file_change" => StringCatalog.Get("ChangeFile"),
+            "generate_image" => StringCatalog.Get("GenerateImage"),
             "Вы" => StringCatalog.Get("You"),
             "Результат" => StringCatalog.Get("Result"),
             "Ошибка" => StringCatalog.Get("Error"),

@@ -26,6 +26,18 @@ namespace ArniLite.UnitTests
         }
 
         [Fact]
+        public void AttachesArgumentsThatArriveUnderAnotherIndex()
+        {
+            var assembler = new ToolCallAssembler();
+            assembler.Add(0, "call-image", "generate_image", string.Empty);
+            assembler.Add(1, string.Empty, string.Empty, "{\"prompt\":\"a red kite\",\"save_path\":\"hero.png\"}");
+            Assert.True(assembler.TryComplete(out var calls, out var error), error);
+            var call = Assert.Single(calls);
+            Assert.Equal("generate_image", call.Name);
+            Assert.Contains("hero.png", call.ArgumentsJson);
+        }
+
+        [Fact]
         public void RejectsIncompleteJson()
         {
             var assembler = new ToolCallAssembler();

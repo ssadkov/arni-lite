@@ -21,7 +21,7 @@ namespace ArniLite
         private static async Task<string> RunAsync(OsFacts os)
         {
             var report = new StringBuilder();
-            report.AppendLine("Arni Lite G0 self-check");
+            report.AppendLine("Arni G0 self-check");
             report.AppendLine("os=" + os.Description + " source=" + os.Source + " windows10plus=" + os.IsAtLeastWindows10);
             report.AppendLine("framework=" + FrameworkProbe.Describe());
             report.AppendLine("tls-policy=" + (os.IsAtLeastWindows10 ? "system-default" : "tls12"));

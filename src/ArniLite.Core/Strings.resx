@@ -64,7 +64,7 @@
     <value>Выйти из аккаунта</value>
   </data>
   <data name="CloseApp" xml:space="preserve">
-    <value>Закрыть Arni Lite</value>
+    <value>Закрыть Arni</value>
   </data>
   <data name="CopyCode" xml:space="preserve">
     <value>Копировать код</value>
@@ -135,6 +135,42 @@
   </data>
   <data name="Send" xml:space="preserve">
     <value>Отправить</value>
+  </data>
+  <data name="Attach" xml:space="preserve">
+    <value>Прикрепить</value>
+  </data>
+  <data name="AddContext" xml:space="preserve">
+    <value>Добавить контекст...</value>
+  </data>
+  <data name="AttachTip" xml:space="preserve">
+    <value>Файл, или вставьте скопированный файл и картинку из буфера</value>
+  </data>
+  <data name="AttachFilter" xml:space="preserve">
+    <value>Текст и изображения|*.txt;*.md;*.json;*.csv;*.xml;*.log;*.cs;*.py;*.js;*.ts;*.html;*.css;*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff|Все файлы|*.*</value>
+  </data>
+  <data name="RemoveAttachment" xml:space="preserve">
+    <value>Убрать</value>
+  </data>
+  <data name="PastedImage" xml:space="preserve">
+    <value>Вставленное изображение</value>
+  </data>
+  <data name="AttachmentMissing" xml:space="preserve">
+    <value>Файл не найден.</value>
+  </data>
+  <data name="AttachmentBinary" xml:space="preserve">
+    <value>Этот файл нельзя вставить как текст. Подходят текст и изображения PNG, JPEG, BMP, GIF.</value>
+  </data>
+  <data name="AttachmentTooLarge" xml:space="preserve">
+    <value>Изображение больше 30 МБ.</value>
+  </data>
+  <data name="AttachmentFolder" xml:space="preserve">
+    <value>Можно прикрепить файл, не папку.</value>
+  </data>
+  <data name="AttachmentLimit" xml:space="preserve">
+    <value>Можно прикрепить не больше 20 файлов.</value>
+  </data>
+  <data name="AttachmentImageFailed" xml:space="preserve">
+    <value>Изображение не удалось прочитать.</value>
   </data>
   <data name="StopAction" xml:space="preserve">
     <value>Остановить</value>
@@ -214,6 +250,57 @@
   <data name="SearchProject" xml:space="preserve">
     <value>Поиск по проекту</value>
   </data>
+  <data name="WebSearch" xml:space="preserve">
+    <value>Поиск в интернете</value>
+  </data>
+  <data name="ReadSkill" xml:space="preserve">
+    <value>Чтение навыка</value>
+  </data>
+  <data name="Mcp" xml:space="preserve">
+    <value>MCP</value>
+  </data>
+  <data name="McpHint" xml:space="preserve">
+    <value>Несколько серверов streamable-http. Для проверки ВкусВилла: https://mcp.vkusvill.ru/mcp. Токен необязателен. Он хранится отдельно и не попадает в журнал и экспорт.</value>
+  </data>
+  <data name="McpUrl" xml:space="preserve">
+    <value>Ссылка</value>
+  </data>
+  <data name="McpAuthorization" xml:space="preserve">
+    <value>Authorization</value>
+  </data>
+  <data name="McpSaved" xml:space="preserve">
+    <value>Токен сохранён</value>
+  </data>
+  <data name="McpClear" xml:space="preserve">
+    <value>Удалить токен</value>
+  </data>
+  <data name="McpUrlInvalid" xml:space="preserve">
+    <value>Нужна ссылка https без логина в адресе.</value>
+  </data>
+  <data name="McpConnecting" xml:space="preserve">
+    <value>Подключение MCP…</value>
+  </data>
+  <data name="McpAdd" xml:space="preserve">
+    <value>Добавить</value>
+  </data>
+  <data name="McpRemove" xml:space="preserve">
+    <value>Удалить</value>
+  </data>
+  <data name="McpConnectedTip" xml:space="preserve">
+    <value>Подключение установлено</value>
+  </data>
+  <data name="McpDisconnectedTip" xml:space="preserve">
+    <value>Подключение не установлено</value>
+  </data>
+  <data name="McpChecking" xml:space="preserve">
+    <value>Проверяем подключение…</value>
+  </data>
+  <data name="McpDuplicate" xml:space="preserve">
+    <value>Этот сервер уже есть в списке.</value>
+  </data>
+  <data name="McpLimit" xml:space="preserve">
+    <value>Можно сохранить не больше 8 серверов.</value>
+  </data>
   <data name="ReadFile" xml:space="preserve">
     <value>Чтение файла</value>
   </data>
@@ -225,6 +312,9 @@
   </data>
   <data name="ChangeFile" xml:space="preserve">
     <value>Изменение файла</value>
+  </data>
+  <data name="GenerateImage" xml:space="preserve">
+    <value>Сгенерированная картинка</value>
   </data>
   <data name="Thinking" xml:space="preserve">
     <value>Модель думает…</value>
@@ -356,7 +446,7 @@
     <value>Модель появится после входа</value>
   </data>
   <data name="ModelRefused" xml:space="preserve">
-    <value>Провайдер отклонил эту модель для Arni Lite. Выберите другую модель.</value>
+    <value>Провайдер отклонил эту модель для Arni. Выберите другую модель.</value>
   </data>
   <data name="SignInFirst" xml:space="preserve">
     <value>Сначала войдите.</value>
@@ -368,7 +458,7 @@
     <value>Сервер ответил {0}: {1}</value>
   </data>
   <data name="AlreadyRunning" xml:space="preserve">
-    <value>Arni Lite уже запущен.</value>
+    <value>Arni уже запущен.</value>
   </data>
   <data name="General" xml:space="preserve">
     <value>Общие</value>
@@ -384,6 +474,9 @@
   </data>
   <data name="About" xml:space="preserve">
     <value>О программе</value>
+  </data>
+  <data name="AboutReadme" xml:space="preserve">
+    <value>Описание</value>
   </data>
   <data name="Version" xml:space="preserve">
     <value>Версия</value>
@@ -493,7 +586,7 @@
   <data name="SpeechRecognitionFailed" xml:space="preserve"><value>Распознавание не завершилось. Проверьте установку Whisper; старой Windows или процессору может потребоваться другая сборка движка. Подробности — в технических логах.</value></data>
   <data name="SpeechPrivacy" xml:space="preserve"><value>Запись обрабатывается локально и удаляется после распознавания. В чат отправляется только текст, когда вы нажмёте «Отправить». На слабом процессоре распознавание может идти медленно.</value></data>
   <data name="Updates" xml:space="preserve"><value>Обновления</value></data>
-  <data name="UpdateDescription" xml:space="preserve"><value>Проверка совместимых выпусков Arni Lite на GitHub. Установка начинается только по вашей кнопке.</value></data>
+  <data name="UpdateDescription" xml:space="preserve"><value>Проверка совместимых выпусков Arni на GitHub. Установка начинается только по вашей кнопке.</value></data>
   <data name="UpdateAutomatic" xml:space="preserve"><value>Проверять при запуске, не чаще раза в сутки</value></data>
   <data name="UpdatePreview" xml:space="preserve"><value>Предлагать предварительные версии</value></data>
   <data name="UpdateLastChecked" xml:space="preserve"><value>Последняя проверка:</value></data>

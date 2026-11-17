@@ -57,7 +57,7 @@ namespace ArniLite.UnitTests
             using var http = new HttpClient(new JsonHandler(body));
             var models = await new ArniApiClient(http).ListModelsAsync("fake-token", CancellationToken.None);
             Assert.Equal(new[] { "another/model:free", "thinkingmachines/inkling-2-small" }, models.Select(model => model.Id));
-            Assert.Equal("Провайдер отклонил эту модель для Arni Lite. Выберите другую модель.",
+            Assert.Equal("Провайдер отклонил эту модель для Arni. Выберите другую модель.",
                 ApiErrorText.ForUser("thinkingmachines/inkling-2-small:free is only available on agentic harnesses."));
         }
 

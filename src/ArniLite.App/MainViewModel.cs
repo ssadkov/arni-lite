@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
@@ -31,7 +32,8 @@ namespace ArniLite
 
         public MainViewModel(OsFacts os, PreferencesStore? preferences = null)
         {
-            Preferences = new PreferencesViewModel(preferences ?? new PreferencesStore());
+            var mcpSecrets = new McpSecretCatalog(new DpapiTokenStore(Path.Combine(AppPaths.DataDirectory, "mcp-auth.bin")));
+            Preferences = new PreferencesViewModel(preferences ?? new PreferencesStore(), mcpSecrets);
             _os = os ?? throw new ArgumentNullException(nameof(os));
             _api = new ArniApiClient(new HttpClient { Timeout = Timeout.InfiniteTimeSpan });
             _runner = new ProcessRunner();
@@ -47,7 +49,8 @@ namespace ArniLite
             CloseCommand = new RelayCommand(() => Application.Current.Shutdown());
             _signedIn = HasToken();
             Chat = new ChatSession(_api, _store, _os, _runner);
-            _publicDownloads.DefaultRequestHeaders.UserAgent.ParseAdd("ArniLite/" + AppVersion.Display);
+            Chat.ConfigureMcp(() => Preferences.Endpoints());
+            _publicDownloads.DefaultRequestHeaders.UserAgent.ParseAdd("Arni/" + AppVersion.Display);
             var downloads = new VerifiedDownload(_publicDownloads);
             Dictation = new DictationViewModel(Preferences.Store, downloads, text => Chat.Draft = string.IsNullOrWhiteSpace(Chat.Draft) ? text : Chat.Draft.TrimEnd() + " " + text, () => !Chat.IsBusy);
             Updates = new UpdatesViewModel(Preferences.Store, downloads, os, () => !Chat.IsBusy && !Dictation.IsActive && !_busy, Chat.SaveDraftForRestart);
@@ -382,6 +385,7 @@ namespace ArniLite
 
             return text.ToString();
         }
+
     }
 
     public abstract class ViewModelBase : System.ComponentModel.INotifyPropertyChanged

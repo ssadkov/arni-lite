@@ -56,7 +56,9 @@ namespace ArniLite.Core
             if (matches.Length == 0) return null;
             if (matches.Length != 1) throw new FormatException("Duplicate installer.");
             var installer = matches[0];
-            if ((architecture != "x64" && architecture != "x86") || installer.FileName != "ArniLiteSetup-" + Version + "-" + architecture + ".exe"
+            var setupName = "ArniSetup-" + Version + "-" + architecture + ".exe";
+            var previousName = "ArniLiteSetup-" + Version + "-" + architecture + ".exe";
+            if ((architecture != "x64" && architecture != "x86") || (installer.FileName != setupName && installer.FileName != previousName)
                 || installer.Bytes < 1 || installer.Bytes > 256 * 1024 * 1024 || !Regex.IsMatch(installer.Sha256 ?? "", "^[0-9a-fA-F]{64}$")) throw new FormatException("Invalid update installer.");
             return installer;
         }

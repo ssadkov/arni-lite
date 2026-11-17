@@ -7,12 +7,68 @@ using System.Threading.Tasks;
 
 namespace ArniLite.Core
 {
+    public sealed class ChatImagePart
+    {
+        public string MediaType { get; set; } = "image/png";
+        public string DataBase64 { get; set; } = string.Empty;
+    }
+
     public sealed class ChatMessage
     {
         public string Role { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty;
         public string ToolCallId { get; set; } = string.Empty;
         public List<ToolCallRecord> ToolCalls { get; set; } = new List<ToolCallRecord>();
+        public List<ChatImagePart> Images { get; set; }
+    }
+
+    public static class AttachmentText
+    {
+        public const int MaxFiles = 20;
+        public const int MaxChars = 12000;
+
+        public static bool IsBinary(byte[] sample)
+        {
+            var length = sample == null ? 0 : Math.Min(sample.Length, 8000);
+            for (var i = 0; i < length; i++)
+            {
+                if (sample[i] == 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static string Clip(string text, out bool truncated)
+        {
+            text = text ?? string.Empty;
+            if (text.Length <= MaxChars)
+            {
+                truncated = false;
+                return text;
+            }
+
+            truncated = true;
+            return text.Substring(0, MaxChars);
+        }
+
+        public static string Compose(string prompt, string name, string body, bool truncated)
+        {
+            var block = (name ?? string.Empty) + ":\n" + (body ?? string.Empty);
+            if (truncated)
+            {
+                block += "\n…";
+            }
+
+            if (string.IsNullOrWhiteSpace(prompt))
+            {
+                return block;
+            }
+
+            return prompt.Trim() + "\n\n" + block;
+        }
     }
 
     public sealed class ToolCallRecord

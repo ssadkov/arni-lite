@@ -35,7 +35,7 @@ namespace ArniLite
             DownloadCommand = new RelayCommand(async () => await DownloadAsync(), () => !_busy && _available != null && _installer == null);
             InstallCommand = new RelayCommand(Install, () => !_busy && _installer != null && _canInstall());
             CancelCommand = new RelayCommand(() => _operation?.Cancel(), () => _busy);
-            ReleaseCommand = new RelayCommand(() => ExternalBrowser.Open(_available!.ReleaseUri.ToString()), () => _available != null);
+            ReleaseCommand = new RelayCommand(() => ExternalBrowser.OpenReleases(_available!.ReleaseUri.ToString()), () => _available != null);
             StringCatalog.LanguageChanged += LanguageChanged;
         }
         public ICommand CheckCommand { get; }

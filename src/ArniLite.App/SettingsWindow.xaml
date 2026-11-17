@@ -20,6 +20,44 @@
                         <TextBlock Text="{local:Loc Agent}" FontWeight="SemiBold" Margin="0,24,0,12" />
                         <CheckBox Content="{local:Loc FreeModelsOnly}" IsChecked="{Binding Chat.FreeOnly}" IsEnabled="{Binding Chat.CanChangeContext}" Margin="0,0,0,12" />
                         <CheckBox Content="{local:Loc SessionTrust}" IsChecked="{Binding Chat.TrustSession}" IsEnabled="{Binding Chat.CanChangeContext}" />
+                        <TextBlock Text="{local:Loc Mcp}" FontWeight="SemiBold" Margin="0,24,0,8" />
+                        <TextBlock Text="{local:Loc McpHint}" TextWrapping="Wrap" Margin="0,0,0,8" />
+                        <ItemsControl ItemsSource="{Binding Preferences.Servers}" Margin="0,0,0,8">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <DockPanel Margin="0,0,0,8">
+                                        <Button DockPanel.Dock="Right" Content="×" Width="28" Height="28" Padding="0" Margin="8,0,0,0"
+                                                ToolTip="{local:Loc McpRemove}" Command="{Binding RemoveCommand}" />
+                                        <Grid DockPanel.Dock="Left" Width="18" Height="18" Margin="0,0,8,0" VerticalAlignment="Center" ToolTip="{Binding StatusTip}">
+                                            <Viewbox>
+                                                <Canvas Width="16" Height="16">
+                                                    <Path x:Name="Ok" Visibility="Collapsed" Stroke="#2F7D32" StrokeThickness="2"
+                                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                                          Data="M 2,8 L 6,12 L 14,3" />
+                                                    <Polygon x:Name="Bad" Visibility="Collapsed" Fill="#E0A100" Points="8,1 15,15 1,15" />
+                                                </Canvas>
+                                            </Viewbox>
+                                        </Grid>
+                                        <TextBlock Text="{Binding Host}" VerticalAlignment="Center" ToolTip="{Binding Url}" />
+                                    </DockPanel>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding Connected}" Value="True">
+                                            <Setter TargetName="Ok" Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Connected}" Value="False">
+                                            <Setter TargetName="Bad" Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="{local:Loc McpUrl}" Margin="0,0,0,6" />
+                        <TextBox x:Name="McpUrlBox" />
+                        <TextBlock Text="{local:Loc McpAuthorization}" Margin="0,12,0,6" />
+                        <PasswordBox x:Name="McpSecret" />
+                        <Button Content="{local:Loc McpAdd}" Click="McpAdd_OnClick" HorizontalAlignment="Left" Margin="0,8,0,0"
+                                IsEnabled="{Binding Preferences.CanChangeMcp}" />
+                        <TextBlock Text="{Binding Preferences.McpMessage}" Foreground="#93622D" TextWrapping="Wrap" Margin="0,8,0,0" />
                         <Button Content="{local:Loc SignOut}" Command="{Binding SignOutCommand}" HorizontalAlignment="Left" Margin="0,24,0,0" Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}}" />
                         <TextBlock Text="{Binding Preferences.SaveError}" Foreground="#93622D" TextWrapping="Wrap" Margin="0,12,0,0" />
                     </StackPanel>
@@ -71,15 +109,19 @@
                 </StackPanel></ScrollViewer>
             </TabItem>
             <TabItem Header="{local:Loc About}">
-                <StackPanel Margin="20">
-                    <TextBlock Text="Arni Lite" FontSize="26" FontWeight="SemiBold" />
-                    <DockPanel Margin="0,20,0,0">
-                        <TextBlock Text="{local:Loc Version}" Width="130" />
-                        <TextBox Text="{x:Static local:AppVersion.Display}" IsReadOnly="True" BorderThickness="0" Background="Transparent" />
-                    </DockPanel>
-                    <DockPanel Margin="0,12,0,0"><TextBlock Text="{local:Loc Platform}" Width="130" /><TextBlock Text="{x:Static local:AppVersion.Platform}" /></DockPanel>
-                    <TextBox x:Name="AboutEnvironment" Text="{x:Static local:AppVersion.EnvironmentSummary}" IsReadOnly="True" FontFamily="Consolas" FontSize="11" TextWrapping="Wrap" Background="#F0F2EA" BorderThickness="0" Padding="10" Margin="0,24,0,0" />
-                </StackPanel>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="20">
+                        <TextBlock Text="Arni" FontSize="26" FontWeight="SemiBold" />
+                        <DockPanel Margin="0,20,0,0">
+                            <TextBlock Text="{local:Loc Version}" Width="130" />
+                            <TextBox Text="{x:Static local:AppVersion.Display}" IsReadOnly="True" BorderThickness="0" Background="Transparent" />
+                        </DockPanel>
+                        <DockPanel Margin="0,12,0,0"><TextBlock Text="{local:Loc Platform}" Width="130" /><TextBlock Text="{x:Static local:AppVersion.Platform}" /></DockPanel>
+                        <TextBox x:Name="AboutEnvironment" Text="{x:Static local:AppVersion.EnvironmentSummary}" IsReadOnly="True" FontFamily="Consolas" FontSize="11" TextWrapping="Wrap" Background="#F0F2EA" BorderThickness="0" Padding="10" Margin="0,24,0,0" />
+                        <TextBlock Text="{local:Loc AboutReadme}" FontWeight="SemiBold" Margin="0,24,0,8" />
+                        <TextBox x:Name="AboutReadmeBox" IsReadOnly="True" IsReadOnlyCaretVisible="True" TextWrapping="Wrap" AcceptsReturn="True" BorderThickness="0" Background="#F0F2EA" Padding="10" FontSize="13" MinHeight="180" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="{local:Loc AboutReadme}" />
+                    </StackPanel>
+                </ScrollViewer>
             </TabItem>
             <TabItem Header="{local:Loc Diagnostics}">
                 <DockPanel Margin="16">

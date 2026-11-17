@@ -22,9 +22,15 @@ namespace ArniLite.Core
             Code = code;
         }
 
+        public MarkdownRun(string text, string link) : this(text)
+        {
+            Link = link ?? string.Empty;
+        }
+
         public string Text { get; }
         public bool Bold { get; }
         public bool Code { get; }
+        public string Link { get; } = string.Empty;
         public bool Break { get; private set; }
 
         public static MarkdownRun LineBreak()
@@ -241,6 +247,21 @@ namespace ArniLite.Core
             var plainStart = 0;
             while (index < source.Length)
             {
+                if (TryLink(source, index, out var labelEnd, out var targetEnd))
+                {
+                    if (index > plainStart)
+                    {
+                        runs.Add(new MarkdownRun(source.Substring(plainStart, index - plainStart)));
+                    }
+
+                    runs.Add(new MarkdownRun(
+                        source.Substring(index + 1, labelEnd - index - 1),
+                        source.Substring(labelEnd + 2, targetEnd - labelEnd - 2)));
+                    index = targetEnd + 1;
+                    plainStart = index;
+                    continue;
+                }
+
                 if (TrySpan(source, index, out var markerLength, out var close, out var bold, out var code))
                 {
                     if (index > plainStart)
@@ -268,6 +289,37 @@ namespace ArniLite.Core
             }
 
             return runs;
+        }
+
+        private static bool TryLink(string text, int index, out int labelEnd, out int targetEnd)
+        {
+            labelEnd = -1;
+            targetEnd = -1;
+            if (text[index] != '[')
+            {
+                return false;
+            }
+
+            var closeLabel = text.IndexOf(']', index + 1);
+            if (closeLabel <= index + 1 || closeLabel + 1 >= text.Length || text[closeLabel + 1] != '(')
+            {
+                return false;
+            }
+
+            var closeTarget = text.IndexOf(')', closeLabel + 2);
+            if (closeTarget <= closeLabel + 2)
+            {
+                return false;
+            }
+
+            if (closeLabel - index - 1 > 300 || closeTarget - closeLabel - 2 > 2000)
+            {
+                return false;
+            }
+
+            labelEnd = closeLabel;
+            targetEnd = closeTarget;
+            return true;
         }
 
         private static bool TrySpan(string text, int index, out int markerLength, out int close, out bool bold, out bool code)

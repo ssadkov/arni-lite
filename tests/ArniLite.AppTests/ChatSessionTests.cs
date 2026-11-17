@@ -233,7 +233,7 @@ namespace ArniLite.AppTests
             await WithTimeout(idle.Task);
             Assert.Null(session.SelectedCatalog);
             Assert.DoesNotContain(session.Models, model => model.Id == rejected);
-            Assert.Contains(session.Items, row => row.Body == "Провайдер отклонил эту модель для Arni Lite. Выберите другую модель.");
+            Assert.Contains(session.Items, row => row.Body == "Провайдер отклонил эту модель для Arni. Выберите другую модель.");
             Assert.Equal(1, handler.ModelRequests);
             Assert.NotEqual("Новый чат", session.ChatRows.Single(row => row == session.SelectedEntry).Title);
         });

@@ -37,6 +37,14 @@ namespace ArniLite.Api
         public int IntervalSeconds { get; set; } = 5;
     }
 
+    public sealed class GeneratedImage
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Model { get; set; } = string.Empty;
+        public int? CostMicros { get; set; }
+        public byte[] Png { get; set; } = Array.Empty<byte>();
+    }
+
     public sealed class ArniApiClient
     {
         private readonly HttpClient _http;
@@ -185,7 +193,7 @@ namespace ArniLite.Api
             return text.ToString();
         }
 
-        public async Task<ModelTurn> CompleteAsync(string token, string model, string chatId, IList<ChatMessage> messages, bool withTools, Action<string> onDelta, CancellationToken cancellationToken)
+        public async Task<ModelTurn> CompleteAsync(string token, string model, string chatId, IList<ChatMessage> messages, bool withTools, Action<string> onDelta, CancellationToken cancellationToken, JArray extraTools = null)
         {
             var payload = new JObject
             {
@@ -196,7 +204,16 @@ namespace ArniLite.Api
             };
             if (withTools)
             {
-                payload["tools"] = ToolSchemas.AgentTools();
+                var tools = ToolSchemas.AgentTools();
+                if (extraTools != null)
+                {
+                    foreach (var tool in extraTools)
+                    {
+                        tools.Add(tool);
+                    }
+                }
+
+                payload["tools"] = tools;
             }
 
             using var request = new HttpRequestMessage(HttpMethod.Post, ArniEndpoints.ApiOrigin + "/api/chat/completions");
@@ -385,6 +402,102 @@ namespace ArniLite.Api
             return ids;
         }
 
+        public async Task<JArray> SearchWebAsync(string token, string query, CancellationToken cancellationToken)
+        {
+            var payload = new JObject { ["query"] = query };
+            using var request = new HttpRequestMessage(HttpMethod.Post, ArniEndpoints.ApiOrigin + "/api/web-search");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            request.Content = new StringContent(payload.ToString(Newtonsoft.Json.Formatting.None), Encoding.UTF8, "application/json");
+            using var response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new ApiCallException((int)response.StatusCode, ApiErrorText.FromBody(body, (int)response.StatusCode));
+            }
+
+            var results = JObject.Parse(body)["results"] as JArray ?? new JArray();
+            var kept = new JArray();
+            foreach (var item in results)
+            {
+                if (kept.Count >= 5 || item.Type != JTokenType.Object)
+                {
+                    continue;
+                }
+
+                var url = ((string)item["url"] ?? string.Empty).Trim();
+                if (!url.StartsWith("https://", StringComparison.OrdinalIgnoreCase) && !url.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var title = ((string)item["title"] ?? string.Empty).Trim();
+                var snippet = ((string)item["snippet"] ?? string.Empty).Trim();
+                if (title.Length > 240)
+                {
+                    title = title.Substring(0, 240);
+                }
+
+                if (snippet.Length > 240)
+                {
+                    snippet = snippet.Substring(0, 240);
+                }
+
+                kept.Add(new JObject
+                {
+                    ["title"] = title.Length == 0 ? url : title,
+                    ["url"] = url,
+                    ["snippet"] = snippet,
+                });
+            }
+
+            return kept;
+        }
+
+        public async Task<GeneratedImage> GenerateImageAsync(string token, string prompt, string aspectRatio, string idempotencyKey, CancellationToken cancellationToken)
+        {
+            var payload = new JObject
+            {
+                ["prompt"] = prompt,
+                ["aspect_ratio"] = aspectRatio,
+                ["n"] = 1,
+            };
+            using var request = new HttpRequestMessage(HttpMethod.Post, ArniEndpoints.ApiOrigin + "/api/images/generations");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            request.Headers.TryAddWithoutValidation("Idempotency-Key", idempotencyKey);
+            request.Content = new StringContent(payload.ToString(Newtonsoft.Json.Formatting.None), Encoding.UTF8, "application/json");
+            using var response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new ApiCallException((int)response.StatusCode, ApiErrorText.FromBody(body, (int)response.StatusCode));
+            }
+
+            var created = JObject.Parse(body);
+            var id = (string)created["id"] ?? string.Empty;
+            if (id.Length == 0 || id.IndexOf('/') >= 0 || id.IndexOf('\\') >= 0)
+            {
+                throw new ApiCallException(502, "Image generation failed. Check API usage before retrying.");
+            }
+
+            using var download = new HttpRequestMessage(HttpMethod.Get, ArniEndpoints.ApiOrigin + "/api/images/" + id);
+            download.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            using var artifact = await _http.SendAsync(download, cancellationToken).ConfigureAwait(false);
+            var bytes = await artifact.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
+            if (!artifact.IsSuccessStatusCode || !ImageAsset.IsPng(bytes))
+            {
+                throw new ApiCallException((int)artifact.StatusCode, "Image download failed. Retry with the same description and path to recover it without a second charge.");
+            }
+
+            var cost = created["costMicros"];
+            return new GeneratedImage
+            {
+                Id = id,
+                Model = (string)created["model"] ?? string.Empty,
+                CostMicros = cost == null || cost.Type == JTokenType.Null ? (int?)null : (int)cost,
+                Png = bytes,
+            };
+        }
+
         public async Task<AccountInfo> AccountAsync(string token, CancellationToken cancellationToken)
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, ArniEndpoints.ApiOrigin + "/api/account");
@@ -445,7 +558,7 @@ namespace ArniLite.Api
                 var item = new JObject
                 {
                     ["role"] = message.Role,
-                    ["content"] = message.Content ?? string.Empty,
+                    ["content"] = ChatWire.Content(message),
                 };
                 if (!string.IsNullOrEmpty(message.ToolCallId))
                 {

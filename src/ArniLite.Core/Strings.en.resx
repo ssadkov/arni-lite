@@ -64,7 +64,7 @@
     <value>Sign out</value>
   </data>
   <data name="CloseApp" xml:space="preserve">
-    <value>Quit Arni Lite</value>
+    <value>Quit Arni</value>
   </data>
   <data name="CopyCode" xml:space="preserve">
     <value>Copy code</value>
@@ -135,6 +135,42 @@ to work on files with Arni.</value>
   </data>
   <data name="Send" xml:space="preserve">
     <value>Send</value>
+  </data>
+  <data name="Attach" xml:space="preserve">
+    <value>Attach</value>
+  </data>
+  <data name="AddContext" xml:space="preserve">
+    <value>Add Context...</value>
+  </data>
+  <data name="AttachTip" xml:space="preserve">
+    <value>A file, or paste a copied file and image from the clipboard</value>
+  </data>
+  <data name="AttachFilter" xml:space="preserve">
+    <value>Text and images|*.txt;*.md;*.json;*.csv;*.xml;*.log;*.cs;*.py;*.js;*.ts;*.html;*.css;*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff|All files|*.*</value>
+  </data>
+  <data name="RemoveAttachment" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="PastedImage" xml:space="preserve">
+    <value>Pasted image</value>
+  </data>
+  <data name="AttachmentMissing" xml:space="preserve">
+    <value>File not found.</value>
+  </data>
+  <data name="AttachmentBinary" xml:space="preserve">
+    <value>This file cannot be inserted as text. Text and PNG, JPEG, BMP or GIF images are supported.</value>
+  </data>
+  <data name="AttachmentTooLarge" xml:space="preserve">
+    <value>The image is larger than 30 MB.</value>
+  </data>
+  <data name="AttachmentFolder" xml:space="preserve">
+    <value>Attach a file, not a folder.</value>
+  </data>
+  <data name="AttachmentLimit" xml:space="preserve">
+    <value>You can attach up to 20 files.</value>
+  </data>
+  <data name="AttachmentImageFailed" xml:space="preserve">
+    <value>The image could not be read.</value>
   </data>
   <data name="StopAction" xml:space="preserve">
     <value>Stop</value>
@@ -214,6 +250,57 @@ to work on files with Arni.</value>
   <data name="SearchProject" xml:space="preserve">
     <value>Searching project</value>
   </data>
+  <data name="WebSearch" xml:space="preserve">
+    <value>Web search</value>
+  </data>
+  <data name="ReadSkill" xml:space="preserve">
+    <value>Reading skill</value>
+  </data>
+  <data name="Mcp" xml:space="preserve">
+    <value>MCP</value>
+  </data>
+  <data name="McpHint" xml:space="preserve">
+    <value>Several streamable-http servers. VkusVill check: https://mcp.vkusvill.ru/mcp. The token is optional. It is stored separately and stays out of the journal and support export.</value>
+  </data>
+  <data name="McpUrl" xml:space="preserve">
+    <value>Link</value>
+  </data>
+  <data name="McpAuthorization" xml:space="preserve">
+    <value>Authorization</value>
+  </data>
+  <data name="McpSaved" xml:space="preserve">
+    <value>Token saved</value>
+  </data>
+  <data name="McpClear" xml:space="preserve">
+    <value>Remove token</value>
+  </data>
+  <data name="McpUrlInvalid" xml:space="preserve">
+    <value>Use an https link with no login in the address.</value>
+  </data>
+  <data name="McpConnecting" xml:space="preserve">
+    <value>Connecting MCP…</value>
+  </data>
+  <data name="McpAdd" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="McpRemove" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="McpConnectedTip" xml:space="preserve">
+    <value>Connection established</value>
+  </data>
+  <data name="McpDisconnectedTip" xml:space="preserve">
+    <value>Connection is not established</value>
+  </data>
+  <data name="McpChecking" xml:space="preserve">
+    <value>Checking the connection…</value>
+  </data>
+  <data name="McpDuplicate" xml:space="preserve">
+    <value>This server is already in the list.</value>
+  </data>
+  <data name="McpLimit" xml:space="preserve">
+    <value>You can save up to 8 servers.</value>
+  </data>
   <data name="ReadFile" xml:space="preserve">
     <value>Reading file</value>
   </data>
@@ -225,6 +312,9 @@ to work on files with Arni.</value>
   </data>
   <data name="ChangeFile" xml:space="preserve">
     <value>Changing file</value>
+  </data>
+  <data name="GenerateImage" xml:space="preserve">
+    <value>Generated image</value>
   </data>
   <data name="Thinking" xml:space="preserve">
     <value>Thinking…</value>
@@ -356,7 +446,7 @@ to work on files with Arni.</value>
     <value>Sign in to choose a model</value>
   </data>
   <data name="ModelRefused" xml:space="preserve">
-    <value>The provider refused this model for Arni Lite. Select another model.</value>
+    <value>The provider refused this model for Arni. Select another model.</value>
   </data>
   <data name="SignInFirst" xml:space="preserve">
     <value>Sign in first.</value>
@@ -368,7 +458,7 @@ to work on files with Arni.</value>
     <value>Server returned {0}: {1}</value>
   </data>
   <data name="AlreadyRunning" xml:space="preserve">
-    <value>Arni Lite is already running.</value>
+    <value>Arni is already running.</value>
   </data>
   <data name="General" xml:space="preserve">
     <value>General</value>
@@ -384,6 +474,9 @@ to work on files with Arni.</value>
   </data>
   <data name="About" xml:space="preserve">
     <value>About</value>
+  </data>
+  <data name="AboutReadme" xml:space="preserve">
+    <value>Description</value>
   </data>
   <data name="Version" xml:space="preserve">
     <value>Version</value>
@@ -493,7 +586,7 @@ to work on files with Arni.</value>
   <data name="SpeechRecognitionFailed" xml:space="preserve"><value>Recognition failed. Check the Whisper installation; older Windows or CPUs may need another engine build. See technical logs.</value></data>
   <data name="SpeechPrivacy" xml:space="preserve"><value>Recording is processed locally and deleted after recognition. Only text is sent to chat when you click Send. Recognition may be slow on older CPUs.</value></data>
   <data name="Updates" xml:space="preserve"><value>Updates</value></data>
-  <data name="UpdateDescription" xml:space="preserve"><value>Check compatible Arni Lite releases on GitHub. Installation starts only when you choose.</value></data>
+  <data name="UpdateDescription" xml:space="preserve"><value>Check compatible Arni releases on GitHub. Installation starts only when you choose.</value></data>
   <data name="UpdateAutomatic" xml:space="preserve"><value>Check at startup, at most once a day</value></data>
   <data name="UpdatePreview" xml:space="preserve"><value>Include preview releases</value></data>
   <data name="UpdateLastChecked" xml:space="preserve"><value>Last checked:</value></data>

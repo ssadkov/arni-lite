@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using System.Reflection;
+using System.Threading;
 using System.Windows;
 using ArniLite.Core;
 using ArniLite.Storage;
@@ -9,6 +11,7 @@ namespace ArniLite
 {
     public partial class SettingsWindow : Window
     {
+        private readonly CancellationTokenSource _readme = new CancellationTokenSource();
         private string _exportStatusKey = string.Empty;
         private string _logStatusKey = string.Empty;
         public SettingsWindow(MainViewModel model, bool updates = false, bool speech = false)
@@ -19,10 +22,43 @@ namespace ArniLite
             Height = Math.Min(Height, SystemParameters.WorkArea.Height);
             RefreshLog();
             model.Dictation.RefreshDevices();
+            AboutReadmeBox.Text = AboutReadme.Offline(AppDirectory());
             if (updates) SettingsTabs.SelectedIndex = 2;
             else if (speech) SettingsTabs.SelectedIndex = 1;
             StringCatalog.LanguageChanged += LanguageChanged;
-            Closed += (_, _) => StringCatalog.LanguageChanged -= LanguageChanged;
+            Closed += (_, _) =>
+            {
+                _readme.Cancel();
+                StringCatalog.LanguageChanged -= LanguageChanged;
+            };
+            Loaded += RefreshMcp;
+        }
+
+        private async void RefreshMcp(object sender, RoutedEventArgs e)
+        {
+            Loaded -= RefreshMcp;
+            var readme = AboutReadme.LoadAsync(AppDirectory(), _readme.Token);
+            if (DataContext is MainViewModel model)
+            {
+                await model.Preferences.RefreshAsync();
+            }
+
+            try
+            {
+                var text = await readme;
+                if (IsLoaded && text.Length > 0)
+                {
+                    AboutReadmeBox.Text = text;
+                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        }
+
+        private static string AppDirectory()
+        {
+            return Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? string.Empty;
         }
 
         private void LanguageChanged(object? sender, EventArgs e)
@@ -33,7 +69,23 @@ namespace ArniLite
         }
 
         private void Close_OnClick(object sender, RoutedEventArgs e) => Close();
-        private void Releases_OnClick(object sender, RoutedEventArgs e) => ArniLite.Windows.ExternalBrowser.Open("https://github.com/ssadkov/arni-lite/releases");
+        private async void McpAdd_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (!(DataContext is MainViewModel model) || !model.Preferences.CanChangeMcp)
+            {
+                return;
+            }
+
+            var url = McpUrlBox.Text;
+            var token = McpSecret.Password;
+            var added = await model.Preferences.AddAsync(url, token);
+            if (added)
+            {
+                McpUrlBox.Text = string.Empty;
+                McpSecret.Password = string.Empty;
+            }
+        }
+        private void Releases_OnClick(object sender, RoutedEventArgs e) => ArniLite.Windows.ExternalBrowser.OpenReleases("https://github.com/ssadkov/arni-lite/releases");
         private void Refresh_OnClick(object sender, RoutedEventArgs e) => RefreshLog();
         private void RefreshLog()
         {
@@ -54,7 +106,7 @@ namespace ArniLite
         {
             var dialog = new SaveFileDialog
             {
-                FileName = "ArniLite-diagnostics-" + DateTime.Now.ToString("yyyyMMdd-HHmm") + ".zip",
+                FileName = "Arni-diagnostics-" + DateTime.Now.ToString("yyyyMMdd-HHmm") + ".zip",
                 DefaultExt = ".zip", Filter = "ZIP (*.zip)|*.zip",
             };
             if (dialog.ShowDialog(this) != true) return;

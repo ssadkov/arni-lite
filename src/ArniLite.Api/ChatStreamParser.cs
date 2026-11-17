@@ -80,15 +80,30 @@ namespace ArniLite.Api
 
             foreach (var item in array)
             {
-                var function = item["function"];
+                var function = item["function"] as JObject;
                 target.Add(new ToolCallDelta
                 {
                     Index = (int?)item["index"] ?? target.Count,
                     Id = (string?)item["id"] ?? string.Empty,
-                    Name = (string?)function?["name"] ?? string.Empty,
-                    Arguments = (string?)function?["arguments"] ?? string.Empty,
+                    Name = ArgumentText(function?["name"]),
+                    Arguments = ArgumentText(function?["arguments"] ?? item["arguments"]),
                 });
             }
+        }
+
+        private static string ArgumentText(JToken token)
+        {
+            if (token == null || token.Type == JTokenType.Null)
+            {
+                return string.Empty;
+            }
+
+            if (token.Type == JTokenType.Object || token.Type == JTokenType.Array)
+            {
+                return token.ToString(Newtonsoft.Json.Formatting.None);
+            }
+
+            return token.Type == JTokenType.String ? (string)token : token.ToString();
         }
     }
 

@@ -1,7 +1,13 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using ArniLite.Core;
 
 namespace ArniLite
@@ -82,6 +88,7 @@ namespace ArniLite
                     continue;
                 }
 
+                var previews = new List<Image>();
                 var text = new TextBlock
                 {
                     Foreground = foreground,
@@ -108,7 +115,28 @@ namespace ArniLite
                         inline.FontFamily = CodeFont;
                     }
 
-                    text.Inlines.Add(inline);
+                    if (TryLocalOrWebLink(run.Link, out var uri))
+                    {
+                        var link = new Hyperlink(inline)
+                        {
+                            NavigateUri = uri,
+                            Cursor = System.Windows.Input.Cursors.Hand,
+                        };
+                        link.PreviewMouseLeftButtonUp += (_, args) =>
+                        {
+                            args.Handled = true;
+                            OpenTarget(uri);
+                        };
+                        text.Inlines.Add(link);
+                        if (TryLocalImage(uri, out var preview))
+                        {
+                            previews.Add(PreviewImage(uri, preview));
+                        }
+                    }
+                    else
+                    {
+                        text.Inlines.Add(inline);
+                    }
                 }
 
                 if (block.Kind == MarkdownKind.Table)
@@ -125,6 +153,122 @@ namespace ArniLite
                 {
                     Children.Add(text);
                 }
+
+                for (var previewIndex = 0; previewIndex < previews.Count; previewIndex++)
+                {
+                    Children.Add(previews[previewIndex]);
+                }
+            }
+        }
+
+        private static Image PreviewImage(Uri uri, BitmapImage source)
+        {
+            var image = new Image
+            {
+                Source = source,
+                MaxWidth = 480,
+                MaxHeight = 360,
+                Stretch = Stretch.Uniform,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Margin = new Thickness(0, 8, 0, 4),
+                Cursor = Cursors.Hand,
+                ToolTip = uri.LocalPath,
+            };
+            image.MouseLeftButtonUp += (_, args) =>
+            {
+                args.Handled = true;
+                OpenTarget(uri);
+            };
+            return image;
+        }
+
+        private static bool TryLocalImage(Uri uri, out BitmapImage image)
+        {
+            image = null;
+            if (uri == null || !uri.IsFile)
+            {
+                return false;
+            }
+
+            var path = uri.LocalPath;
+            var extension = Path.GetExtension(path);
+            if (!extension.Equals(".png", StringComparison.OrdinalIgnoreCase)
+                && !extension.Equals(".jpg", StringComparison.OrdinalIgnoreCase)
+                && !extension.Equals(".jpeg", StringComparison.OrdinalIgnoreCase)
+                && !extension.Equals(".gif", StringComparison.OrdinalIgnoreCase)
+                && !extension.Equals(".bmp", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            if (!File.Exists(path))
+            {
+                return false;
+            }
+
+            try
+            {
+                var bitmap = new BitmapImage();
+                bitmap.BeginInit();
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
+                bitmap.DecodePixelWidth = 960;
+                bitmap.UriSource = new Uri(path, UriKind.Absolute);
+                bitmap.EndInit();
+                bitmap.Freeze();
+                image = bitmap;
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        private static bool TryLocalOrWebLink(string target, out Uri uri)
+        {
+            uri = null;
+            var value = (target ?? string.Empty).Trim();
+            if (value.Length == 0)
+            {
+                return false;
+            }
+
+            if (value.StartsWith("https://", StringComparison.OrdinalIgnoreCase) || value.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+            {
+                return Uri.TryCreate(value, UriKind.Absolute, out uri);
+            }
+
+            if (value.Length >= 3 && char.IsLetter(value[0]) && value[1] == ':' && (value[2] == '\\' || value[2] == '/'))
+            {
+                return Uri.TryCreate(value, UriKind.Absolute, out uri) && uri.IsFile;
+            }
+
+            return false;
+        }
+
+        private static void OpenTarget(Uri uri)
+        {
+            try
+            {
+                if (uri == null)
+                {
+                    return;
+                }
+
+                if (uri.IsFile)
+                {
+                    Process.Start(uri.LocalPath);
+                    return;
+                }
+
+                if (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
+                {
+                    Process.Start(uri.AbsoluteUri);
+                }
+            }
+            catch (Exception)
+            {
             }
         }
 

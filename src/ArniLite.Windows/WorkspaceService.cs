@@ -19,6 +19,22 @@ namespace ArniLite.Windows
             Root = string.Empty;
         }
 
+        public string NewPngPath(string relative)
+        {
+            if (!ImageAsset.TryTarget(Root, relative, out var full, out var error))
+            {
+                throw new IOException(error);
+            }
+
+            EnsureNoReparse(full);
+            if (File.Exists(full))
+            {
+                throw new IOException("This file already exists. Choose a new image path.");
+            }
+
+            return full;
+        }
+
         public string ResolveFile(string relative)
         {
             if (!WorkspacePath.TryCombine(Root, relative, out var full, out var error)) throw new IOException(error);

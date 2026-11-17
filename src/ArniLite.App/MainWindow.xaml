@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:local="clr-namespace:ArniLite" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="ArniLite.MainWindow" Title="Arni Lite" Width="1180" Height="720" MinWidth="840" MinHeight="540" WindowStartupLocation="CenterScreen" Background="#FAFAF8" FontFamily="Segoe UI" FontSize="14" Foreground="#242824" UseLayoutRounding="True" SnapsToDevicePixels="True" SizeChanged="Window_OnSizeChanged" PreviewKeyDown="Window_OnPreviewKeyDown">
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:local="clr-namespace:ArniLite" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="ArniLite.MainWindow" Title="Arni" Width="1180" Height="720" MinWidth="840" MinHeight="540" WindowStartupLocation="CenterScreen" Background="#FAFAF8" FontFamily="Segoe UI" FontSize="14" Foreground="#242824" UseLayoutRounding="True" SnapsToDevicePixels="True" SizeChanged="Window_OnSizeChanged" PreviewKeyDown="Window_OnPreviewKeyDown">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition x:Name="NavigationColumn" Width="248" />
@@ -9,10 +9,7 @@
         <Border x:Name="Navigation" Background="#EFF1EB" BorderBrush="#E3E6DE" BorderThickness="0,0,1,0">
             <DockPanel Margin="14,18,14,14">
                 <StackPanel DockPanel.Dock="Top">
-                    <Grid Margin="8,0,4,22">
-                        <TextBlock Text="arni" FontSize="25" FontWeight="SemiBold" />
-                        <TextBlock Text="LITE" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="#76816E" FontSize="11" FontWeight="SemiBold" />
-                    </Grid>
+                    <TextBlock Text="arni" FontSize="25" FontWeight="SemiBold" Margin="8,0,4,22" />
                     <Button Content="{local:Loc NewChat}" Command="{Binding Chat.NewChatCommand}" Style="{StaticResource PrimaryButton}" HorizontalContentAlignment="Left" Padding="14,10" ToolTip="{local:Loc NewChatTip}" Click="NewChat_OnClick" />
                     <Border Background="#E5E8E0" CornerRadius="7" Margin="0,10,0,2" Padding="10,8">
                         <Grid>
@@ -186,13 +183,43 @@
                 <TextBlock Text="{Binding Dictation.Status}" TextWrapping="Wrap" Foreground="#64765A" FontSize="12" Margin="4,0,0,8" Visibility="{Binding Dictation.HasStatus, Converter={StaticResource BoolVis}}" />
                 <TextBlock Text="{Binding Dictation.RecordingTime}" Foreground="#93622D" FontSize="12" Margin="4,0,0,8" Visibility="{Binding Dictation.IsRecording, Converter={StaticResource BoolVis}}" />
                 <TextBlock Text="{Binding Chat.Activity}" Foreground="#64765A" FontSize="12" Margin="4,0,0,8" Visibility="{Binding Chat.HasActivity, Converter={StaticResource BoolVis}}" />
-                <Border Background="White" BorderBrush="#DDE2D6" BorderThickness="1" CornerRadius="14" Padding="14,12">
+                <TextBlock Text="{Binding Chat.AttachmentError}" Foreground="#93622D" FontSize="12" TextWrapping="Wrap" Margin="4,0,0,8">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Visible" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Chat.AttachmentError}" Value="">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <Border Background="White" BorderBrush="#DDE2D6" BorderThickness="1" CornerRadius="14" Padding="14,12" AllowDrop="True" Drop="Composer_OnDrop" DragOver="Composer_OnDragOver">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-                        <Grid MinHeight="52">
+                        <ItemsControl ItemsSource="{Binding Chat.Attachments}" Margin="0,0,0,8" Visibility="{Binding Chat.HasAttachments, Converter={StaticResource BoolVis}}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="#F4F5F0" CornerRadius="8" Padding="8,4" Margin="0,0,8,8">
+                                        <DockPanel>
+                                            <Button DockPanel.Dock="Right" Content="×" Width="22" Height="22" Padding="0" Margin="8,0,0,0" Command="{Binding RemoveCommand}" ToolTip="{local:Loc RemoveAttachment}" />
+                                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center" MaxWidth="220" TextTrimming="CharacterEllipsis" />
+                                        </DockPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Grid Grid.Row="1" MinHeight="52">
                             <TextBox x:Name="Draft" Text="{Binding Chat.Draft, UpdateSourceTrigger=PropertyChanged}" MinHeight="48" MaxHeight="140" BorderThickness="0" Background="Transparent" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" PreviewKeyDown="Draft_OnPreviewKeyDown" AutomationProperties.Name="{local:Loc MessageArni}" />
                             <TextBlock Text="{local:Loc DraftHint}" Foreground="#969E8E" IsHitTestVisible="False" Margin="1,2,0,0">
                                 <TextBlock.Style>
@@ -207,7 +234,8 @@
                                 </TextBlock.Style>
                             </TextBlock>
                         </Grid>
-                        <DockPanel Grid.Row="1" Margin="0,10,0,0">
+                        <DockPanel Grid.Row="2" Margin="0,10,0,0">
+                            <Button DockPanel.Dock="Left" Style="{StaticResource AttachButton}" Margin="0,0,8,0" Click="Attach_OnClick" ToolTip="{local:Loc AddContext}" IsEnabled="{Binding Chat.CanChangeContext}" AutomationProperties.Name="{local:Loc AddContext}" />
                             <Button DockPanel.Dock="Right" Content="{local:Loc Send}" Style="{StaticResource PrimaryButton}" Command="{Binding Chat.SendCommand}" Visibility="{Binding Chat.IsBusy, Converter={StaticResource BoolVis}, ConverterParameter=invert}" />
                             <Button DockPanel.Dock="Right" Content="{local:Loc StopAction}" Command="{Binding Chat.StopCommand}" Visibility="{Binding Chat.IsBusy, Converter={StaticResource BoolVis}}" />
                             <Button DockPanel.Dock="Right" Content="{Binding Dictation.ToggleLabel}" Click="Dictate_OnClick" Margin="0,0,8,0" ToolTip="{local:Loc SpeechTip}" AutomationProperties.Name="{local:Loc Dictation}" />

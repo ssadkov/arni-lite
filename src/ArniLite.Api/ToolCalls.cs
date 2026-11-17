@@ -12,10 +12,50 @@ namespace ArniLite.Api
 
         public void Add(int index, string id, string name, string arguments)
         {
-            if (!_calls.TryGetValue(index, out var call))
+            MutableCall call = null;
+            if (!string.IsNullOrEmpty(id))
             {
-                call = new MutableCall { Index = index };
-                _calls[index] = call;
+                foreach (var existing in _calls.Values)
+                {
+                    if (string.Equals(existing.Id, id, StringComparison.Ordinal))
+                    {
+                        call = existing;
+                        break;
+                    }
+                }
+            }
+
+            if (call == null && _calls.TryGetValue(index, out var indexed)
+                && (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(indexed.Id) || string.Equals(indexed.Id, id, StringComparison.Ordinal)))
+            {
+                call = indexed;
+            }
+
+            // Argument fragments often arrive without an id and with a different index than the tool name.
+            if (call == null && string.IsNullOrEmpty(id))
+            {
+                foreach (var existing in _calls.Values)
+                {
+                    call = existing;
+                }
+
+                if (call != null && !string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(call.Name)
+                    && !string.Equals(call.Name, name, StringComparison.Ordinal))
+                {
+                    call = null;
+                }
+            }
+
+            if (call == null)
+            {
+                var key = index;
+                while (_calls.ContainsKey(key))
+                {
+                    key++;
+                }
+
+                call = new MutableCall { Index = key };
+                _calls[key] = call;
             }
 
             if (!string.IsNullOrEmpty(id))
@@ -38,6 +78,7 @@ namespace ArniLite.Api
         {
             calls = new List<ToolCallRecord>();
             error = string.Empty;
+            CoalesceOrphanArguments();
             foreach (var pair in _calls)
             {
                 var call = pair.Value;
@@ -85,6 +126,36 @@ namespace ArniLite.Api
             return true;
         }
 
+        private void CoalesceOrphanArguments()
+        {
+            var orphans = new List<int>();
+            MutableCall named = null;
+            var namedCount = 0;
+            foreach (var pair in _calls)
+            {
+                if (string.IsNullOrEmpty(pair.Value.Id) && string.IsNullOrEmpty(pair.Value.Name) && pair.Value.Arguments.Length > 0)
+                {
+                    orphans.Add(pair.Key);
+                }
+                else if (!string.IsNullOrEmpty(pair.Value.Id) && !string.IsNullOrEmpty(pair.Value.Name))
+                {
+                    named = pair.Value;
+                    namedCount++;
+                }
+            }
+
+            if (namedCount != 1 || orphans.Count == 0)
+            {
+                return;
+            }
+
+            for (var i = 0; i < orphans.Count; i++)
+            {
+                named.Arguments.Append(_calls[orphans[i]].Arguments.ToString());
+                _calls.Remove(orphans[i]);
+            }
+        }
+
         private sealed class MutableCall
         {
             public int Index { get; set; }
@@ -112,6 +183,14 @@ namespace ArniLite.Api
                     ["start_line"] = new JObject { ["type"] = "integer", ["minimum"] = 1 },
                     ["max_lines"] = new JObject { ["type"] = "integer", ["minimum"] = 1, ["maximum"] = 500 },
                 }, new JArray("path")),
+                Function("web_search", "Search the public web for current facts. Returns up to five titles, URLs and short snippets. A snippet is not the page. Do not fetch the URL yourself.", new JObject
+                {
+                    ["query"] = StringProp("Search query, up to 300 characters."),
+                }, new JArray("query")),
+                Function("read_skill", "Read the full instruction of one named skill. A project skill in .github/skills overrides the built-in skill with the same name.", new JObject
+                {
+                    ["name"] = StringProp("Skill name, for example source-research."),
+                }, new JArray("name")),
                 Function("search_text", "Literal text search inside the selected project.", new JObject
                 {
                     ["query"] = StringProp("Literal text to find."),
@@ -125,6 +204,12 @@ namespace ArniLite.Api
                     ["must_not_exist"] = new JObject { ["type"] = "boolean" },
                     ["content"] = StringProp("Full new text of the file."),
                 }, new JArray("path", "content")),
+                Function("generate_image", "Generate one PNG inside the selected project with Amazon Bedrock Stable Image Core. Costs $0.04 from the API budget. The prompt must be English, up to 10000 characters. save_path is an unused relative path ending in .png. aspect_ratio is optional and defaults to 16:9. The same prompt, ratio and save_path recovers the image without a second charge. Never retry a failed generation with changed arguments. After completed, put the returned path in the reply as a Markdown link.", new JObject
+                {
+                    ["prompt"] = StringProp("Detailed English description of the image."),
+                    ["save_path"] = StringProp("Unused PNG path relative to the project, for example public/generated/hero.png."),
+                    ["aspect_ratio"] = new JObject { ["type"] = "string", ["enum"] = new JArray("16:9", "1:1", "21:9", "2:3", "3:2", "4:5", "5:4", "9:16", "9:21") },
+                }, new JArray("prompt", "save_path")),
                 Function("run_command", "Run one non-interactive command after the user confirms it. Pass an exact user-supplied command unchanged. The project folder is not a sandbox. Set timeout_ms to at least 300000 when hashing many files.", new JObject
                 {
                     ["shell"] = new JObject { ["type"] = "string", ["enum"] = new JArray("powershell", "cmd") },

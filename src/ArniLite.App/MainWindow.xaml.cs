@@ -1,8 +1,10 @@
 using System.Collections.Specialized;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using ArniLite.Core;
 using ArniLite.Storage;
@@ -45,6 +47,7 @@ namespace ArniLite
             _model.Chat.Items.CollectionChanged += ItemsOnCollectionChanged;
             _model.Chat.TextGrew += OnTextGrew;
             StringCatalog.LanguageChanged += OnLanguageChanged;
+            DataObject.AddPastingHandler(Draft, Draft_OnPaste);
             Loaded += (_, _) => { ScrollTranscriptToEnd(); Draft.Focus(); _ = _model.Updates.CheckAutomaticallyAsync(); };
             Closed += (_, _) =>
             {
@@ -184,8 +187,64 @@ namespace ArniLite
             e.Handled = true;
         }
 
+        private void Attach_OnClick(object sender, RoutedEventArgs e)
+        {
+            var dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Multiselect = true,
+                Title = StringCatalog.Get("AddContext"),
+                Filter = StringCatalog.Get("AttachFilter"),
+            };
+            if (dialog.ShowDialog(this) == true)
+            {
+                _model.Chat.AttachPaths(dialog.FileNames);
+            }
+        }
+
+        private void Composer_OnDragOver(object sender, DragEventArgs e)
+        {
+            e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None;
+            e.Handled = true;
+        }
+
+        private void Composer_OnDrop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                _model.Chat.AttachPaths((string[])e.Data.GetData(DataFormats.FileDrop));
+            }
+        }
+
+        private void Draft_OnPaste(object sender, DataObjectPastingEventArgs e)
+        {
+            if (TakeClipboardAttachment(e.DataObject))
+            {
+                e.CancelCommand();
+            }
+        }
+
         private void Draft_OnPreviewKeyDown(object sender, KeyEventArgs e)
         {
+            var paste = (e.Key == Key.V && Keyboard.Modifiers == ModifierKeys.Control)
+                || (e.Key == Key.Insert && Keyboard.Modifiers == ModifierKeys.Shift);
+            if (paste)
+            {
+                IDataObject data = null;
+                try
+                {
+                    data = Clipboard.GetDataObject();
+                }
+                catch (System.Exception)
+                {
+                }
+
+                if (data != null && TakeClipboardAttachment(data))
+                {
+                    e.Handled = true;
+                    return;
+                }
+            }
+
             if (e.Key == Key.Enter && Keyboard.Modifiers == ModifierKeys.None)
             {
                 var model = DataContext as MainViewModel;
@@ -196,6 +255,130 @@ namespace ArniLite
 
                 e.Handled = true;
             }
+        }
+
+        private bool TakeClipboardAttachment(IDataObject data)
+        {
+            if (data == null)
+            {
+                return false;
+            }
+
+            try
+            {
+                if (data.GetDataPresent(DataFormats.FileDrop) && data.GetData(DataFormats.FileDrop) is string[] paths && paths.Length > 0)
+                {
+                    _model.Chat.AttachPaths(paths);
+                    return true;
+                }
+            }
+            catch (System.Exception)
+            {
+            }
+
+            var image = ReadClipboardImage(data);
+            if (image == null)
+            {
+                return false;
+            }
+
+            _model.Chat.AttachImage(image);
+            return true;
+        }
+
+        private static BitmapSource ReadClipboardImage(IDataObject data)
+        {
+            foreach (var format in new[] { "PNG", "image/png", "JFIF", "image/jpeg", "image/jpg", "image/bmp", "image/gif", "image/tiff" })
+            {
+                var frame = DecodeClipboardImage(data, format);
+                if (frame != null)
+                {
+                    return frame;
+                }
+            }
+
+            try
+            {
+                if (data.GetDataPresent(DataFormats.Bitmap, false) && data.GetData(DataFormats.Bitmap, false) is BitmapSource bitmap)
+                {
+                    return FreezeImage(bitmap);
+                }
+            }
+            catch (System.Exception)
+            {
+            }
+
+            try
+            {
+                if (Clipboard.ContainsImage())
+                {
+                    var image = Clipboard.GetImage();
+                    if (image != null)
+                    {
+                        return FreezeImage(image);
+                    }
+                }
+            }
+            catch (System.Exception)
+            {
+            }
+
+            return null;
+        }
+
+        private static BitmapSource DecodeClipboardImage(IDataObject data, string format)
+        {
+            try
+            {
+                if (!data.GetDataPresent(format, false))
+                {
+                    return null;
+                }
+
+                var raw = data.GetData(format, false);
+                Stream stream = raw as Stream;
+                if (raw is byte[] bytes)
+                {
+                    stream = new MemoryStream(bytes);
+                }
+
+                if (stream == null)
+                {
+                    return null;
+                }
+
+                var copy = new MemoryStream();
+                if (stream.CanSeek)
+                {
+                    stream.Position = 0;
+                }
+
+                stream.CopyTo(copy);
+                if (copy.Length < 8)
+                {
+                    return null;
+                }
+
+                copy.Position = 0;
+                var decoder = BitmapDecoder.Create(copy, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+                return decoder.Frames.Count == 0 ? null : FreezeImage(decoder.Frames[0]);
+            }
+            catch (System.Exception)
+            {
+                return null;
+            }
+        }
+
+        private static BitmapSource FreezeImage(BitmapSource source)
+        {
+            if (source.IsFrozen)
+            {
+                return source;
+            }
+
+            var clone = source.Clone();
+            clone.Freeze();
+            return clone;
         }
     }
 }
