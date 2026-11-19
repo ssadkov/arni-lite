@@ -54,6 +54,11 @@ namespace ArniLite.Api
             _http = http ?? throw new ArgumentNullException(nameof(http));
         }
 
+        private static void MarkClient(HttpRequestMessage request)
+        {
+            request.Headers.TryAddWithoutValidation("X-Arni-Client", "arni");
+        }
+
         public async Task<DiagnosticItem> ProbeTlsAsync(CancellationToken cancellationToken)
         {
             try
@@ -144,6 +149,7 @@ namespace ArniLite.Api
             using var request = new HttpRequestMessage(HttpMethod.Post, ArniEndpoints.ApiOrigin + "/api/chat/completions");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
             request.Headers.TryAddWithoutValidation("X-Arni-Chat-Id", chatId);
+            MarkClient(request);
             request.Content = new StringContent(payload.ToString(Newtonsoft.Json.Formatting.None), Encoding.UTF8, "application/json");
             using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
@@ -219,6 +225,7 @@ namespace ArniLite.Api
             using var request = new HttpRequestMessage(HttpMethod.Post, ArniEndpoints.ApiOrigin + "/api/chat/completions");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
             request.Headers.TryAddWithoutValidation("X-Arni-Chat-Id", chatId);
+            MarkClient(request);
             request.Content = new StringContent(payload.ToString(Newtonsoft.Json.Formatting.None), Encoding.UTF8, "application/json");
             using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
@@ -464,6 +471,7 @@ namespace ArniLite.Api
             using var request = new HttpRequestMessage(HttpMethod.Post, ArniEndpoints.ApiOrigin + "/api/images/generations");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
             request.Headers.TryAddWithoutValidation("Idempotency-Key", idempotencyKey);
+            MarkClient(request);
             request.Content = new StringContent(payload.ToString(Newtonsoft.Json.Formatting.None), Encoding.UTF8, "application/json");
             using var response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
             var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
