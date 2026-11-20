@@ -1,4 +1,4 @@
-# Arni (0.1.4)
+# Arni (0.1.5)
 
 Лёгкое приложение для Windows 7 SP1 и новее. Чаты с моделями Arni, агент в папке проекта и установка отдельно для 32- и 64-битной Windows. Нужен .NET Framework 4.8.
 
@@ -6,7 +6,7 @@
 
 - Чаты по выбранной папке проекта и потоковый ответ модели.
 - Вход через Яндекс или Google в браузере. Сессия хранится только у текущего пользователя Windows.
-- Счёт и лимиты аккаунта, список моделей.
+- Счёт и лимиты аккаунта справа вверху: баланс, пополнение, расходы, тарифы и выход. Список моделей в чате.
 - Агент читает и ищет файлы проекта, предлагает правки и выполняет команды после подтверждения.
 - Поиск в интернете. В ответ попадают заголовок, адрес и короткий фрагмент, без открытия страницы.
 - Несколько MCP-серверов: адрес и необязательный ключ. Подключение проверяется при добавлении.
@@ -25,7 +25,7 @@ Lightweight client for Windows 7 SP1 and newer. Arni chats, a project agent, and
 
 - Project chats with a streaming model response.
 - Sign-in with Yandex or Google in the browser. The session stays with the current Windows user.
-- Account balance, limits, and the model list.
+- Account balance and limits at the top right: top-up, expenses, prices, and sign-out. The model list stays in the chat.
 - The agent reads and searches project files, proposes edits, and runs commands after confirmation.
 - Web search. A result is a title, address, and short snippet. The page itself is not opened.
 - Several MCP servers: an address and an optional key. The connection is checked when a server is added.

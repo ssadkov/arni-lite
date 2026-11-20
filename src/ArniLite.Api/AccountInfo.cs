@@ -16,6 +16,10 @@ namespace ArniLite.Api
         public IList<string> LimitLines { get; } = new List<string>();
         public string ResetInfo { get; private set; } = string.Empty;
         public bool HasBudget { get; private set; }
+        public string ChipText { get; private set; } = string.Empty;
+        public string BalanceText { get; private set; } = string.Empty;
+        public IList<string> PanelLines { get; } = new List<string>();
+        public IList<AccountWindowRow> Windows { get; } = new List<AccountWindowRow>();
         public AccountInfo Relocalize() => Parse(_source);
 
         public static AccountInfo Parse(string body)
@@ -58,7 +62,134 @@ namespace ArniLite.Api
                 }
             }
             if (info.LimitLines.Count == 0) info.LimitLines.Add(StringCatalog.Get("NoLimits"));
+            FillPanel(info, budget, free, rates);
             return info;
+        }
+
+        private static void FillPanel(AccountInfo info, JObject? budget, JObject? free, JObject? rates)
+        {
+            var total = 0L;
+            var available = 0L;
+            var limitKind = 0;
+            var active = false;
+            if (budget != null)
+            {
+                var balance = Math.Max(0, Number(budget["balanceMicros"]) ?? 0);
+                active = (bool?)budget["enabled"] == true && (bool?)budget["expired"] != true;
+                total = active ? balance : 0;
+                available = total;
+                if (active)
+                {
+                    ConsiderWindow(budget["fiveHour"] as JObject, 1, ref available, ref limitKind);
+                    ConsiderWindow(budget["weekly"] as JObject, 2, ref available, ref limitKind);
+                }
+            }
+
+            info.BalanceText = StringCatalog.Get("AccountBalance", Money(total, rates));
+            if (budget != null && TryDate(budget["validUntil"], out var until))
+            {
+                info.PanelLines.Add(until.UtcDateTime.Year >= 2099
+                    ? StringCatalog.Get("AccountOpenEnded")
+                    : StringCatalog.Get("AccountValidUntil", until.ToLocalTime().ToString("d MMMM yyyy", StringCatalog.Culture)));
+            }
+            if (active)
+            {
+                info.PanelLines.Add(limitKind == 0
+                    ? StringCatalog.Get("AccountAvailableBalance", Money(available, rates))
+                    : StringCatalog.Get("AccountAvailableLimited", Money(available, rates), limitKind == 1 ? StringCatalog.Get("FiveHours") : StringCatalog.Get("AccountWindowWeek")));
+            }
+            var plan = info.Plan == "FREE" || info.Plan.Length == 0 ? StringCatalog.Get("AccountFreePlan") : info.Plan;
+            info.PanelLines.Add(StringCatalog.Get("AccountPlan", plan));
+            var stepsRemaining = Number(free?["remaining"]);
+            var stepsLimit = Number(free?["limit"]);
+            if (stepsRemaining.HasValue && stepsLimit.HasValue)
+            {
+                info.PanelLines.Add(StringCatalog.Get("AccountSteps", stepsRemaining.Value, stepsLimit.Value));
+            }
+            if (budget != null)
+            {
+                var state = (bool?)budget["expired"] == true ? StringCatalog.Get("AccountAccessExpired")
+                    : (bool?)budget["enabled"] == true ? StringCatalog.Get("AccountAccessActive") : StringCatalog.Get("AccountAccessPaused");
+                info.PanelLines.Add(StringCatalog.Get("AccountPaidAccess", state));
+                AddWindowRow(info, StringCatalog.Get("FiveHours"), budget["fiveHour"] as JObject, rates, total);
+                AddWindowRow(info, StringCatalog.Get("AccountWindowWeek"), budget["weekly"] as JObject, rates, total);
+            }
+
+            var suffix = limitKind == 0 ? string.Empty : StringCatalog.Get("AccountAvailableNow", Money(available, rates), limitKind == 1 ? StringCatalog.Get("LimitFiveHour") : StringCatalog.Get("LimitWeek"));
+            var who = info.Email.Length > 0 ? info.Email : StringCatalog.Get("AccountArni");
+            info.ChipText = StringCatalog.Get("AccountChip", Money(total, rates), suffix, who);
+        }
+
+        private static void ConsiderWindow(JObject? window, int kind, ref long available, ref int limitKind)
+        {
+            if (window == null) return;
+            var remaining = WindowRemaining(window);
+            if (remaining < available)
+            {
+                available = remaining;
+                limitKind = kind;
+            }
+        }
+
+        private static long WindowRemaining(JObject? window)
+        {
+            if (window == null) return long.MaxValue;
+            var requests = Number(window["requests"]) ?? 0;
+            var requestLimit = Number(window["requestLimit"]) ?? 0;
+            if (requestLimit > 0 && requests >= requestLimit) return 0;
+            var limit = Number(window["limitMicros"]);
+            var used = Number(window["usedMicros"]);
+            if (limit.HasValue && used.HasValue) return Math.Max(0, limit.Value - used.Value);
+            return Number(window["remainingMicros"]) ?? long.MaxValue;
+        }
+
+        private static void AddWindowRow(AccountInfo info, string title, JObject? window, JObject? rates, long total)
+        {
+            if (window == null) return;
+            var used = Number(window["usedMicros"]);
+            var limit = Number(window["limitMicros"]);
+            var requests = Number(window["requests"]) ?? 0;
+            var requestLimit = Number(window["requestLimit"]) ?? 0;
+            var reset = TryDate(window["resetsAt"], out var resets)
+                ? StringCatalog.Get("AccountWindowReset", resets.ToLocalTime().ToString("ddd HH:mm", StringCatalog.Culture))
+                : StringCatalog.Get("AccountWindowNotStarted");
+            string text;
+            double share = 0;
+            var showBar = false;
+            if (used.HasValue && limit.HasValue)
+            {
+                var remaining = requestLimit > 0 && requests >= requestLimit ? 0 : Math.Max(0, limit.Value - used.Value);
+                var moneyShare = limit.Value > 0 ? (double)used.Value / limit.Value : 1;
+                var requestShare = requestLimit > 0 ? (double)requests / requestLimit : 1;
+                share = Math.Min(1, Math.Max(0, Math.Max(moneyShare, requestShare)));
+                showBar = true;
+                var spent = StringCatalog.Get("AccountWindowSpent", title, Money(used.Value, rates), Money(limit.Value, rates));
+                var requestsText = StringCatalog.Get("AccountWindowRequests", requests, requestLimit);
+                text = remaining < total
+                    ? spent + " · " + StringCatalog.Get("AccountWindowLeft", Money(remaining, rates)) + " · " + requestsText + " · " + reset
+                    : StringCatalog.Get("AccountWindowCeiling", title, Money(used.Value, rates), Money(limit.Value, rates)) + " · " + requestsText + " · " + reset;
+            }
+            else
+            {
+                var parts = new List<string>();
+                var remaining = Number(window["remainingMicros"]);
+                if (remaining.HasValue) parts.Add(Money(remaining.Value, rates));
+                if (requestLimit > 0) parts.Add(StringCatalog.Get("RequestsRemaining", Math.Max(0, requestLimit - requests), requestLimit));
+                if (parts.Count == 0) return;
+                text = StringCatalog.Get("WindowRemaining", title, string.Join(" · ", parts)) + " · " + reset;
+                if (requestLimit > 0)
+                {
+                    share = Math.Min(1, (double)requests / requestLimit);
+                    showBar = true;
+                }
+            }
+            info.Windows.Add(new AccountWindowRow
+            {
+                Text = text,
+                BarPixels = showBar ? share * 320 : 0,
+                ShowBar = showBar,
+                Level = share >= 1 ? "exhausted" : share >= 0.8 ? "warning" : "ok",
+            });
         }
 
         private static void AddWindow(IList<string> lines, string title, JObject? window, JObject? rates)
@@ -88,6 +219,14 @@ namespace ArniLite.Api
             && long.TryParse(value.ToString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var number) ? number : (long?)null;
 
         private static string Text(JToken? value) => value?.Type == JTokenType.String ? value.ToString() : string.Empty;
+
+        public sealed class AccountWindowRow
+        {
+            public string Text { get; set; } = string.Empty;
+            public double BarPixels { get; set; }
+            public bool ShowBar { get; set; }
+            public string Level { get; set; } = "ok";
+        }
 
         private static bool TryDate(JToken? value, out DateTimeOffset date)
         {

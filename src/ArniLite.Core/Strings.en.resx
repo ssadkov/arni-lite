@@ -63,6 +63,18 @@
   <data name="SignOut" xml:space="preserve">
     <value>Sign out</value>
   </data>
+  <data name="Billing" xml:space="preserve">
+    <value>Balance</value>
+  </data>
+  <data name="BillingTopUp" xml:space="preserve">
+    <value>Top up</value>
+  </data>
+  <data name="BillingExpenses" xml:space="preserve">
+    <value>Expenses</value>
+  </data>
+  <data name="BillingTariffs" xml:space="preserve">
+    <value>Prices</value>
+  </data>
   <data name="CloseApp" xml:space="preserve">
     <value>Quit Arni</value>
   </data>
@@ -605,4 +617,27 @@ to work on files with Arni.</value>
   <data name="UpdateInstallFailed" xml:space="preserve"><value>Could not start installation or save the draft. The app stays open.</value></data>
   <data name="UpdateIdleOnly" xml:space="preserve"><value>Finish the agent task and dictation before installing. The draft is saved before restarting.</value></data>
   <data name="UpdateGitHub" xml:space="preserve"><value>All releases on GitHub</value></data>
+  <data name="AccountChip" xml:space="preserve"><value>Balance: {0}{1} · {2}</value></data>
+  <data name="AccountAvailableNow" xml:space="preserve"><value> (available now {0} · {1})</value></data>
+  <data name="AccountBalance" xml:space="preserve"><value>Account balance: {0}</value></data>
+  <data name="AccountOpenEnded" xml:space="preserve"><value>No expiry</value></data>
+  <data name="AccountValidUntil" xml:space="preserve"><value>Valid until {0}</value></data>
+  <data name="AccountAvailableBalance" xml:space="preserve"><value>Available now: {0}</value></data>
+  <data name="AccountAvailableLimited" xml:space="preserve"><value>Available now: {0} (limited by {1})</value></data>
+  <data name="AccountPlan" xml:space="preserve"><value>Plan: {0}</value></data>
+  <data name="AccountFreePlan" xml:space="preserve"><value>Free</value></data>
+  <data name="AccountSteps" xml:space="preserve"><value>Free steps: {0} of {1}</value></data>
+  <data name="AccountPaidAccess" xml:space="preserve"><value>Paid models: {0}</value></data>
+  <data name="AccountAccessActive" xml:space="preserve"><value>active</value></data>
+  <data name="AccountAccessPaused" xml:space="preserve"><value>paused</value></data>
+  <data name="AccountAccessExpired" xml:space="preserve"><value>expired</value></data>
+  <data name="AccountWindowWeek" xml:space="preserve"><value>Week</value></data>
+  <data name="LimitFiveHour" xml:space="preserve"><value>5 h</value></data>
+  <data name="LimitWeek" xml:space="preserve"><value>week</value></data>
+  <data name="AccountWindowSpent" xml:space="preserve"><value>{0}: spent {1} of {2}</value></data>
+  <data name="AccountWindowLeft" xml:space="preserve"><value>{0} left</value></data>
+  <data name="AccountWindowRequests" xml:space="preserve"><value>requests {0} of {1}</value></data>
+  <data name="AccountWindowCeiling" xml:space="preserve"><value>{0}: spent {1} · the {2} limit is above the balance and does not restrict</value></data>
+  <data name="AccountWindowReset" xml:space="preserve"><value>resets {0}</value></data>
+  <data name="AccountWindowNotStarted" xml:space="preserve"><value>starts with the first request</value></data>
 </root>

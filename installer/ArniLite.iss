@@ -2,10 +2,10 @@
 ; Keep AppVersion in step with the numeric part of the application version.
 
 #ifndef AppVersion
-#define AppVersion "0.1.4"
+#define AppVersion "0.1.5"
 #endif
 #ifndef AppNumericVersion
-#define AppNumericVersion "0.1.4"
+#define AppNumericVersion "0.1.5"
 #endif
 #ifndef Arch
 #define Arch "x64"

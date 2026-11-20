@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using ArniLite.Windows;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using ArniLite.Core;
@@ -64,6 +65,43 @@ namespace ArniLite
         {
             _model.Chat.RefreshLocalization();
             PreviewPlayer.RefreshLocalization();
+        }
+
+        private void Account_OnClick(object sender, RoutedEventArgs e)
+        {
+            AccountPopup.IsOpen = !AccountPopup.IsOpen;
+        }
+
+        private void AccountBilling_OnClick(object sender, RoutedEventArgs e)
+        {
+            var section = (sender as Button)?.Tag as string ?? "topup";
+            AccountPopup.IsOpen = false;
+            try { ExternalBrowser.Open("https://chat.arnion.kz/#" + section); }
+            catch (AuthLinkException) { }
+        }
+
+        private void AccountSignOut_OnClick(object sender, RoutedEventArgs e)
+        {
+            AccountPopup.IsOpen = false;
+        }
+
+        private void Window_OnPreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (!AccountPopup.IsOpen || !(e.OriginalSource is DependencyObject source)) return;
+            if (IsInside(AccountButton, source) || IsInside(AccountPanel, source)) return;
+            AccountPopup.IsOpen = false;
+        }
+
+        private static bool IsInside(DependencyObject parent, DependencyObject source)
+        {
+            while (source != null)
+            {
+                if (source == parent) return true;
+                source = source is Visual || source is System.Windows.Media.Media3D.Visual3D
+                    ? VisualTreeHelper.GetParent(source)
+                    : LogicalTreeHelper.GetParent(source);
+            }
+            return false;
         }
 
         private void Settings_OnClick(object sender, RoutedEventArgs e)

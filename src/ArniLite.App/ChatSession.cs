@@ -378,6 +378,7 @@ namespace ArniLite
         }
 
         public AccountInfo? Account => _account;
+        public string AccountChip => _account?.ChipText ?? StringCatalog.Get("Account");
         public string AccountTitle => !string.IsNullOrEmpty(_account?.Email) ? _account.Email : StringCatalog.Get("AccountArni");
         public string AccountError => _accountError.Length == 0 ? string.Empty : StringCatalog.Get(_accountError);
         public bool AccountLoading => _accountLoading;
@@ -531,6 +532,7 @@ namespace ArniLite
         private void NotifyAccount()
         {
             Notify(nameof(Account));
+            Notify(nameof(AccountChip));
             Notify(nameof(AccountTitle));
             Notify(nameof(AccountError));
             Notify(nameof(AccountLoading));

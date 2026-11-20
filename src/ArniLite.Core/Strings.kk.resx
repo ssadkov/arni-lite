@@ -63,6 +63,18 @@
   <data name="SignOut" xml:space="preserve">
     <value>Аккаунттан шығу</value>
   </data>
+  <data name="Billing" xml:space="preserve">
+    <value>Баланс</value>
+  </data>
+  <data name="BillingTopUp" xml:space="preserve">
+    <value>Толтыру</value>
+  </data>
+  <data name="BillingExpenses" xml:space="preserve">
+    <value>Шығындар</value>
+  </data>
+  <data name="BillingTariffs" xml:space="preserve">
+    <value>Тарифтер</value>
+  </data>
   <data name="CloseApp" xml:space="preserve">
     <value>Arni қолданбасын жабу</value>
   </data>
@@ -605,4 +617,27 @@
   <data name="UpdateInstallFailed" xml:space="preserve"><value>Орнату басталмады немесе жоба сақталмады. Қолданба ашық қалады.</value></data>
   <data name="UpdateIdleOnly" xml:space="preserve"><value>Орнату алдында агент жұмысын және диктантты аяқтаңыз. Қайта іске қосу алдында жоба сақталады.</value></data>
   <data name="UpdateGitHub" xml:space="preserve"><value>GitHub-тағы барлық шығарылымдар</value></data>
+  <data name="AccountChip" xml:space="preserve"><value>Баланс: {0}{1} · {2}</value></data>
+  <data name="AccountAvailableNow" xml:space="preserve"><value> (қазір қолжетімді {0} · {1})</value></data>
+  <data name="AccountBalance" xml:space="preserve"><value>Шоттағы қалдық: {0}</value></data>
+  <data name="AccountOpenEnded" xml:space="preserve"><value>Мерзімсіз</value></data>
+  <data name="AccountValidUntil" xml:space="preserve"><value>{0} дейін жарамды</value></data>
+  <data name="AccountAvailableBalance" xml:space="preserve"><value>Қазір қолжетімді: {0}</value></data>
+  <data name="AccountAvailableLimited" xml:space="preserve"><value>Қазір қолжетімді: {0} (шектеу: {1})</value></data>
+  <data name="AccountPlan" xml:space="preserve"><value>Тариф: {0}</value></data>
+  <data name="AccountFreePlan" xml:space="preserve"><value>Тегін</value></data>
+  <data name="AccountSteps" xml:space="preserve"><value>Тегін қадамдар: {0} / {1}</value></data>
+  <data name="AccountPaidAccess" xml:space="preserve"><value>Ақылы модельдер: {0}</value></data>
+  <data name="AccountAccessActive" xml:space="preserve"><value>белсенді</value></data>
+  <data name="AccountAccessPaused" xml:space="preserve"><value>тоқтатылған</value></data>
+  <data name="AccountAccessExpired" xml:space="preserve"><value>мерзімі өтті</value></data>
+  <data name="AccountWindowWeek" xml:space="preserve"><value>Апта</value></data>
+  <data name="LimitFiveHour" xml:space="preserve"><value>5 сағ</value></data>
+  <data name="LimitWeek" xml:space="preserve"><value>апта</value></data>
+  <data name="AccountWindowSpent" xml:space="preserve"><value>{0}: жұмсалғаны {1} / {2}</value></data>
+  <data name="AccountWindowLeft" xml:space="preserve"><value>тағы {0}</value></data>
+  <data name="AccountWindowRequests" xml:space="preserve"><value>сұрау {0} / {1}</value></data>
+  <data name="AccountWindowCeiling" xml:space="preserve"><value>{0}: жұмсалғаны {1} · лимит {2} қалдықтан жоғары және шектемейді</value></data>
+  <data name="AccountWindowReset" xml:space="preserve"><value>қалпына келу {0}</value></data>
+  <data name="AccountWindowNotStarted" xml:space="preserve"><value>алғашқы сұраудан басталады</value></data>
 </root>
