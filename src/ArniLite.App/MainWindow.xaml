@@ -339,7 +339,7 @@
                     <StackPanel Visibility="{Binding Chat.HasProject, Converter={StaticResource BoolVis}, ConverterParameter=invert}" Margin="0,20">
                         <TextBlock Text="{local:Loc NoProjectTitle}" FontWeight="SemiBold" />
                         <TextBlock Text="{local:Loc NoProjectHelp}" Foreground="#7D8773" TextWrapping="Wrap" Margin="0,8,0,16" />
-                        <Button Content="{local:Loc AddProject}" Command="{Binding Chat.ChooseFolderCommand}" />
+                        <Button Content="{local:Loc AttachProjectFolder}" Command="{Binding Chat.AttachFolderCommand}" />
                     </StackPanel>
                     <ListBox ItemsSource="{Binding Chat.ProjectFiles}" Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                         <ListBox.Style>

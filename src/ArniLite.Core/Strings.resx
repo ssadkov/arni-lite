@@ -221,10 +221,10 @@
     <value>У этого чата нет проекта</value>
   </data>
   <data name="NoProjectHelp" xml:space="preserve">
-    <value>Добавьте папку, чтобы открыть новый чат с доступом к её файлам.</value>
+    <value>Агент сможет работать с файлами выбранной папки.</value>
   </data>
-  <data name="AddProject" xml:space="preserve">
-    <value>Добавить проект</value>
+  <data name="AttachProjectFolder" xml:space="preserve">
+    <value>Привязать папку к этому чату</value>
   </data>
   <data name="BackToFiles" xml:space="preserve">
     <value>К списку файлов</value>

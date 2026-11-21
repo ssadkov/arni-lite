@@ -221,10 +221,10 @@
     <value>Бұл чатта жоба жоқ</value>
   </data>
   <data name="NoProjectHelp" xml:space="preserve">
-    <value>Файлдарына қолжетімді жаңа чат ашу үшін қалта қосыңыз.</value>
+    <value>Arni таңдалған қалтадағы файлдармен жұмыс істей алады.</value>
   </data>
-  <data name="AddProject" xml:space="preserve">
-    <value>Жоба қосу</value>
+  <data name="AttachProjectFolder" xml:space="preserve">
+    <value>Қалтаны осы чатқа байланыстыру</value>
   </data>
   <data name="BackToFiles" xml:space="preserve">
     <value>Файлдар тізіміне оралу</value>

@@ -71,6 +71,59 @@ namespace ArniLite.AppTests
             await Task.CompletedTask;
         });
 
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public Task LinkingAFolderKeepsTheCurrentChatAndPersistsTheProject(bool hasHistory) => OnDispatcher(() =>
+        {
+            using var fixture = new SessionFixture();
+            var initialChatId = fixture.History.NewChat();
+            if (hasHistory)
+                fixture.History.Append(initialChatId, new ChatMessage { Role = "user", Content = "Начало обсуждения" });
+            var notePath = Path.Combine(fixture.ProjectA, "note.txt");
+            File.WriteAllText(notePath, "Содержимое проекта", new UTF8Encoding(false));
+            string? selectedFolder = null;
+            var selections = 0;
+            var session = fixture.CreateSession(selectProjectFolder: () => { selections++; return selectedFolder; });
+            var chatId = session.SelectedEntry!.ChatId;
+            session.Draft = "Продолжение черновика";
+            var attachment = ComposerAttachments.ReadFile(notePath, _ => { });
+            session.Attachments.Add(attachment);
+            session.ToggleProjectCommand.Execute(fixture.ProjectA);
+            var transcript = session.Items.ToArray();
+            var originalChatCount = session.Chats.Count;
+
+            session.SetInputLocked(true);
+            Assert.False(session.AttachFolderCommand.CanExecute(null));
+            session.AttachFolderCommand.Execute(null);
+            Assert.Equal(0, selections);
+            session.SetInputLocked(false);
+            session.AttachFolderCommand.Execute(null); // Cancelled folder picker.
+            Assert.False(session.HasProject);
+
+            selectedFolder = fixture.ProjectA;
+            session.AttachFolderCommand.Execute(null);
+
+            Assert.Equal(chatId, fixture.History.CurrentChatId());
+            Assert.Equal(originalChatCount, session.Chats.Count);
+            Assert.Equal(transcript, session.Items.ToArray());
+            Assert.Equal("Продолжение черновика", session.Draft);
+            Assert.Same(attachment, Assert.Single(session.Attachments));
+            Assert.Equal(fixture.ProjectA, session.ProjectPath);
+            Assert.Equal(chatId, session.SelectedEntry?.ChatId);
+            Assert.Equal(fixture.ProjectA, session.SelectedEntry?.ProjectPath);
+            Assert.False(session.AttachFolderCommand.CanExecute(null));
+            Assert.Contains("note.txt", session.ProjectFiles);
+            session.OpenProjectFileCommand.Execute("note.txt");
+            Assert.Equal("Содержимое проекта", session.FilePreviewBody);
+
+            var reopened = fixture.CreateSession();
+            Assert.Equal(chatId, reopened.SelectedEntry?.ChatId);
+            Assert.Equal(fixture.ProjectA, reopened.ProjectPath);
+            Assert.Equal(transcript.Select(row => row.Body), reopened.Items.Select(row => row.Body));
+            return Task.CompletedTask;
+        });
+
         [Fact]
         public Task FilePreviewReadsTextWithoutCallingTheModelOrRunningAProcess() => OnDispatcher(async () =>
         {
@@ -341,8 +394,9 @@ namespace ArniLite.AppTests
                 File.WriteAllLines(Path.Combine(DirectoryPath, "folders.txt"), new[] { ProjectA, ProjectB });
             }
 
-            public ChatSession CreateSession(HttpClient? client = null) => new ChatSession(
-                new ArniApiClient(client ?? new HttpClient(new RejectNetwork())), new MemoryToken(), new OsFacts(), new RejectProcesses(), DirectoryPath);
+            public ChatSession CreateSession(HttpClient? client = null, Func<string?>? selectProjectFolder = null) => new ChatSession(
+                new ArniApiClient(client ?? new HttpClient(new RejectNetwork())), new MemoryToken(), new OsFacts(), new RejectProcesses(),
+                DirectoryPath, selectProjectFolder);
 
             public void Dispose() => Directory.Delete(DirectoryPath, true);
         }

@@ -30,6 +30,7 @@ namespace ArniLite
         private readonly List<ChatMessage> _history = new List<ChatMessage>();
         private readonly SynchronizationContext _ui;
         private readonly string _dataDirectory;
+        private readonly Func<string?> _selectProjectFolder;
         private readonly DiagnosticLog _diagnostics;
         private readonly DispatcherTimer _streamTimer;
         private readonly object _streamGate = new object();
@@ -72,7 +73,8 @@ namespace ArniLite
         private string _attachmentError = string.Empty;
         private int _pastedImages;
 
-        public ChatSession(ArniApiClient api, ITokenStore tokens, OsFacts os, IProcessRunner processes, string? dataDirectory = null)
+        public ChatSession(ArniApiClient api, ITokenStore tokens, OsFacts os, IProcessRunner processes,
+            string? dataDirectory = null, Func<string?>? selectProjectFolder = null)
         {
             _api = api;
             _tokens = tokens;
@@ -81,6 +83,7 @@ namespace ArniLite
             _streamTimer = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(60) };
             _streamTimer.Tick += (_, _) => FlushPendingText();
             _dataDirectory = dataDirectory ?? AppPaths.DataDirectory;
+            _selectProjectFolder = selectProjectFolder ?? SelectProjectFolder;
             _diagnostics = dataDirectory == null ? DiagnosticLog.Current : new DiagnosticLog(Path.Combine(_dataDirectory, "logs"));
             Directory.CreateDirectory(_dataDirectory);
             _journal = new JsonlJournal(Path.Combine(_dataDirectory, "side-effects.jsonl"));
@@ -103,7 +106,8 @@ namespace ArniLite
             NewChatCommand = new RelayCommand(NewChat, () => CanChangeContext);
             StopCommand = new RelayCommand(Stop, () => _busy);
             ClosePreviewCommand = new RelayCommand(ClosePreview);
-            ChooseFolderCommand = new RelayCommand(ChooseFolder, () => CanChangeContext);
+            ChooseFolderCommand = new RelayCommand(() => ChooseFolder(attachToCurrentChat: false), () => CanChangeContext);
+            AttachFolderCommand = new RelayCommand(() => ChooseFolder(attachToCurrentChat: true), () => CanChangeContext && !HasProject);
             AllowCommand = new RelayCommand(() => Resolve(true), () => _permissionVisible);
             DenyCommand = new RelayCommand(() => Resolve(false), () => _permissionVisible);
             RefreshAccountCommand = new RelayCommand(async () => await LoadAccountAsync(), () => !_accountLoading && CanChangeContext);
@@ -129,6 +133,7 @@ namespace ArniLite
         public ICommand SendCommand { get; }
         public ICommand NewChatCommand { get; }
         public ICommand ChooseFolderCommand { get; }
+        public ICommand AttachFolderCommand { get; }
         public ICommand AllowCommand { get; }
         public ICommand DenyCommand { get; }
         public ICommand RefreshAccountCommand { get; }
@@ -139,7 +144,7 @@ namespace ArniLite
         {
             _inputLocked = value;
             Notify(nameof(CanChangeContext));
-            foreach (var command in new[] { SendCommand, NewChatCommand, ChooseFolderCommand }) (command as RelayCommand)?.Raise();
+            foreach (var command in new[] { SendCommand, NewChatCommand, ChooseFolderCommand, AttachFolderCommand }) (command as RelayCommand)?.Raise();
         }
         public void SaveDraftForRestart()
         {
@@ -1031,19 +1036,24 @@ namespace ArniLite
                 catch (Exception) { Items.Add(new TranscriptRow("Проект недоступен", StringCatalog.Get("ProjectUnavailableDetail", folder), false)); }
             }
 
-            ProjectLabel = HasProject ? "Проект: " + _workspace.Root : "Чат без доступа к проекту";
-            Notify(nameof(ProjectPath));
-            Notify(nameof(ProjectName));
-            Notify(nameof(HasProject));
-            Notify(nameof(ChatTitle));
-            RefreshProjectFiles();
+            RefreshProjectContext();
             foreach (var message in _historyStore.Load(_chatId))
             {
                 _history.Add(message);
                 AddRow(message);
             }
             Notify(nameof(ChatTitle));
+        }
+
+        private void RefreshProjectContext()
+        {
+            ProjectLabel = HasProject ? "Проект: " + _workspace.Root : "Чат без доступа к проекту";
+            Notify(nameof(ProjectPath));
+            Notify(nameof(ProjectName));
+            Notify(nameof(HasProject));
+            RefreshProjectFiles();
             (OpenInExplorerCommand as RelayCommand)?.Raise();
+            (AttachFolderCommand as RelayCommand)?.Raise();
         }
 
         private void RefreshLists()
@@ -1138,6 +1148,7 @@ namespace ArniLite
             }
 
             var map = ReadChatFolders();
+            if (map.TryGetValue(_chatId, out var existing) && existing == _workspace.Root) return;
             map[_chatId] = _workspace.Root;
             var lines = new List<string>();
             foreach (var pair in map)
@@ -1146,7 +1157,10 @@ namespace ArniLite
             }
 
             Directory.CreateDirectory(_dataDirectory);
-            File.WriteAllLines(Path.Combine(_dataDirectory, "chat-folders.txt"), lines);
+            var path = Path.Combine(_dataDirectory, "chat-folders.txt");
+            var temporary = path + ".tmp";
+            File.WriteAllLines(temporary, lines);
+            if (File.Exists(path)) File.Replace(temporary, path, null); else File.Move(temporary, path);
         }
 
         private Dictionary<string, string> ReadChatFolders()
@@ -1281,25 +1295,55 @@ namespace ArniLite
             RefreshLists();
         }
 
-        private void ChooseFolder()
+        private static string? SelectProjectFolder()
         {
-            using (var dialog = new FolderBrowserDialog { Description = StringCatalog.Get("FolderDialog") })
-            {
-                if (dialog.ShowDialog() != DialogResult.OK)
-                {
-                    return;
-                }
+            using var dialog = new FolderBrowserDialog { Description = StringCatalog.Get("FolderDialog") };
+            return dialog.ShowDialog() == DialogResult.OK ? dialog.SelectedPath : null;
+        }
 
-                try
+        private void ChooseFolder(bool attachToCurrentChat)
+        {
+            if (!CanChangeContext || (attachToCurrentChat && HasProject)) return;
+            var path = _selectProjectFolder();
+            if (string.IsNullOrEmpty(path)) return;
+
+            try
+            {
+                if (attachToCurrentChat)
                 {
-                    RememberFolder(dialog.SelectedPath);
-                    NewProjectChat(dialog.SelectedPath);
+                    AttachFolder(path);
                 }
-                catch (Exception ex)
+                else
                 {
-                    Items.Add(new TranscriptRow("Папка", ex.Message, false));
+                    RememberFolder(path);
+                    NewProjectChat(path);
                 }
             }
+            catch (Exception ex)
+            {
+                Items.Add(new TranscriptRow("Папка", ex.Message, false));
+            }
+        }
+
+        private void AttachFolder(string path)
+        {
+            if (!CanChangeContext || HasProject) return;
+            _workspace.SetRoot(path);
+            try
+            {
+                if (!File.Exists(_historyStore.ChatPath(_chatId)))
+                    _historyStore.Rewrite(_chatId, _history);
+                BindCurrentChatFolder();
+            }
+            catch
+            {
+                _workspace.ClearRoot();
+                throw;
+            }
+
+            _collapsedProjects.Remove(_workspace.Root);
+            RefreshProjectContext();
+            RebuildChatRows();
         }
 
         private void Resolve(bool allowed)
@@ -1511,6 +1555,7 @@ namespace ArniLite
             (NewChatCommand as RelayCommand)?.Raise();
             (OpenInExplorerCommand as RelayCommand)?.Raise();
             (ChooseFolderCommand as RelayCommand)?.Raise();
+            (AttachFolderCommand as RelayCommand)?.Raise();
             (AllowCommand as RelayCommand)?.Raise();
             (DenyCommand as RelayCommand)?.Raise();
         }

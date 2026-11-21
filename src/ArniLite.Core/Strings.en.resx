@@ -221,10 +221,10 @@ to work on files with Arni.</value>
     <value>This conversation has no project</value>
   </data>
   <data name="NoProjectHelp" xml:space="preserve">
-    <value>Add a folder to start a conversation with access to its files.</value>
+    <value>Arni can work with files in the folder you choose.</value>
   </data>
-  <data name="AddProject" xml:space="preserve">
-    <value>Add project</value>
+  <data name="AttachProjectFolder" xml:space="preserve">
+    <value>Link a folder to this chat</value>
   </data>
   <data name="BackToFiles" xml:space="preserve">
     <value>Back to files</value>
