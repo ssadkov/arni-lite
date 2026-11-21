@@ -7,8 +7,8 @@ using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Threading;
 using ArniLite.Api;
 using ArniLite.Core;
@@ -1310,26 +1310,27 @@ namespace ArniLite
 
         private string ProjectPickerStartPath()
         {
-            var previous = Folders.FirstOrDefault(Directory.Exists);
+            var previous = Folders.FirstOrDefault(IsProjectPickerLocation);
             if (previous == null)
             {
                 var chatFolders = ReadChatFolders();
                 previous = Chats.Select(chat => chatFolders.TryGetValue(chat.Id, out var folder) ? folder : null)
-                    .FirstOrDefault(Directory.Exists);
+                    .FirstOrDefault(IsProjectPickerLocation);
             }
             if (previous == null) return Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
-            return Directory.GetParent(previous)?.FullName ?? previous;
+            var parent = Directory.GetParent(previous);
+            return parent?.Parent != null ? parent.FullName : previous;
         }
+
+        private static bool IsProjectPickerLocation(string? path) =>
+            path != null && Directory.Exists(path) && Directory.GetParent(path) != null;
 
         private static string? SelectProjectFolder(string startPath)
         {
-            using var dialog = new FolderBrowserDialog
-            {
-                Description = StringCatalog.Get("FolderDialog"),
-                SelectedPath = startPath,
-            };
-            return dialog.ShowDialog() == DialogResult.OK ? dialog.SelectedPath : null;
+            var window = System.Windows.Application.Current?.MainWindow;
+            var owner = window == null ? IntPtr.Zero : new WindowInteropHelper(window).Handle;
+            return ProjectFolderPicker.Show(owner, StringCatalog.Get("FolderDialog"), startPath);
         }
 
         private void ChooseFolder(bool attachToCurrentChat)

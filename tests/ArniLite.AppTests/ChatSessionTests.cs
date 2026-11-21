@@ -160,6 +160,28 @@ namespace ArniLite.AppTests
         });
 
         [Fact]
+        public Task FolderPickerKeepsATopLevelProjectInsteadOfSelectingTheDrive() => OnDispatcher(() =>
+        {
+            using var fixture = new SessionFixture();
+            var topLevelProject = new DirectoryInfo(fixture.DirectoryPath);
+            while (topLevelProject.Parent?.Parent != null) topLevelProject = topLevelProject.Parent;
+            File.WriteAllLines(Path.Combine(fixture.DirectoryPath, "folders.txt"),
+                new[] { topLevelProject.Root.FullName, topLevelProject.FullName });
+            var generalChatId = fixture.History.NewChat();
+            fixture.History.Append(generalChatId, new ChatMessage { Role = "user", Content = "Общий чат" });
+            string? initialPath = null;
+            var session = fixture.CreateSession(selectProjectFolder: startPath =>
+            {
+                initialPath = startPath;
+                return null;
+            });
+            session.AttachFolderCommand.Execute(null);
+            Assert.Equal(topLevelProject.FullName, initialPath);
+            Assert.False(session.HasProject);
+            return Task.CompletedTask;
+        });
+
+        [Fact]
         public Task FilePreviewReadsTextWithoutCallingTheModelOrRunningAProcess() => OnDispatcher(async () =>
         {
             using var fixture = new SessionFixture();
