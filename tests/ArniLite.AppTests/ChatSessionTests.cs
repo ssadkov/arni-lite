@@ -215,6 +215,45 @@ namespace ArniLite.AppTests
         });
 
         [Fact]
+        public Task DeepSeekBonusStaysSeparateAndRefreshesAfterTheSelectedModelAnswers() => OnDispatcher(async () =>
+        {
+            using var fixture = new SessionFixture();
+            var handler = new AccountHandler { BonusBalance = 15000000 };
+            using var client = new HttpClient(handler);
+            var session = fixture.CreateSession(client);
+            await session.LoadAccountAsync();
+            var deepSeek = session.Models.Single(model => model.Id == AccountHandler.DeepSeekId);
+            Assert.Equal("DeepSeek V4.1 Flash", deepSeek.Name);
+            Assert.Contains(" · Бонус · ", deepSeek.Display);
+            Assert.False(deepSeek.Free);
+            Assert.True(session.SelectedCatalog.Free);
+            Assert.Contains("$0.00", session.Account!.BalanceText);
+            Assert.Contains("$15.00 из $15.00", session.Account.BonusSummary);
+            Assert.Equal(new[] { "На 5 часов доступно $5.00", "На неделю доступно $10.00" }, session.Account.BonusLimits);
+
+            session.SelectedCatalog = deepSeek;
+            session.FreeOnly = true;
+            Assert.DoesNotContain(deepSeek, session.Models);
+            session.FreeOnly = false;
+            session.SelectedCatalog = deepSeek;
+            var refreshed = new TaskCompletionSource<bool>();
+            session.PropertyChanged += (_, args) =>
+            {
+                if (args.PropertyName == nameof(ChatSession.Account) && session.Account!.BonusSummary.Contains("$0.00 из $15.00"))
+                    refreshed.TrySetResult(true);
+            };
+            session.Draft = "Ответь коротко";
+            session.SendCommand.Execute(null);
+            await WithTimeout(refreshed.Task);
+
+            Assert.Equal(AccountHandler.DeepSeekId, handler.RequestedModel);
+            Assert.Same(deepSeek, session.SelectedCatalog);
+            Assert.False(deepSeek.HasBonus);
+            Assert.DoesNotContain(" · Бонус · ", deepSeek.Display);
+            Assert.Equal(1, handler.CatalogRequests);
+        });
+
+        [Fact]
         public Task RejectedModelIsRemovedWithoutSilentlySwitchingOrRetrying() => OnDispatcher(async () =>
         {
             using var fixture = new SessionFixture();
@@ -346,30 +385,52 @@ namespace ArniLite.AppTests
 
         private sealed class AccountHandler : HttpMessageHandler
         {
+            public const string DeepSeekId = "deepseek/deepseek-v4.1-flash-1017";
             public bool FailCatalog { get; set; }
             public bool FailAccount { get; set; }
             public bool RejectModel { get; set; }
+            public int? BonusBalance { get; set; }
+            public string? RequestedModel { get; private set; }
             public int CatalogRequests { get; private set; }
             public int ModelRequests { get; private set; }
             private int _remaining = 9;
 
-            protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
             {
                 if (request.RequestUri.AbsolutePath == "/api/account")
-                    return Json(FailAccount ? "{\"error\":\"unavailable\"}" : "{\"user\":{\"email\":\"user@example.com\",\"plan\":\"FREE\",\"budget\":null,\"freeSteps\":{\"remaining\":" + _remaining + ",\"limit\":150}}}", FailAccount ? HttpStatusCode.ServiceUnavailable : HttpStatusCode.OK);
+                {
+                    if (FailAccount) return Json("{\"error\":\"unavailable\"}", HttpStatusCode.ServiceUnavailable);
+                    var budget = BonusBalance.HasValue
+                        ? "{\"enabled\":true,\"balanceMicros\":0,\"bonus\":{\"balanceMicros\":" + BonusBalance.Value
+                            + ",\"grantedMicros\":15000000,\"expiresAt\":\"2099-12-14T18:59:59Z\",\"models\":[\"" + DeepSeekId
+                            + "\"],\"fiveHour\":{\"remainingMicros\":5000000},\"weekly\":{\"remainingMicros\":10000000}}}"
+                        : "null";
+                    return Json("{\"user\":{\"email\":\"user@example.com\",\"plan\":\"FREE\",\"budget\":" + budget
+                        + ",\"freeSteps\":{\"remaining\":" + _remaining + ",\"limit\":150}}}");
+                }
                 if (request.RequestUri.AbsolutePath == "/api/models")
                 {
                     CatalogRequests++;
-                    return Json(FailCatalog ? "{\"error\":\"unavailable\"}" : "{\"data\":[{\"id\":\"test/model-a\",\"arni_free\":true},{\"id\":\"test/model-b\",\"arni_free\":true}]}", FailCatalog ? HttpStatusCode.ServiceUnavailable : HttpStatusCode.OK);
+                    if (FailCatalog) return Json("{\"error\":\"unavailable\"}", HttpStatusCode.ServiceUnavailable);
+                    var deepSeek = BonusBalance.HasValue
+                        ? ",{\"id\":\"" + DeepSeekId + "\",\"name\":\"DeepSeek V4.1 Flash · бонус $15.00 до 14.12\",\"arni_provider\":\"openrouter\",\"arni_bonus\":{\"balanceMicros\":15000000}}"
+                        : string.Empty;
+                    return Json("{\"data\":[{\"id\":\"test/model-a\",\"arni_free\":true},{\"id\":\"test/model-b\",\"arni_free\":true}" + deepSeek + "]}");
                 }
                 ModelRequests++;
                 if (RejectModel) return Json("{\"error\":\"test/model-a is only available on agentic harnesses.\"}", HttpStatusCode.Forbidden);
+                if (BonusBalance.HasValue)
+                {
+                    var payload = Newtonsoft.Json.Linq.JObject.Parse(await request.Content.ReadAsStringAsync());
+                    RequestedModel = (string?)payload["model"];
+                    if (RequestedModel == DeepSeekId) BonusBalance = 0;
+                }
                 _remaining--;
                 return Json("{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":\"Готово.\"},\"finish_reason\":\"stop\"}]}");
             }
 
-            private static Task<HttpResponseMessage> Json(string body, HttpStatusCode status = HttpStatusCode.OK) => Task.FromResult(
-                new HttpResponseMessage(status) { Content = new StringContent(body, Encoding.UTF8, "application/json") });
+            private static HttpResponseMessage Json(string body, HttpStatusCode status = HttpStatusCode.OK) =>
+                new HttpResponseMessage(status) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
         }
 
         private sealed class ToolRoundHandler : HttpMessageHandler

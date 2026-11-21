@@ -50,6 +50,20 @@ namespace ArniLite.UnitTests
             Assert.Throws<FormatException>(() => AccountInfo.Parse("{\"user\":null}"));
         }
 
+        [Theory]
+        [InlineData(true, "2000-12-14T18:59:59Z", "Срок действия истёк")]
+        [InlineData(false, "2099-12-14T18:59:59Z", "Бонус приостановлен")]
+        public void UnavailableBonusShowsItsStatusWithoutAdvertisingTheModel(bool enabled, string expiresAt, string status)
+        {
+            var account = AccountInfo.Parse("{\"user\":{\"budget\":{\"enabled\":" + (enabled ? "true" : "false")
+                + ",\"bonus\":{\"balanceMicros\":15000000,\"grantedMicros\":15000000,\"expiresAt\":\"" + expiresAt
+                + "\",\"models\":[\"deepseek/deepseek-v4.1-flash-1017\"],\"fiveHour\":{\"remainingMicros\":5000000}}}}}");
+            Assert.True(account.HasBonus);
+            Assert.Equal(status, account.BonusSummary);
+            Assert.Empty(account.BonusLimits);
+            Assert.False(account.HasBonusFor("deepseek/deepseek-v4.1-flash-1017"));
+        }
+
         [Fact]
         public async Task CatalogExcludesRefusedFreeEndpointsButKeepsOtherModels()
         {

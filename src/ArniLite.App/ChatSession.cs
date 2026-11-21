@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
@@ -105,11 +106,7 @@ namespace ArniLite
             ChooseFolderCommand = new RelayCommand(ChooseFolder, () => CanChangeContext);
             AllowCommand = new RelayCommand(() => Resolve(true), () => _permissionVisible);
             DenyCommand = new RelayCommand(() => Resolve(false), () => _permissionVisible);
-            RefreshAccountCommand = new RelayCommand(async () =>
-            {
-                if (Models.Count == 0) await LoadAccountAsync();
-                else await RefreshAccountAsync();
-            }, () => !_accountLoading && !_busy);
+            RefreshAccountCommand = new RelayCommand(async () => await LoadAccountAsync(), () => !_accountLoading && CanChangeContext);
         }
 
         public ObservableCollection<TranscriptRow> Items { get; } = new ObservableCollection<TranscriptRow>();
@@ -337,10 +334,7 @@ namespace ArniLite
             {
                 if (!CanChangeContext) return;
                 _selectedCatalog = value;
-                if (value != null)
-                {
-                    _selectedModel = value.Id;
-                }
+                _selectedModel = value?.Id ?? string.Empty;
 
                 Notify(nameof(SelectedCatalog));
                 Notify(nameof(SelectedModel));
@@ -463,7 +457,12 @@ namespace ArniLite
                 }
             }
 
-            SelectedCatalog = match ?? (Models.Count == 0 ? null : Models[0]);
+            SelectedCatalog = match ?? Models.FirstOrDefault(model => model.Free);
+        }
+
+        private void RefreshModelBonuses()
+        {
+            foreach (var model in _catalog) model.HasBonus = _account?.HasBonusFor(model.Id) == true;
         }
 
         public event System.Action TextGrew;
@@ -484,9 +483,10 @@ namespace ArniLite
             try
             {
                 var models = await _api.ListModelsAsync(token, CancellationToken.None).ConfigureAwait(true);
-                if (generation != _accountGeneration) return;
+                if (generation != _accountGeneration || !CanChangeContext) return;
                 _catalog.Clear();
                 _catalog.AddRange(models);
+                RefreshModelBonuses();
                 ApplyModelFilter();
                 _modelStatus = Models.Count == 0 ? "NoModels" : string.Empty;
             }
@@ -509,7 +509,11 @@ namespace ArniLite
             try
             {
                 var account = await _api.AccountAsync(token, CancellationToken.None).ConfigureAwait(true);
-                if (generation == _accountGeneration) _account = account;
+                if (generation == _accountGeneration)
+                {
+                    _account = account;
+                    RefreshModelBonuses();
+                }
             }
             catch (Exception ex)
             {

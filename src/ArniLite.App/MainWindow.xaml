@@ -87,6 +87,20 @@
                                 <TextBlock Text="{Binding Chat.Account.Email}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                             </DockPanel>
                             <TextBlock Text="{Binding Chat.Account.BalanceText}" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,0,0,8" />
+                            <Border Background="#F4F5F0" CornerRadius="6" Padding="8" Margin="0,0,0,8"
+                                    Visibility="{Binding Chat.Account.HasBonus, Converter={StaticResource BoolVis}, FallbackValue=Collapsed}">
+                                <StackPanel>
+                                    <TextBlock Text="{local:Loc DeepSeekBonusTitle}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                    <TextBlock Text="{Binding Chat.Account.BonusSummary}" TextWrapping="Wrap" Margin="0,3,0,0" />
+                                    <ItemsControl ItemsSource="{Binding Chat.Account.BonusLimits}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding}" TextWrapping="Wrap" Margin="0,3,0,0" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
                             <ItemsControl ItemsSource="{Binding Chat.Account.PanelLines}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>

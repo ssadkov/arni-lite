@@ -640,4 +640,11 @@
   <data name="AccountWindowCeiling" xml:space="preserve"><value>{0}: жұмсалғаны {1} · лимит {2} қалдықтан жоғары және шектемейді</value></data>
   <data name="AccountWindowReset" xml:space="preserve"><value>қалпына келу {0}</value></data>
   <data name="AccountWindowNotStarted" xml:space="preserve"><value>алғашқы сұраудан басталады</value></data>
+  <data name="DeepSeekBonusTitle" xml:space="preserve"><value>DeepSeek V4.1 Flash бонусы</value></data>
+  <data name="DeepSeekBonusBalance" xml:space="preserve"><value>{0} / {1} · {2} дейін</value></data>
+  <data name="DeepSeekBonusExpired" xml:space="preserve"><value>Мерзімі өтті</value></data>
+  <data name="DeepSeekBonusPaused" xml:space="preserve"><value>Бонус тоқтатылды</value></data>
+  <data name="DeepSeekBonusFiveHours" xml:space="preserve"><value>5 сағатқа {0} қолжетімді</value></data>
+  <data name="DeepSeekBonusWeek" xml:space="preserve"><value>Аптаға {0} қолжетімді</value></data>
+  <data name="ModelBonus" xml:space="preserve"><value>Бонус</value></data>
 </root>

@@ -640,4 +640,11 @@ to work on files with Arni.</value>
   <data name="AccountWindowCeiling" xml:space="preserve"><value>{0}: spent {1} · the {2} limit is above the balance and does not restrict</value></data>
   <data name="AccountWindowReset" xml:space="preserve"><value>resets {0}</value></data>
   <data name="AccountWindowNotStarted" xml:space="preserve"><value>starts with the first request</value></data>
+  <data name="DeepSeekBonusTitle" xml:space="preserve"><value>DeepSeek V4.1 Flash bonus</value></data>
+  <data name="DeepSeekBonusBalance" xml:space="preserve"><value>{0} of {1} · until {2}</value></data>
+  <data name="DeepSeekBonusExpired" xml:space="preserve"><value>Expired</value></data>
+  <data name="DeepSeekBonusPaused" xml:space="preserve"><value>Bonus paused</value></data>
+  <data name="DeepSeekBonusFiveHours" xml:space="preserve"><value>{0} available for 5 hours</value></data>
+  <data name="DeepSeekBonusWeek" xml:space="preserve"><value>{0} available for the week</value></data>
+  <data name="ModelBonus" xml:space="preserve"><value>Bonus</value></data>
 </root>

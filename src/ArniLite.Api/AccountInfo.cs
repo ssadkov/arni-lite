@@ -8,6 +8,7 @@ namespace ArniLite.Api
 {
     public sealed class AccountInfo
     {
+        private readonly HashSet<string> _bonusModels = new HashSet<string>(StringComparer.Ordinal);
         private string _source = string.Empty;
         public string Email { get; private set; } = string.Empty;
         public string Plan { get; private set; } = string.Empty;
@@ -18,9 +19,13 @@ namespace ArniLite.Api
         public bool HasBudget { get; private set; }
         public string ChipText { get; private set; } = string.Empty;
         public string BalanceText { get; private set; } = string.Empty;
+        public string BonusSummary { get; private set; } = string.Empty;
+        public IList<string> BonusLimits { get; } = new List<string>();
+        public bool HasBonus => BonusSummary.Length > 0;
         public IList<string> PanelLines { get; } = new List<string>();
         public IList<AccountWindowRow> Windows { get; } = new List<AccountWindowRow>();
         public AccountInfo Relocalize() => Parse(_source);
+        public bool HasBonusFor(string modelId) => _bonusModels.Contains(modelId);
 
         public static AccountInfo Parse(string body)
         {
@@ -48,6 +53,8 @@ namespace ArniLite.Api
                 if ((bool?)budget["expired"] == true) info.LimitLines.Add(StringCatalog.Get("PaidExpired"));
                 else if ((bool?)budget["enabled"] == false) info.LimitLines.Add(StringCatalog.Get("PaidPaused"));
                 else if (TryDate(budget["validUntil"], out var until)) info.ResetInfo = StringCatalog.Get("PaidUntil", until.ToLocalTime().ToString("d", StringCatalog.Culture));
+                if (budget["bonus"] is JObject bonus)
+                    info.FillBonus(bonus, (bool?)budget["enabled"] == true, rates);
             }
 
             var remaining = Number(free?["remaining"]);
@@ -64,6 +71,43 @@ namespace ArniLite.Api
             if (info.LimitLines.Count == 0) info.LimitLines.Add(StringCatalog.Get("NoLimits"));
             FillPanel(info, budget, free, rates);
             return info;
+        }
+
+        private void FillBonus(JObject bonus, bool enabled, JObject? rates)
+        {
+            var balance = Number(bonus["balanceMicros"]);
+            var granted = Number(bonus["grantedMicros"]);
+            if (!balance.HasValue || !granted.HasValue || !TryDate(bonus["expiresAt"], out var expiresAt)) return;
+            if ((bool?)bonus["expired"] == true || expiresAt <= DateTimeOffset.UtcNow)
+            {
+                BonusSummary = StringCatalog.Get("DeepSeekBonusExpired");
+                return;
+            }
+            if (!enabled)
+            {
+                BonusSummary = StringCatalog.Get("DeepSeekBonusPaused");
+                return;
+            }
+
+            BonusSummary = StringCatalog.Get("DeepSeekBonusBalance", Money(balance.Value, rates), Money(granted.Value, rates),
+                expiresAt.ToLocalTime().ToString("g", StringCatalog.Culture));
+            AddBonusLimit("DeepSeekBonusFiveHours", bonus["fiveHour"] as JObject, balance.Value, rates);
+            AddBonusLimit("DeepSeekBonusWeek", bonus["weekly"] as JObject, balance.Value, rates);
+            if (balance.Value > 0 && bonus["models"] is JArray models)
+            {
+                foreach (var model in models)
+                {
+                    var id = Text(model);
+                    if (id.Length > 0) _bonusModels.Add(id);
+                }
+            }
+        }
+
+        private void AddBonusLimit(string resource, JObject? window, long balance, JObject? rates)
+        {
+            var remaining = Number(window?["remainingMicros"]);
+            if (remaining.HasValue)
+                BonusLimits.Add(StringCatalog.Get(resource, Money(Math.Min(balance, remaining.Value), rates)));
         }
 
         private static void FillPanel(AccountInfo info, JObject? budget, JObject? free, JObject? rates)

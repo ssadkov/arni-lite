@@ -7,6 +7,8 @@ namespace ArniLite.Api
 {
     public sealed class CatalogModel : INotifyPropertyChanged
     {
+        private bool _hasBonus;
+
         // OpenRouter refused these free endpoints for Arni (2026-11-11).
         public static bool IsAvailableForArni(string id) =>
             !string.Equals(id, "thinkingmachines/inkling:free", StringComparison.OrdinalIgnoreCase)
@@ -26,7 +28,19 @@ namespace ArniLite.Api
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Display)));
         }
 
-        public string Display => Provider + " · " + Name + " · " + PriceLabel;
+        public bool HasBonus
+        {
+            get => _hasBonus;
+            set
+            {
+                if (_hasBonus == value) return;
+                _hasBonus = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Display)));
+            }
+        }
+
+        public string Display => Provider + " · " + Name
+            + (HasBonus ? " · " + StringCatalog.Get("ModelBonus") : string.Empty) + " · " + PriceLabel;
 
         public override string ToString()
         {
