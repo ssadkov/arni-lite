@@ -30,7 +30,7 @@ namespace ArniLite
         private readonly List<ChatMessage> _history = new List<ChatMessage>();
         private readonly SynchronizationContext _ui;
         private readonly string _dataDirectory;
-        private readonly Func<string?> _selectProjectFolder;
+        private readonly Func<string, string?> _selectProjectFolder;
         private readonly DiagnosticLog _diagnostics;
         private readonly DispatcherTimer _streamTimer;
         private readonly object _streamGate = new object();
@@ -74,7 +74,7 @@ namespace ArniLite
         private int _pastedImages;
 
         public ChatSession(ArniApiClient api, ITokenStore tokens, OsFacts os, IProcessRunner processes,
-            string? dataDirectory = null, Func<string?>? selectProjectFolder = null)
+            string? dataDirectory = null, Func<string, string?>? selectProjectFolder = null)
         {
             _api = api;
             _tokens = tokens;
@@ -1047,6 +1047,7 @@ namespace ArniLite
 
         private void RefreshProjectContext()
         {
+            if (HasProject) RememberFolder(_workspace.Root);
             ProjectLabel = HasProject ? "Проект: " + _workspace.Root : "Чат без доступа к проекту";
             Notify(nameof(ProjectPath));
             Notify(nameof(ProjectName));
@@ -1157,7 +1158,11 @@ namespace ArniLite
             }
 
             Directory.CreateDirectory(_dataDirectory);
-            var path = Path.Combine(_dataDirectory, "chat-folders.txt");
+            ReplaceFolderList(Path.Combine(_dataDirectory, "chat-folders.txt"), lines);
+        }
+
+        private static void ReplaceFolderList(string path, IEnumerable<string> lines)
+        {
             var temporary = path + ".tmp";
             File.WriteAllLines(temporary, lines);
             if (File.Exists(path)) File.Replace(temporary, path, null); else File.Move(temporary, path);
@@ -1279,45 +1284,66 @@ namespace ArniLite
 
         private void RememberFolder(string path)
         {
-            var folderFile = Path.Combine(_dataDirectory, "folders.txt");
-            var lines = File.Exists(folderFile) ? File.ReadAllLines(folderFile) : new string[0];
-            var kept = new List<string> { path };
-            for (var i = 0; i < lines.Length && kept.Count < 8; i++)
-            {
-                if (!string.Equals(lines[i], path, StringComparison.OrdinalIgnoreCase) && Directory.Exists(lines[i]))
-                {
-                    kept.Add(lines[i]);
-                }
-            }
+            if (string.Equals(Folders.FirstOrDefault(), path, StringComparison.OrdinalIgnoreCase)) return;
 
-            Directory.CreateDirectory(_dataDirectory);
-            File.WriteAllLines(folderFile, kept);
-            RefreshLists();
+            var folderFile = Path.Combine(_dataDirectory, "folders.txt");
+            try
+            {
+                var lines = File.Exists(folderFile) ? File.ReadAllLines(folderFile) : Array.Empty<string>();
+                var kept = new List<string> { path };
+                foreach (var folder in lines)
+                {
+                    if (kept.Count == 8) break;
+                    if (!string.Equals(folder, path, StringComparison.OrdinalIgnoreCase) && Directory.Exists(folder))
+                        kept.Add(folder);
+                }
+                if (!lines.SequenceEqual(kept))
+                    ReplaceFolderList(folderFile, kept);
+                Folders.Clear();
+                foreach (var folder in kept) Folders.Add(folder);
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+            {
+                _diagnostics.Write("recent_project_folders_save_failed", exception: ex);
+            }
         }
 
-        private static string? SelectProjectFolder()
+        private string ProjectPickerStartPath()
         {
-            using var dialog = new FolderBrowserDialog { Description = StringCatalog.Get("FolderDialog") };
+            var previous = Folders.FirstOrDefault(Directory.Exists);
+            if (previous == null)
+            {
+                var chatFolders = ReadChatFolders();
+                previous = Chats.Select(chat => chatFolders.TryGetValue(chat.Id, out var folder) ? folder : null)
+                    .FirstOrDefault(Directory.Exists);
+            }
+            if (previous == null) return Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+            return Directory.GetParent(previous)?.FullName ?? previous;
+        }
+
+        private static string? SelectProjectFolder(string startPath)
+        {
+            using var dialog = new FolderBrowserDialog
+            {
+                Description = StringCatalog.Get("FolderDialog"),
+                SelectedPath = startPath,
+            };
             return dialog.ShowDialog() == DialogResult.OK ? dialog.SelectedPath : null;
         }
 
         private void ChooseFolder(bool attachToCurrentChat)
         {
             if (!CanChangeContext || (attachToCurrentChat && HasProject)) return;
-            var path = _selectProjectFolder();
-            if (string.IsNullOrEmpty(path)) return;
 
             try
             {
+                var path = _selectProjectFolder(ProjectPickerStartPath());
+                if (string.IsNullOrEmpty(path)) return;
                 if (attachToCurrentChat)
-                {
                     AttachFolder(path);
-                }
                 else
-                {
-                    RememberFolder(path);
                     NewProjectChat(path);
-                }
             }
             catch (Exception ex)
             {

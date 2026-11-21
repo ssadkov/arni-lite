@@ -71,7 +71,14 @@
                     <Button x:Name="FilesButton" DockPanel.Dock="Right" Content="{local:Loc Files}" Style="{StaticResource QuietButton}" Click="ToggleFiles_OnClick" ToolTip="{local:Loc FilesTip}" />
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="{Binding Chat.ChatTitle}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                        <TextBlock Text="{Binding Chat.ProjectName}" ToolTip="{Binding Chat.ProjectPath}" FontSize="11" Foreground="#758071" Margin="0,3,0,0" />
+                        <TextBlock Text="{Binding Chat.ProjectName}" ToolTip="{Binding Chat.ProjectPath}" FontSize="11" Foreground="#758071" Margin="0,3,0,0"
+                                   Visibility="{Binding Chat.HasProject, Converter={StaticResource BoolVis}}" />
+                        <Button Style="{StaticResource QuietButton}" Command="{Binding Chat.AttachFolderCommand}" Padding="0" Margin="0,2,0,0"
+                                HorizontalAlignment="Left" FontSize="11" Foreground="#526849" ToolTip="{local:Loc AttachProjectFolder}"
+                                AutomationProperties.Name="{local:Loc AttachProjectFolder}"
+                                Visibility="{Binding Chat.HasProject, Converter={StaticResource BoolVis}, ConverterParameter=invert}">
+                            <TextBlock Text="{local:Loc NoProject}" TextDecorations="Underline" />
+                        </Button>
                     </StackPanel>
                 </DockPanel>
             </Border>
