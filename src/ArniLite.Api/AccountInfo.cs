@@ -11,6 +11,7 @@ namespace ArniLite.Api
         private readonly HashSet<string> _bonusModels = new HashSet<string>(StringComparer.Ordinal);
         private string _source = string.Empty;
         public string Email { get; private set; } = string.Empty;
+        public string AuthProvider { get; private set; } = string.Empty;
         public string Plan { get; private set; } = string.Empty;
         public string AccountType { get; private set; } = string.Empty;
         public string Summary => string.Join(" · ", LimitLines);
@@ -18,6 +19,7 @@ namespace ArniLite.Api
         public string ResetInfo { get; private set; } = string.Empty;
         public bool HasBudget { get; private set; }
         public string ChipText { get; private set; } = string.Empty;
+        public string ChipTooltip { get; private set; } = string.Empty;
         public string BalanceText { get; private set; } = string.Empty;
         public string BonusSummary { get; private set; } = string.Empty;
         public IList<string> BonusLimits { get; } = new List<string>();
@@ -39,6 +41,13 @@ namespace ArniLite.Api
             {
                 _source = body,
                 Email = Text(user["email"]),
+                AuthProvider = Text(user["authProvider"]) switch
+                {
+                    "yandex" => "yandex",
+                    "google" => "google",
+                    "vk" => "vk",
+                    _ => string.Empty,
+                },
                 Plan = Text(user["plan"]),
                 HasBudget = budget != null,
             };
@@ -161,11 +170,13 @@ namespace ArniLite.Api
                 AddWindowRow(info, StringCatalog.Get("AccountWindowWeek"), budget["weekly"] as JObject, rates, mainBalance);
             }
 
-            var suffix = limitKind == 0 ? string.Empty : StringCatalog.Get("AccountAvailableNow", Money(available, rates), limitKind == 1 ? StringCatalog.Get("LimitFiveHour") : StringCatalog.Get("LimitWeek"));
-            var who = info.Email.Length > 0 ? info.Email : StringCatalog.Get("AccountArni");
-            info.ChipText = bonusBalance > 0
-                ? StringCatalog.Get("AccountChipWithDeepSeekBonus", Money(mainBalance + bonusBalance, rates), Money(bonusBalance, rates), who)
-                : StringCatalog.Get("AccountChip", Money(mainBalance, rates), suffix, who);
+            info.ChipText = Money(mainBalance + bonusBalance, rates);
+            info.ChipTooltip = info.Email.Length > 0 ? info.Email : StringCatalog.Get("AccountArni");
+            if (bonusBalance > 0)
+            {
+                info.ChipText += "*";
+                info.ChipTooltip = StringCatalog.Get("AccountBonusTooltip", Money(bonusBalance, rates)) + "\n" + info.ChipTooltip;
+            }
         }
 
         private static void ConsiderWindow(JObject? window, int kind, ref long available, ref int limitKind)

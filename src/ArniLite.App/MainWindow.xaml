@@ -65,8 +65,12 @@
             <Border BorderBrush="#E9EBE5" BorderThickness="0,0,0,1" Padding="16,14">
                 <DockPanel>
                     <Button DockPanel.Dock="Left" Content="{local:Loc Projects}" Style="{StaticResource QuietButton}" Margin="0,0,12,0" Click="ToggleNavigation_OnClick" ToolTip="{local:Loc ProjectsTip}" />
-                    <Button x:Name="AccountButton" DockPanel.Dock="Right" Margin="8,0,0,0" Padding="10,6" MaxWidth="360" Style="{StaticResource QuietButton}" Click="Account_OnClick" Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}}" ToolTip="{Binding Chat.AccountChip}">
-                        <TextBlock Text="{Binding Chat.AccountChip}" TextTrimming="CharacterEllipsis" FontSize="12" />
+                    <Button x:Name="AccountButton" DockPanel.Dock="Right" Margin="8,0,0,0" Padding="10,6" Style="{StaticResource QuietButton}" Click="Account_OnClick"
+                            Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}}" ToolTip="{Binding Chat.AccountTooltip}" AutomationProperties.HelpText="{Binding Chat.AccountTooltip}">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Style="{StaticResource AccountProviderIcon}" Margin="0,0,6,0" />
+                            <TextBlock Text="{Binding Chat.AccountChip}" FontSize="12" VerticalAlignment="Center" />
+                        </StackPanel>
                     </Button>
                     <Button x:Name="FilesButton" DockPanel.Dock="Right" Content="{local:Loc Files}" Style="{StaticResource QuietButton}" Click="ToggleFiles_OnClick" ToolTip="{local:Loc FilesTip}" />
                     <StackPanel VerticalAlignment="Center">

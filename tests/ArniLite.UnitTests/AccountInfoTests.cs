@@ -54,7 +54,8 @@ namespace ArniLite.UnitTests
                 Assert.Equal("Основной баланс: ≈ 161,15 ₽", account.BalanceText);
                 var total = 1394.02m.ToString("N2", StringCatalog.Culture);
                 var bonus = 1232.87m.ToString("N2", StringCatalog.Culture);
-                Assert.StartsWith($"Баланс: ≈ {total} ₽ · из них ≈ {bonus} ₽ на DeepSeek", account.ChipText);
+                Assert.Equal($"≈ {total} ₽*", account.ChipText);
+                Assert.StartsWith($"* Из этой суммы ≈ {bonus} ₽ доступны только для DeepSeek V4.1 Flash.", account.ChipTooltip);
                 Assert.StartsWith($"≈ {bonus} ₽ из ≈ {bonus} ₽", account.BonusSummary);
             }
             finally { CultureInfo.CurrentCulture = previousCulture; }
@@ -83,8 +84,8 @@ namespace ArniLite.UnitTests
             Assert.Equal(status, account.BonusSummary);
             Assert.Empty(account.BonusLimits);
             Assert.False(account.HasBonusFor("deepseek/deepseek-v4.1-flash-1017"));
-            Assert.StartsWith("Баланс: $0.00 ·", account.ChipText);
-            Assert.DoesNotContain("DeepSeek", account.ChipText);
+            Assert.Equal("$0.00", account.ChipText);
+            Assert.DoesNotContain("DeepSeek", account.ChipTooltip);
         }
 
         [Fact]

@@ -339,7 +339,8 @@ namespace ArniLite.AppTests
             Assert.True(session.SelectedCatalog.Free);
             Assert.Contains("$0.00", session.Account!.BalanceText);
             Assert.Contains("$15.00 из $15.00", session.Account.BonusSummary);
-            Assert.StartsWith("Баланс: $15.00 · из них $15.00 на DeepSeek", session.AccountChip);
+            Assert.Equal("$15.00*", session.AccountChip);
+            Assert.StartsWith("* Из этой суммы $15.00 доступны только для DeepSeek V4.1 Flash.", session.AccountTooltip);
             Assert.Equal(new[] { "На 5 часов доступно $5.00", "На неделю доступно $10.00" }, session.Account.BonusLimits);
 
             session.SelectedCatalog = deepSeek;
@@ -361,9 +362,31 @@ namespace ArniLite.AppTests
             Assert.Same(deepSeek, session.SelectedCatalog);
             Assert.False(deepSeek.HasBonus);
             Assert.DoesNotContain(" · Бонус · ", deepSeek.Display);
-            Assert.StartsWith("Баланс: $0.00 ·", session.AccountChip);
-            Assert.DoesNotContain("DeepSeek", session.AccountChip);
+            Assert.Equal("$0.00", session.AccountChip);
+            Assert.Equal("user@example.com", session.AccountTooltip);
             Assert.Equal(1, handler.CatalogRequests);
+        });
+
+        [Theory]
+        [InlineData("yandex", "YandexAccountIcon")]
+        [InlineData("google", "GoogleAccountIcon")]
+        [InlineData("vk", "VkAccountIcon")]
+        [InlineData("unknown", "DefaultAccountIcon")]
+        [InlineData(null, "DefaultAccountIcon")]
+        public Task AccountIconUsesTheVerifiedProviderFromTheApi(string? provider, string resourceKey) => OnDispatcher(async () =>
+        {
+            var user = new Newtonsoft.Json.Linq.JObject { ["email"] = "fake@gmail.com", ["authProvider"] = provider };
+            var account = AccountInfo.Parse(new Newtonsoft.Json.Linq.JObject { ["user"] = user }.ToString());
+            var icons = (System.Windows.ResourceDictionary)System.Windows.Application.LoadComponent(
+                new Uri("/ArniLite;component/UI/AccountProviderIcons.xaml", UriKind.Relative));
+            var icon = new System.Windows.Controls.Image
+            {
+                DataContext = new { Chat = new { Account = account } },
+                Style = (System.Windows.Style)icons["AccountProviderIcon"],
+            };
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            Assert.Same(icons[resourceKey], icon.Source);
+            Assert.True(icon.Source.Width > 0);
         });
 
         [Fact]
