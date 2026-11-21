@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -6,6 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using ArniLite.Api;
+using ArniLite.Core;
 using Xunit;
 
 namespace ArniLite.UnitTests
@@ -40,6 +42,25 @@ namespace ArniLite.UnitTests
         }
 
         [Fact]
+        public void DecimalServerRateIsReadUnderRussianCulture()
+        {
+            var previousCulture = CultureInfo.CurrentCulture;
+            try
+            {
+                CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("ru-RU");
+                var account = AccountInfo.Parse("{\"user\":{\"budget\":{\"enabled\":true,\"balanceMicros\":1960700,"
+                    + "\"bonus\":{\"balanceMicros\":15000000,\"grantedMicros\":15000000,\"expiresAt\":\"2099-12-14T18:59:59Z\"}},"
+                    + "\"billingRates\":{\"RUB\":82.1911}}}");
+                Assert.Equal("Основной баланс: ≈ 161,15 ₽", account.BalanceText);
+                var total = 1394.02m.ToString("N2", StringCatalog.Culture);
+                var bonus = 1232.87m.ToString("N2", StringCatalog.Culture);
+                Assert.StartsWith($"Баланс: ≈ {total} ₽ · из них ≈ {bonus} ₽ на DeepSeek", account.ChipText);
+                Assert.StartsWith($"≈ {bonus} ₽ из ≈ {bonus} ₽", account.BonusSummary);
+            }
+            finally { CultureInfo.CurrentCulture = previousCulture; }
+        }
+
+        [Fact]
         public void UsesServerExchangeRateAndDoesNotInventMissingLimits()
         {
             var account = AccountInfo.Parse("{\"user\":{\"email\":\"user@example.com\",\"plan\":\"PRO\",\"budget\":{\"balanceMicros\":2000000},\"billingRates\":{\"RUB\":100}}}");
@@ -62,6 +83,8 @@ namespace ArniLite.UnitTests
             Assert.Equal(status, account.BonusSummary);
             Assert.Empty(account.BonusLimits);
             Assert.False(account.HasBonusFor("deepseek/deepseek-v4.1-flash-1017"));
+            Assert.StartsWith("Баланс: $0.00 ·", account.ChipText);
+            Assert.DoesNotContain("DeepSeek", account.ChipText);
         }
 
         [Fact]

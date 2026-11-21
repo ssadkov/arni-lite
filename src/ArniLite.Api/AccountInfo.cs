@@ -53,8 +53,6 @@ namespace ArniLite.Api
                 if ((bool?)budget["expired"] == true) info.LimitLines.Add(StringCatalog.Get("PaidExpired"));
                 else if ((bool?)budget["enabled"] == false) info.LimitLines.Add(StringCatalog.Get("PaidPaused"));
                 else if (TryDate(budget["validUntil"], out var until)) info.ResetInfo = StringCatalog.Get("PaidUntil", until.ToLocalTime().ToString("d", StringCatalog.Culture));
-                if (budget["bonus"] is JObject bonus)
-                    info.FillBonus(bonus, (bool?)budget["enabled"] == true, rates);
             }
 
             var remaining = Number(free?["remaining"]);
@@ -73,20 +71,20 @@ namespace ArniLite.Api
             return info;
         }
 
-        private void FillBonus(JObject bonus, bool enabled, JObject? rates)
+        private long FillBonus(JObject bonus, bool enabled, JObject? rates)
         {
             var balance = Number(bonus["balanceMicros"]);
             var granted = Number(bonus["grantedMicros"]);
-            if (!balance.HasValue || !granted.HasValue || !TryDate(bonus["expiresAt"], out var expiresAt)) return;
+            if (!balance.HasValue || !granted.HasValue || !TryDate(bonus["expiresAt"], out var expiresAt)) return 0;
             if ((bool?)bonus["expired"] == true || expiresAt <= DateTimeOffset.UtcNow)
             {
                 BonusSummary = StringCatalog.Get("DeepSeekBonusExpired");
-                return;
+                return 0;
             }
             if (!enabled)
             {
                 BonusSummary = StringCatalog.Get("DeepSeekBonusPaused");
-                return;
+                return 0;
             }
 
             BonusSummary = StringCatalog.Get("DeepSeekBonusBalance", Money(balance.Value, rates), Money(granted.Value, rates),
@@ -101,6 +99,7 @@ namespace ArniLite.Api
                     if (id.Length > 0) _bonusModels.Add(id);
                 }
             }
+            return Math.Max(0, balance.Value);
         }
 
         private void AddBonusLimit(string resource, JObject? window, long balance, JObject? rates)
@@ -112,7 +111,7 @@ namespace ArniLite.Api
 
         private static void FillPanel(AccountInfo info, JObject? budget, JObject? free, JObject? rates)
         {
-            var total = 0L;
+            var mainBalance = 0L;
             var available = 0L;
             var limitKind = 0;
             var active = false;
@@ -120,8 +119,8 @@ namespace ArniLite.Api
             {
                 var balance = Math.Max(0, Number(budget["balanceMicros"]) ?? 0);
                 active = (bool?)budget["enabled"] == true && (bool?)budget["expired"] != true;
-                total = active ? balance : 0;
-                available = total;
+                mainBalance = active ? balance : 0;
+                available = mainBalance;
                 if (active)
                 {
                     ConsiderWindow(budget["fiveHour"] as JObject, 1, ref available, ref limitKind);
@@ -129,7 +128,10 @@ namespace ArniLite.Api
                 }
             }
 
-            info.BalanceText = StringCatalog.Get("AccountBalance", Money(total, rates));
+            var bonusBalance = budget?["bonus"] is JObject bonus
+                ? info.FillBonus(bonus, (bool?)budget["enabled"] == true, rates)
+                : 0;
+            info.BalanceText = StringCatalog.Get(info.HasBonus ? "AccountMainBalance" : "AccountBalance", Money(mainBalance, rates));
             if (budget != null && TryDate(budget["validUntil"], out var until))
             {
                 info.PanelLines.Add(until.UtcDateTime.Year >= 2099
@@ -155,13 +157,15 @@ namespace ArniLite.Api
                 var state = (bool?)budget["expired"] == true ? StringCatalog.Get("AccountAccessExpired")
                     : (bool?)budget["enabled"] == true ? StringCatalog.Get("AccountAccessActive") : StringCatalog.Get("AccountAccessPaused");
                 info.PanelLines.Add(StringCatalog.Get("AccountPaidAccess", state));
-                AddWindowRow(info, StringCatalog.Get("FiveHours"), budget["fiveHour"] as JObject, rates, total);
-                AddWindowRow(info, StringCatalog.Get("AccountWindowWeek"), budget["weekly"] as JObject, rates, total);
+                AddWindowRow(info, StringCatalog.Get("FiveHours"), budget["fiveHour"] as JObject, rates, mainBalance);
+                AddWindowRow(info, StringCatalog.Get("AccountWindowWeek"), budget["weekly"] as JObject, rates, mainBalance);
             }
 
             var suffix = limitKind == 0 ? string.Empty : StringCatalog.Get("AccountAvailableNow", Money(available, rates), limitKind == 1 ? StringCatalog.Get("LimitFiveHour") : StringCatalog.Get("LimitWeek"));
             var who = info.Email.Length > 0 ? info.Email : StringCatalog.Get("AccountArni");
-            info.ChipText = StringCatalog.Get("AccountChip", Money(total, rates), suffix, who);
+            info.ChipText = bonusBalance > 0
+                ? StringCatalog.Get("AccountChipWithDeepSeekBonus", Money(mainBalance + bonusBalance, rates), Money(bonusBalance, rates), who)
+                : StringCatalog.Get("AccountChip", Money(mainBalance, rates), suffix, who);
         }
 
         private static void ConsiderWindow(JObject? window, int kind, ref long available, ref int limitKind)
@@ -251,8 +255,9 @@ namespace ArniLite.Api
         private static string Money(long micros, JObject? rates)
         {
             var usd = micros / 1000000m;
-            var rate = rates?["RUB"];
-            if (rate != null && rate.Type != JTokenType.Null && decimal.TryParse(rate.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var rub) && rub > 0)
+            if (rates?["RUB"] is JValue rate
+                && decimal.TryParse(rate.ToString(CultureInfo.InvariantCulture), NumberStyles.Float, CultureInfo.InvariantCulture, out var rub)
+                && rub > 0)
             {
                 return "≈ " + (usd * rub).ToString("N2", StringCatalog.Culture) + " ₽";
             }

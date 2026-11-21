@@ -339,6 +339,7 @@ namespace ArniLite.AppTests
             Assert.True(session.SelectedCatalog.Free);
             Assert.Contains("$0.00", session.Account!.BalanceText);
             Assert.Contains("$15.00 из $15.00", session.Account.BonusSummary);
+            Assert.StartsWith("Баланс: $15.00 · из них $15.00 на DeepSeek", session.AccountChip);
             Assert.Equal(new[] { "На 5 часов доступно $5.00", "На неделю доступно $10.00" }, session.Account.BonusLimits);
 
             session.SelectedCatalog = deepSeek;
@@ -360,6 +361,8 @@ namespace ArniLite.AppTests
             Assert.Same(deepSeek, session.SelectedCatalog);
             Assert.False(deepSeek.HasBonus);
             Assert.DoesNotContain(" · Бонус · ", deepSeek.Display);
+            Assert.StartsWith("Баланс: $0.00 ·", session.AccountChip);
+            Assert.DoesNotContain("DeepSeek", session.AccountChip);
             Assert.Equal(1, handler.CatalogRequests);
         });
 
