@@ -1,12 +1,12 @@
-# Arni (0.1.5)
+# Arni (0.1.6)
 
 Лёгкое приложение для Windows 7 SP1 и новее. Чаты с моделями Arni, агент в папке проекта и установка отдельно для 32- и 64-битной Windows. Нужен .NET Framework 4.8.
 
 ## Возможности
 
-- Чаты по выбранной папке проекта и потоковый ответ модели.
+- Чаты по папке проекта и потоковый ответ модели. Папку можно привязать к открытому чату через «Без проекта» или панель «Файлы».
 - Вход через Яндекс или Google в браузере. Сессия хранится только у текущего пользователя Windows.
-- Счёт и лимиты аккаунта справа вверху: баланс, пополнение, расходы, тарифы и выход. Список моделей в чате.
+- Счёт и лимиты аккаунта справа вверху: баланс, пополнение, расходы, тарифы и выход. Звёздочка у суммы отмечает бонус DeepSeek.
 - Агент читает и ищет файлы проекта, предлагает правки и выполняет команды после подтверждения.
 - Поиск в интернете. В ответ попадают заголовок, адрес и короткий фрагмент, без открытия страницы.
 - Несколько MCP-серверов: адрес и необязательный ключ. Подключение проверяется при добавлении.
@@ -23,9 +23,9 @@
 
 Lightweight client for Windows 7 SP1 and newer. Arni chats, a project agent, and separate 32-bit and 64-bit installers. Requires .NET Framework 4.8.
 
-- Project chats with a streaming model response.
+- Project chats with streaming model responses. Link a folder to an open chat from “No project” or the Files panel.
 - Sign-in with Yandex or Google in the browser. The session stays with the current Windows user.
-- Account balance and limits at the top right: top-up, expenses, prices, and sign-out. The model list stays in the chat.
+- Account balance and limits at the top right, with top-up, expenses, prices, and sign-out. An asterisk marks a balance that includes a DeepSeek bonus.
 - The agent reads and searches project files, proposes edits, and runs commands after confirmation.
 - Web search. A result is a title, address, and short snippet. The page itself is not opened.
 - Several MCP servers: an address and an optional key. The connection is checked when a server is added.
