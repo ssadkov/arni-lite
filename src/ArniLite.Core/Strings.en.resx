@@ -221,10 +221,10 @@ to work on files with Arni.</value>
     <value>This conversation has no project</value>
   </data>
   <data name="NoProjectHelp" xml:space="preserve">
-    <value>Add a folder to start a conversation with access to its files.</value>
+    <value>Arni can work with files in the folder you choose.</value>
   </data>
-  <data name="AddProject" xml:space="preserve">
-    <value>Add project</value>
+  <data name="AttachProjectFolder" xml:space="preserve">
+    <value>Link a folder to this chat</value>
   </data>
   <data name="BackToFiles" xml:space="preserve">
     <value>Back to files</value>
@@ -387,6 +387,12 @@ to work on files with Arni.</value>
   </data>
   <data name="ToolLimit" xml:space="preserve">
     <value>Stopped at the tool call limit.</value>
+  </data>
+  <data name="StreamInterrupted" xml:space="preserve">
+    <value>The model stopped before finishing its answer. Send the message again or choose another model.</value>
+  </data>
+  <data name="RepeatedToolFailure" xml:space="preserve">
+    <value>Stopped: the tool {0} returned the same error twice. Rephrase the request or choose another model.</value>
   </data>
   <data name="InvalidAccount" xml:space="preserve">
     <value>The server returned invalid account data.</value>
@@ -617,9 +623,9 @@ to work on files with Arni.</value>
   <data name="UpdateInstallFailed" xml:space="preserve"><value>Could not start installation or save the draft. The app stays open.</value></data>
   <data name="UpdateIdleOnly" xml:space="preserve"><value>Finish the agent task and dictation before installing. The draft is saved before restarting.</value></data>
   <data name="UpdateGitHub" xml:space="preserve"><value>All releases on GitHub</value></data>
-  <data name="AccountChip" xml:space="preserve"><value>Balance: {0}{1} · {2}</value></data>
-  <data name="AccountAvailableNow" xml:space="preserve"><value> (available now {0} · {1})</value></data>
   <data name="AccountBalance" xml:space="preserve"><value>Account balance: {0}</value></data>
+  <data name="AccountMainBalance" xml:space="preserve"><value>Main balance: {0}</value></data>
+  <data name="AccountBonusTooltip" xml:space="preserve"><value>* Includes {0} available only for DeepSeek V4.1 Flash.</value></data>
   <data name="AccountOpenEnded" xml:space="preserve"><value>No expiry</value></data>
   <data name="AccountValidUntil" xml:space="preserve"><value>Valid until {0}</value></data>
   <data name="AccountAvailableBalance" xml:space="preserve"><value>Available now: {0}</value></data>
@@ -632,12 +638,17 @@ to work on files with Arni.</value>
   <data name="AccountAccessPaused" xml:space="preserve"><value>paused</value></data>
   <data name="AccountAccessExpired" xml:space="preserve"><value>expired</value></data>
   <data name="AccountWindowWeek" xml:space="preserve"><value>Week</value></data>
-  <data name="LimitFiveHour" xml:space="preserve"><value>5 h</value></data>
-  <data name="LimitWeek" xml:space="preserve"><value>week</value></data>
   <data name="AccountWindowSpent" xml:space="preserve"><value>{0}: spent {1} of {2}</value></data>
   <data name="AccountWindowLeft" xml:space="preserve"><value>{0} left</value></data>
   <data name="AccountWindowRequests" xml:space="preserve"><value>requests {0} of {1}</value></data>
   <data name="AccountWindowCeiling" xml:space="preserve"><value>{0}: spent {1} · the {2} limit is above the balance and does not restrict</value></data>
   <data name="AccountWindowReset" xml:space="preserve"><value>resets {0}</value></data>
   <data name="AccountWindowNotStarted" xml:space="preserve"><value>starts with the first request</value></data>
+  <data name="DeepSeekBonusTitle" xml:space="preserve"><value>DeepSeek V4.1 Flash bonus</value></data>
+  <data name="DeepSeekBonusBalance" xml:space="preserve"><value>{0} of {1} · until {2}</value></data>
+  <data name="DeepSeekBonusExpired" xml:space="preserve"><value>Expired</value></data>
+  <data name="DeepSeekBonusPaused" xml:space="preserve"><value>Bonus paused</value></data>
+  <data name="DeepSeekBonusFiveHours" xml:space="preserve"><value>{0} available for 5 hours</value></data>
+  <data name="DeepSeekBonusWeek" xml:space="preserve"><value>{0} available for the week</value></data>
+  <data name="ModelBonus" xml:space="preserve"><value>Bonus</value></data>
 </root>

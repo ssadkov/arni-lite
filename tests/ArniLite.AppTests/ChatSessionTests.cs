@@ -71,6 +71,116 @@ namespace ArniLite.AppTests
             await Task.CompletedTask;
         });
 
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public Task LinkingAFolderKeepsTheCurrentChatAndPersistsTheProject(bool hasHistory) => OnDispatcher(() =>
+        {
+            using var fixture = new SessionFixture();
+            var initialChatId = fixture.History.NewChat();
+            if (hasHistory)
+                fixture.History.Append(initialChatId, new ChatMessage { Role = "user", Content = "Начало обсуждения" });
+            var notePath = Path.Combine(fixture.ProjectA, "note.txt");
+            File.WriteAllText(notePath, "Содержимое проекта", new UTF8Encoding(false));
+            string? selectedFolder = null;
+            var selections = 0;
+            var session = fixture.CreateSession(selectProjectFolder: _ => { selections++; return selectedFolder; });
+            var chatId = session.SelectedEntry!.ChatId;
+            session.Draft = "Продолжение черновика";
+            var attachment = ComposerAttachments.ReadFile(notePath, _ => { });
+            session.Attachments.Add(attachment);
+            session.ToggleProjectCommand.Execute(fixture.ProjectA);
+            var transcript = session.Items.ToArray();
+            var originalChatCount = session.Chats.Count;
+
+            session.SetInputLocked(true);
+            Assert.False(session.AttachFolderCommand.CanExecute(null));
+            session.AttachFolderCommand.Execute(null);
+            Assert.Equal(0, selections);
+            session.SetInputLocked(false);
+            session.AttachFolderCommand.Execute(null); // Cancelled folder picker.
+            Assert.False(session.HasProject);
+
+            selectedFolder = fixture.ProjectA;
+            session.AttachFolderCommand.Execute(null);
+
+            Assert.Equal(chatId, fixture.History.CurrentChatId());
+            Assert.Equal(originalChatCount, session.Chats.Count);
+            Assert.Equal(transcript, session.Items.ToArray());
+            Assert.Equal("Продолжение черновика", session.Draft);
+            Assert.Same(attachment, Assert.Single(session.Attachments));
+            Assert.Equal(fixture.ProjectA, session.ProjectPath);
+            Assert.Equal(chatId, session.SelectedEntry?.ChatId);
+            Assert.Equal(fixture.ProjectA, session.SelectedEntry?.ProjectPath);
+            Assert.False(session.AttachFolderCommand.CanExecute(null));
+            Assert.Contains("note.txt", session.ProjectFiles);
+            session.OpenProjectFileCommand.Execute("note.txt");
+            Assert.Equal("Содержимое проекта", session.FilePreviewBody);
+
+            var reopened = fixture.CreateSession();
+            Assert.Equal(chatId, reopened.SelectedEntry?.ChatId);
+            Assert.Equal(fixture.ProjectA, reopened.ProjectPath);
+            Assert.Equal(transcript.Select(row => row.Body), reopened.Items.Select(row => row.Body));
+            return Task.CompletedTask;
+        });
+
+        [Fact]
+        public Task FolderPickersStartAtTheParentOfTheLastProjectAfterRestart() => OnDispatcher(() =>
+        {
+            using var fixture = new SessionFixture();
+            var projects = Path.Combine(fixture.DirectoryPath, "other-projects");
+            var lastProject = Path.Combine(projects, "recent");
+            Directory.CreateDirectory(lastProject);
+            var session = fixture.CreateSession(selectProjectFolder: startPath =>
+            {
+                Assert.Equal(fixture.DirectoryPath, startPath);
+                return lastProject;
+            });
+            session.NewChatCommand.Execute(null);
+            session.AttachFolderCommand.Execute(null);
+            Assert.Equal(lastProject, session.ProjectPath);
+
+            session.NewChatCommand.Execute(null);
+            fixture.History.Append(session.SelectedEntry!.ChatId, new ChatMessage { Role = "user", Content = "Общий чат" });
+            var startPaths = new System.Collections.Generic.List<string>();
+            var reopened = fixture.CreateSession(selectProjectFolder: startPath =>
+            {
+                startPaths.Add(startPath);
+                return null;
+            });
+            reopened.AttachFolderCommand.Execute(null);
+            reopened.ChooseFolderCommand.Execute(null);
+            Assert.Equal(new[] { projects, projects }, startPaths);
+            Assert.False(reopened.HasProject);
+
+            Directory.Delete(lastProject);
+            reopened.AttachFolderCommand.Execute(null);
+            Assert.Equal(fixture.DirectoryPath, startPaths.Last());
+            return Task.CompletedTask;
+        });
+
+        [Fact]
+        public Task FolderPickerKeepsATopLevelProjectInsteadOfSelectingTheDrive() => OnDispatcher(() =>
+        {
+            using var fixture = new SessionFixture();
+            var topLevelProject = new DirectoryInfo(fixture.DirectoryPath);
+            while (topLevelProject.Parent?.Parent != null) topLevelProject = topLevelProject.Parent;
+            File.WriteAllLines(Path.Combine(fixture.DirectoryPath, "folders.txt"),
+                new[] { topLevelProject.Root.FullName, topLevelProject.FullName });
+            var generalChatId = fixture.History.NewChat();
+            fixture.History.Append(generalChatId, new ChatMessage { Role = "user", Content = "Общий чат" });
+            string? initialPath = null;
+            var session = fixture.CreateSession(selectProjectFolder: startPath =>
+            {
+                initialPath = startPath;
+                return null;
+            });
+            session.AttachFolderCommand.Execute(null);
+            Assert.Equal(topLevelProject.FullName, initialPath);
+            Assert.False(session.HasProject);
+            return Task.CompletedTask;
+        });
+
         [Fact]
         public Task FilePreviewReadsTextWithoutCallingTheModelOrRunningAProcess() => OnDispatcher(async () =>
         {
@@ -215,6 +325,71 @@ namespace ArniLite.AppTests
         });
 
         [Fact]
+        public Task DeepSeekBonusStaysSeparateAndRefreshesAfterTheSelectedModelAnswers() => OnDispatcher(async () =>
+        {
+            using var fixture = new SessionFixture();
+            var handler = new AccountHandler { BonusBalance = 15000000 };
+            using var client = new HttpClient(handler);
+            var session = fixture.CreateSession(client);
+            await session.LoadAccountAsync();
+            var deepSeek = session.Models.Single(model => model.Id == AccountHandler.DeepSeekId);
+            Assert.Equal("DeepSeek V4.1 Flash", deepSeek.Name);
+            Assert.Contains(" · Бонус · ", deepSeek.Display);
+            Assert.False(deepSeek.Free);
+            Assert.True(session.SelectedCatalog.Free);
+            Assert.Contains("$0.00", session.Account!.BalanceText);
+            Assert.Contains("$15.00 из $15.00", session.Account.BonusSummary);
+            Assert.Equal("$15.00*", session.AccountChip);
+            Assert.StartsWith("* Из этой суммы $15.00 доступны только для DeepSeek V4.1 Flash.", session.AccountTooltip);
+            Assert.Equal(new[] { "На 5 часов доступно $5.00", "На неделю доступно $10.00" }, session.Account.BonusLimits);
+
+            session.SelectedCatalog = deepSeek;
+            session.FreeOnly = true;
+            Assert.DoesNotContain(deepSeek, session.Models);
+            session.FreeOnly = false;
+            session.SelectedCatalog = deepSeek;
+            var refreshed = new TaskCompletionSource<bool>();
+            session.PropertyChanged += (_, args) =>
+            {
+                if (args.PropertyName == nameof(ChatSession.Account) && session.Account!.BonusSummary.Contains("$0.00 из $15.00"))
+                    refreshed.TrySetResult(true);
+            };
+            session.Draft = "Ответь коротко";
+            session.SendCommand.Execute(null);
+            await WithTimeout(refreshed.Task);
+
+            Assert.Equal(AccountHandler.DeepSeekId, handler.RequestedModel);
+            Assert.Same(deepSeek, session.SelectedCatalog);
+            Assert.False(deepSeek.HasBonus);
+            Assert.DoesNotContain(" · Бонус · ", deepSeek.Display);
+            Assert.Equal("$0.00", session.AccountChip);
+            Assert.Equal("user@example.com", session.AccountTooltip);
+            Assert.Equal(1, handler.CatalogRequests);
+        });
+
+        [Theory]
+        [InlineData("yandex", "YandexAccountIcon")]
+        [InlineData("google", "GoogleAccountIcon")]
+        [InlineData("vk", "VkAccountIcon")]
+        [InlineData("unknown", "DefaultAccountIcon")]
+        [InlineData(null, "DefaultAccountIcon")]
+        public Task AccountIconUsesTheVerifiedProviderFromTheApi(string? provider, string resourceKey) => OnDispatcher(async () =>
+        {
+            var user = new Newtonsoft.Json.Linq.JObject { ["email"] = "fake@gmail.com", ["authProvider"] = provider };
+            var account = AccountInfo.Parse(new Newtonsoft.Json.Linq.JObject { ["user"] = user }.ToString());
+            var icons = (System.Windows.ResourceDictionary)System.Windows.Application.LoadComponent(
+                new Uri("/ArniLite;component/UI/AccountProviderIcons.xaml", UriKind.Relative));
+            var icon = new System.Windows.Controls.Image
+            {
+                DataContext = new { Chat = new { Account = account } },
+                Style = (System.Windows.Style)icons["AccountProviderIcon"],
+            };
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            Assert.Same(icons[resourceKey], icon.Source);
+            Assert.True(icon.Source.Width > 0);
+        });
+
+        [Fact]
         public Task RejectedModelIsRemovedWithoutSilentlySwitchingOrRetrying() => OnDispatcher(async () =>
         {
             using var fixture = new SessionFixture();
@@ -302,8 +477,9 @@ namespace ArniLite.AppTests
                 File.WriteAllLines(Path.Combine(DirectoryPath, "folders.txt"), new[] { ProjectA, ProjectB });
             }
 
-            public ChatSession CreateSession(HttpClient? client = null) => new ChatSession(
-                new ArniApiClient(client ?? new HttpClient(new RejectNetwork())), new MemoryToken(), new OsFacts(), new RejectProcesses(), DirectoryPath);
+            public ChatSession CreateSession(HttpClient? client = null, Func<string, string?>? selectProjectFolder = null) => new ChatSession(
+                new ArniApiClient(client ?? new HttpClient(new RejectNetwork())), new MemoryToken(), new OsFacts(), new RejectProcesses(),
+                DirectoryPath, selectProjectFolder);
 
             public void Dispose() => Directory.Delete(DirectoryPath, true);
         }
@@ -346,30 +522,52 @@ namespace ArniLite.AppTests
 
         private sealed class AccountHandler : HttpMessageHandler
         {
+            public const string DeepSeekId = "deepseek/deepseek-v4.1-flash-1017";
             public bool FailCatalog { get; set; }
             public bool FailAccount { get; set; }
             public bool RejectModel { get; set; }
+            public int? BonusBalance { get; set; }
+            public string? RequestedModel { get; private set; }
             public int CatalogRequests { get; private set; }
             public int ModelRequests { get; private set; }
             private int _remaining = 9;
 
-            protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
             {
                 if (request.RequestUri.AbsolutePath == "/api/account")
-                    return Json(FailAccount ? "{\"error\":\"unavailable\"}" : "{\"user\":{\"email\":\"user@example.com\",\"plan\":\"FREE\",\"budget\":null,\"freeSteps\":{\"remaining\":" + _remaining + ",\"limit\":150}}}", FailAccount ? HttpStatusCode.ServiceUnavailable : HttpStatusCode.OK);
+                {
+                    if (FailAccount) return Json("{\"error\":\"unavailable\"}", HttpStatusCode.ServiceUnavailable);
+                    var budget = BonusBalance.HasValue
+                        ? "{\"enabled\":true,\"balanceMicros\":0,\"bonus\":{\"balanceMicros\":" + BonusBalance.Value
+                            + ",\"grantedMicros\":15000000,\"expiresAt\":\"2099-12-14T18:59:59Z\",\"models\":[\"" + DeepSeekId
+                            + "\"],\"fiveHour\":{\"remainingMicros\":5000000},\"weekly\":{\"remainingMicros\":10000000}}}"
+                        : "null";
+                    return Json("{\"user\":{\"email\":\"user@example.com\",\"plan\":\"FREE\",\"budget\":" + budget
+                        + ",\"freeSteps\":{\"remaining\":" + _remaining + ",\"limit\":150}}}");
+                }
                 if (request.RequestUri.AbsolutePath == "/api/models")
                 {
                     CatalogRequests++;
-                    return Json(FailCatalog ? "{\"error\":\"unavailable\"}" : "{\"data\":[{\"id\":\"test/model-a\",\"arni_free\":true},{\"id\":\"test/model-b\",\"arni_free\":true}]}", FailCatalog ? HttpStatusCode.ServiceUnavailable : HttpStatusCode.OK);
+                    if (FailCatalog) return Json("{\"error\":\"unavailable\"}", HttpStatusCode.ServiceUnavailable);
+                    var deepSeek = BonusBalance.HasValue
+                        ? ",{\"id\":\"" + DeepSeekId + "\",\"name\":\"DeepSeek V4.1 Flash · бонус $15.00 до 14.12\",\"arni_provider\":\"openrouter\",\"arni_bonus\":{\"balanceMicros\":15000000}}"
+                        : string.Empty;
+                    return Json("{\"data\":[{\"id\":\"test/model-a\",\"arni_free\":true},{\"id\":\"test/model-b\",\"arni_free\":true}" + deepSeek + "]}");
                 }
                 ModelRequests++;
                 if (RejectModel) return Json("{\"error\":\"test/model-a is only available on agentic harnesses.\"}", HttpStatusCode.Forbidden);
+                if (BonusBalance.HasValue)
+                {
+                    var payload = Newtonsoft.Json.Linq.JObject.Parse(await request.Content.ReadAsStringAsync());
+                    RequestedModel = (string?)payload["model"];
+                    if (RequestedModel == DeepSeekId) BonusBalance = 0;
+                }
                 _remaining--;
                 return Json("{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":\"Готово.\"},\"finish_reason\":\"stop\"}]}");
             }
 
-            private static Task<HttpResponseMessage> Json(string body, HttpStatusCode status = HttpStatusCode.OK) => Task.FromResult(
-                new HttpResponseMessage(status) { Content = new StringContent(body, Encoding.UTF8, "application/json") });
+            private static HttpResponseMessage Json(string body, HttpStatusCode status = HttpStatusCode.OK) =>
+                new HttpResponseMessage(status) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
         }
 
         private sealed class ToolRoundHandler : HttpMessageHandler

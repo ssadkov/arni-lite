@@ -31,8 +31,12 @@ try {
     finally { [Array]::Clear($privateBytes, 0, $privateBytes.Length) }
     if ($rsa.ToXmlString($false) -ne [IO.File]::ReadAllText($publicPath)) { throw 'Signing key does not match the application trust key.' }
     $installers = @('x64', 'x86') | ForEach-Object {
-        $name = "ArniLiteSetup-$Version-$_.exe"
+        $name = "ArniSetup-$Version-$_.exe"
         $path = Join-Path $InstallerDirectory $name
+        if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+            $name = "ArniLiteSetup-$Version-$_.exe"
+            $path = Join-Path $InstallerDirectory $name
+        }
         $file = Get-Item -LiteralPath $path
         @{ Architecture = $_; FileName = $name; Bytes = $file.Length; Sha256 = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant() }
     }

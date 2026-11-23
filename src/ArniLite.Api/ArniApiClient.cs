@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using ArniLite.Core;
@@ -356,6 +357,8 @@ namespace ArniLite.Api
                 }
 
                 var name = (string)item["name"];
+                if (name != null && item["arni_bonus"] is JObject)
+                    name = Regex.Replace(name, @" · бонус \$[\d.]+ до \d{2}\.\d{2}$", string.Empty);
                 var prompt = (string)item["pricing"]?["prompt"];
                 var completion = (string)item["pricing"]?["completion"];
                 var markedFree = item["arni_free"] != null && item["arni_free"].Type == JTokenType.Boolean && (bool)item["arni_free"];

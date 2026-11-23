@@ -65,13 +65,24 @@
             <Border BorderBrush="#E9EBE5" BorderThickness="0,0,0,1" Padding="16,14">
                 <DockPanel>
                     <Button DockPanel.Dock="Left" Content="{local:Loc Projects}" Style="{StaticResource QuietButton}" Margin="0,0,12,0" Click="ToggleNavigation_OnClick" ToolTip="{local:Loc ProjectsTip}" />
-                    <Button x:Name="AccountButton" DockPanel.Dock="Right" Margin="8,0,0,0" Padding="10,6" MaxWidth="360" Style="{StaticResource QuietButton}" Click="Account_OnClick" Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}}" ToolTip="{Binding Chat.AccountChip}">
-                        <TextBlock Text="{Binding Chat.AccountChip}" TextTrimming="CharacterEllipsis" FontSize="12" />
+                    <Button x:Name="AccountButton" DockPanel.Dock="Right" Margin="8,0,0,0" Padding="10,6" Style="{StaticResource QuietButton}" Click="Account_OnClick"
+                            Visibility="{Binding IsSignedIn, Converter={StaticResource BoolVis}}" ToolTip="{Binding Chat.AccountTooltip}" AutomationProperties.HelpText="{Binding Chat.AccountTooltip}">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Style="{StaticResource AccountProviderIcon}" Margin="0,0,6,0" />
+                            <TextBlock Text="{Binding Chat.AccountChip}" FontSize="12" VerticalAlignment="Center" />
+                        </StackPanel>
                     </Button>
                     <Button x:Name="FilesButton" DockPanel.Dock="Right" Content="{local:Loc Files}" Style="{StaticResource QuietButton}" Click="ToggleFiles_OnClick" ToolTip="{local:Loc FilesTip}" />
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="{Binding Chat.ChatTitle}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                        <TextBlock Text="{Binding Chat.ProjectName}" ToolTip="{Binding Chat.ProjectPath}" FontSize="11" Foreground="#758071" Margin="0,3,0,0" />
+                        <TextBlock Text="{Binding Chat.ProjectName}" ToolTip="{Binding Chat.ProjectPath}" FontSize="11" Foreground="#758071" Margin="0,3,0,0"
+                                   Visibility="{Binding Chat.HasProject, Converter={StaticResource BoolVis}}" />
+                        <Button Style="{StaticResource QuietButton}" Command="{Binding Chat.AttachFolderCommand}" Padding="0" Margin="0,2,0,0"
+                                HorizontalAlignment="Left" FontSize="11" Foreground="#526849" ToolTip="{local:Loc AttachProjectFolder}"
+                                AutomationProperties.Name="{local:Loc AttachProjectFolder}"
+                                Visibility="{Binding Chat.HasProject, Converter={StaticResource BoolVis}, ConverterParameter=invert}">
+                            <TextBlock Text="{local:Loc NoProject}" TextDecorations="Underline" />
+                        </Button>
                     </StackPanel>
                 </DockPanel>
             </Border>
@@ -87,6 +98,20 @@
                                 <TextBlock Text="{Binding Chat.Account.Email}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                             </DockPanel>
                             <TextBlock Text="{Binding Chat.Account.BalanceText}" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,0,0,8" />
+                            <Border Background="#F4F5F0" CornerRadius="6" Padding="8" Margin="0,0,0,8"
+                                    Visibility="{Binding Chat.Account.HasBonus, Converter={StaticResource BoolVis}, FallbackValue=Collapsed}">
+                                <StackPanel>
+                                    <TextBlock Text="{local:Loc DeepSeekBonusTitle}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                    <TextBlock Text="{Binding Chat.Account.BonusSummary}" TextWrapping="Wrap" Margin="0,3,0,0" />
+                                    <ItemsControl ItemsSource="{Binding Chat.Account.BonusLimits}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding}" TextWrapping="Wrap" Margin="0,3,0,0" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
                             <ItemsControl ItemsSource="{Binding Chat.Account.PanelLines}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
@@ -325,7 +350,7 @@
                     <StackPanel Visibility="{Binding Chat.HasProject, Converter={StaticResource BoolVis}, ConverterParameter=invert}" Margin="0,20">
                         <TextBlock Text="{local:Loc NoProjectTitle}" FontWeight="SemiBold" />
                         <TextBlock Text="{local:Loc NoProjectHelp}" Foreground="#7D8773" TextWrapping="Wrap" Margin="0,8,0,16" />
-                        <Button Content="{local:Loc AddProject}" Command="{Binding Chat.ChooseFolderCommand}" />
+                        <Button Content="{local:Loc AttachProjectFolder}" Command="{Binding Chat.AttachFolderCommand}" />
                     </StackPanel>
                     <ListBox ItemsSource="{Binding Chat.ProjectFiles}" Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                         <ListBox.Style>

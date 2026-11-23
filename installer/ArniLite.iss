@@ -2,19 +2,23 @@
 ; Keep AppVersion in step with the numeric part of the application version.
 
 #ifndef AppVersion
-#define AppVersion "0.1.5"
+#define AppVersion "0.1.6"
 #endif
 #ifndef AppNumericVersion
-#define AppNumericVersion "0.1.5"
+#define AppNumericVersion "0.1.6"
 #endif
 #ifndef Arch
 #define Arch "x64"
 #endif
 #if Arch == "x86"
+#ifndef BuildDir
 #define BuildDir "..\dist\publish\x86"
+#endif
 #define SetupSuffix "-x86"
 #else
+#ifndef BuildDir
 #define BuildDir "..\dist\publish\x64"
+#endif
 #define SetupSuffix "-x64"
 #endif
 

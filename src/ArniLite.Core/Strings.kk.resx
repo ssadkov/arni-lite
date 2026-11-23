@@ -221,10 +221,10 @@
     <value>Бұл чатта жоба жоқ</value>
   </data>
   <data name="NoProjectHelp" xml:space="preserve">
-    <value>Файлдарына қолжетімді жаңа чат ашу үшін қалта қосыңыз.</value>
+    <value>Arni таңдалған қалтадағы файлдармен жұмыс істей алады.</value>
   </data>
-  <data name="AddProject" xml:space="preserve">
-    <value>Жоба қосу</value>
+  <data name="AttachProjectFolder" xml:space="preserve">
+    <value>Қалтаны осы чатқа байланыстыру</value>
   </data>
   <data name="BackToFiles" xml:space="preserve">
     <value>Файлдар тізіміне оралу</value>
@@ -387,6 +387,12 @@
   </data>
   <data name="ToolLimit" xml:space="preserve">
     <value>Құралдарды шақыру шегіне жетті.</value>
+  </data>
+  <data name="StreamInterrupted" xml:space="preserve">
+    <value>Модель жауапты аяқтамай үзіп тастады. Хабарламаны қайта жіберіңіз немесе басқа модельді таңдаңыз.</value>
+  </data>
+  <data name="RepeatedToolFailure" xml:space="preserve">
+    <value>Тоқтатылды: {0} құралы бірдей қатені екі рет қайтарды. Сұрауды нақтылаңыз немесе басқа модельді таңдаңыз.</value>
   </data>
   <data name="InvalidAccount" xml:space="preserve">
     <value>Сервер аккаунттың қате деректерін қайтарды.</value>
@@ -617,9 +623,9 @@
   <data name="UpdateInstallFailed" xml:space="preserve"><value>Орнату басталмады немесе жоба сақталмады. Қолданба ашық қалады.</value></data>
   <data name="UpdateIdleOnly" xml:space="preserve"><value>Орнату алдында агент жұмысын және диктантты аяқтаңыз. Қайта іске қосу алдында жоба сақталады.</value></data>
   <data name="UpdateGitHub" xml:space="preserve"><value>GitHub-тағы барлық шығарылымдар</value></data>
-  <data name="AccountChip" xml:space="preserve"><value>Баланс: {0}{1} · {2}</value></data>
-  <data name="AccountAvailableNow" xml:space="preserve"><value> (қазір қолжетімді {0} · {1})</value></data>
   <data name="AccountBalance" xml:space="preserve"><value>Шоттағы қалдық: {0}</value></data>
+  <data name="AccountMainBalance" xml:space="preserve"><value>Негізгі баланс: {0}</value></data>
+  <data name="AccountBonusTooltip" xml:space="preserve"><value>* Бұл соманың {0} бөлігі тек DeepSeek V4.1 Flash үшін қолжетімді.</value></data>
   <data name="AccountOpenEnded" xml:space="preserve"><value>Мерзімсіз</value></data>
   <data name="AccountValidUntil" xml:space="preserve"><value>{0} дейін жарамды</value></data>
   <data name="AccountAvailableBalance" xml:space="preserve"><value>Қазір қолжетімді: {0}</value></data>
@@ -632,12 +638,17 @@
   <data name="AccountAccessPaused" xml:space="preserve"><value>тоқтатылған</value></data>
   <data name="AccountAccessExpired" xml:space="preserve"><value>мерзімі өтті</value></data>
   <data name="AccountWindowWeek" xml:space="preserve"><value>Апта</value></data>
-  <data name="LimitFiveHour" xml:space="preserve"><value>5 сағ</value></data>
-  <data name="LimitWeek" xml:space="preserve"><value>апта</value></data>
   <data name="AccountWindowSpent" xml:space="preserve"><value>{0}: жұмсалғаны {1} / {2}</value></data>
   <data name="AccountWindowLeft" xml:space="preserve"><value>тағы {0}</value></data>
   <data name="AccountWindowRequests" xml:space="preserve"><value>сұрау {0} / {1}</value></data>
   <data name="AccountWindowCeiling" xml:space="preserve"><value>{0}: жұмсалғаны {1} · лимит {2} қалдықтан жоғары және шектемейді</value></data>
   <data name="AccountWindowReset" xml:space="preserve"><value>қалпына келу {0}</value></data>
   <data name="AccountWindowNotStarted" xml:space="preserve"><value>алғашқы сұраудан басталады</value></data>
+  <data name="DeepSeekBonusTitle" xml:space="preserve"><value>DeepSeek V4.1 Flash бонусы</value></data>
+  <data name="DeepSeekBonusBalance" xml:space="preserve"><value>{0} / {1} · {2} дейін</value></data>
+  <data name="DeepSeekBonusExpired" xml:space="preserve"><value>Мерзімі өтті</value></data>
+  <data name="DeepSeekBonusPaused" xml:space="preserve"><value>Бонус тоқтатылды</value></data>
+  <data name="DeepSeekBonusFiveHours" xml:space="preserve"><value>5 сағатқа {0} қолжетімді</value></data>
+  <data name="DeepSeekBonusWeek" xml:space="preserve"><value>Аптаға {0} қолжетімді</value></data>
+  <data name="ModelBonus" xml:space="preserve"><value>Бонус</value></data>
 </root>

@@ -2,12 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Threading;
 using ArniLite.Api;
 using ArniLite.Core;
@@ -29,6 +30,7 @@ namespace ArniLite
         private readonly List<ChatMessage> _history = new List<ChatMessage>();
         private readonly SynchronizationContext _ui;
         private readonly string _dataDirectory;
+        private readonly Func<string, string?> _selectProjectFolder;
         private readonly DiagnosticLog _diagnostics;
         private readonly DispatcherTimer _streamTimer;
         private readonly object _streamGate = new object();
@@ -71,7 +73,8 @@ namespace ArniLite
         private string _attachmentError = string.Empty;
         private int _pastedImages;
 
-        public ChatSession(ArniApiClient api, ITokenStore tokens, OsFacts os, IProcessRunner processes, string? dataDirectory = null)
+        public ChatSession(ArniApiClient api, ITokenStore tokens, OsFacts os, IProcessRunner processes,
+            string? dataDirectory = null, Func<string, string?>? selectProjectFolder = null)
         {
             _api = api;
             _tokens = tokens;
@@ -80,6 +83,7 @@ namespace ArniLite
             _streamTimer = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(60) };
             _streamTimer.Tick += (_, _) => FlushPendingText();
             _dataDirectory = dataDirectory ?? AppPaths.DataDirectory;
+            _selectProjectFolder = selectProjectFolder ?? SelectProjectFolder;
             _diagnostics = dataDirectory == null ? DiagnosticLog.Current : new DiagnosticLog(Path.Combine(_dataDirectory, "logs"));
             Directory.CreateDirectory(_dataDirectory);
             _journal = new JsonlJournal(Path.Combine(_dataDirectory, "side-effects.jsonl"));
@@ -102,14 +106,11 @@ namespace ArniLite
             NewChatCommand = new RelayCommand(NewChat, () => CanChangeContext);
             StopCommand = new RelayCommand(Stop, () => _busy);
             ClosePreviewCommand = new RelayCommand(ClosePreview);
-            ChooseFolderCommand = new RelayCommand(ChooseFolder, () => CanChangeContext);
+            ChooseFolderCommand = new RelayCommand(() => ChooseFolder(attachToCurrentChat: false), () => CanChangeContext);
+            AttachFolderCommand = new RelayCommand(() => ChooseFolder(attachToCurrentChat: true), () => CanChangeContext && !HasProject);
             AllowCommand = new RelayCommand(() => Resolve(true), () => _permissionVisible);
             DenyCommand = new RelayCommand(() => Resolve(false), () => _permissionVisible);
-            RefreshAccountCommand = new RelayCommand(async () =>
-            {
-                if (Models.Count == 0) await LoadAccountAsync();
-                else await RefreshAccountAsync();
-            }, () => !_accountLoading && !_busy);
+            RefreshAccountCommand = new RelayCommand(async () => await LoadAccountAsync(), () => !_accountLoading && CanChangeContext);
         }
 
         public ObservableCollection<TranscriptRow> Items { get; } = new ObservableCollection<TranscriptRow>();
@@ -132,6 +133,7 @@ namespace ArniLite
         public ICommand SendCommand { get; }
         public ICommand NewChatCommand { get; }
         public ICommand ChooseFolderCommand { get; }
+        public ICommand AttachFolderCommand { get; }
         public ICommand AllowCommand { get; }
         public ICommand DenyCommand { get; }
         public ICommand RefreshAccountCommand { get; }
@@ -142,7 +144,7 @@ namespace ArniLite
         {
             _inputLocked = value;
             Notify(nameof(CanChangeContext));
-            foreach (var command in new[] { SendCommand, NewChatCommand, ChooseFolderCommand }) (command as RelayCommand)?.Raise();
+            foreach (var command in new[] { SendCommand, NewChatCommand, ChooseFolderCommand, AttachFolderCommand }) (command as RelayCommand)?.Raise();
         }
         public void SaveDraftForRestart()
         {
@@ -337,10 +339,7 @@ namespace ArniLite
             {
                 if (!CanChangeContext) return;
                 _selectedCatalog = value;
-                if (value != null)
-                {
-                    _selectedModel = value.Id;
-                }
+                _selectedModel = value?.Id ?? string.Empty;
 
                 Notify(nameof(SelectedCatalog));
                 Notify(nameof(SelectedModel));
@@ -379,6 +378,7 @@ namespace ArniLite
 
         public AccountInfo? Account => _account;
         public string AccountChip => _account?.ChipText ?? StringCatalog.Get("Account");
+        public string AccountTooltip => _account?.ChipTooltip ?? StringCatalog.Get("Account");
         public string AccountTitle => !string.IsNullOrEmpty(_account?.Email) ? _account.Email : StringCatalog.Get("AccountArni");
         public string AccountError => _accountError.Length == 0 ? string.Empty : StringCatalog.Get(_accountError);
         public bool AccountLoading => _accountLoading;
@@ -463,7 +463,12 @@ namespace ArniLite
                 }
             }
 
-            SelectedCatalog = match ?? (Models.Count == 0 ? null : Models[0]);
+            SelectedCatalog = match ?? Models.FirstOrDefault(model => model.Free);
+        }
+
+        private void RefreshModelBonuses()
+        {
+            foreach (var model in _catalog) model.HasBonus = _account?.HasBonusFor(model.Id) == true;
         }
 
         public event System.Action TextGrew;
@@ -484,9 +489,10 @@ namespace ArniLite
             try
             {
                 var models = await _api.ListModelsAsync(token, CancellationToken.None).ConfigureAwait(true);
-                if (generation != _accountGeneration) return;
+                if (generation != _accountGeneration || !CanChangeContext) return;
                 _catalog.Clear();
                 _catalog.AddRange(models);
+                RefreshModelBonuses();
                 ApplyModelFilter();
                 _modelStatus = Models.Count == 0 ? "NoModels" : string.Empty;
             }
@@ -509,7 +515,11 @@ namespace ArniLite
             try
             {
                 var account = await _api.AccountAsync(token, CancellationToken.None).ConfigureAwait(true);
-                if (generation == _accountGeneration) _account = account;
+                if (generation == _accountGeneration)
+                {
+                    _account = account;
+                    RefreshModelBonuses();
+                }
             }
             catch (Exception ex)
             {
@@ -533,6 +543,7 @@ namespace ArniLite
         {
             Notify(nameof(Account));
             Notify(nameof(AccountChip));
+            Notify(nameof(AccountTooltip));
             Notify(nameof(AccountTitle));
             Notify(nameof(AccountError));
             Notify(nameof(AccountLoading));
@@ -1027,19 +1038,25 @@ namespace ArniLite
                 catch (Exception) { Items.Add(new TranscriptRow("Проект недоступен", StringCatalog.Get("ProjectUnavailableDetail", folder), false)); }
             }
 
-            ProjectLabel = HasProject ? "Проект: " + _workspace.Root : "Чат без доступа к проекту";
-            Notify(nameof(ProjectPath));
-            Notify(nameof(ProjectName));
-            Notify(nameof(HasProject));
-            Notify(nameof(ChatTitle));
-            RefreshProjectFiles();
+            RefreshProjectContext();
             foreach (var message in _historyStore.Load(_chatId))
             {
                 _history.Add(message);
                 AddRow(message);
             }
             Notify(nameof(ChatTitle));
+        }
+
+        private void RefreshProjectContext()
+        {
+            if (HasProject) RememberFolder(_workspace.Root);
+            ProjectLabel = HasProject ? "Проект: " + _workspace.Root : "Чат без доступа к проекту";
+            Notify(nameof(ProjectPath));
+            Notify(nameof(ProjectName));
+            Notify(nameof(HasProject));
+            RefreshProjectFiles();
             (OpenInExplorerCommand as RelayCommand)?.Raise();
+            (AttachFolderCommand as RelayCommand)?.Raise();
         }
 
         private void RefreshLists()
@@ -1134,6 +1151,7 @@ namespace ArniLite
             }
 
             var map = ReadChatFolders();
+            if (map.TryGetValue(_chatId, out var existing) && existing == _workspace.Root) return;
             map[_chatId] = _workspace.Root;
             var lines = new List<string>();
             foreach (var pair in map)
@@ -1142,7 +1160,14 @@ namespace ArniLite
             }
 
             Directory.CreateDirectory(_dataDirectory);
-            File.WriteAllLines(Path.Combine(_dataDirectory, "chat-folders.txt"), lines);
+            ReplaceFolderList(Path.Combine(_dataDirectory, "chat-folders.txt"), lines);
+        }
+
+        private static void ReplaceFolderList(string path, IEnumerable<string> lines)
+        {
+            var temporary = path + ".tmp";
+            File.WriteAllLines(temporary, lines);
+            if (File.Exists(path)) File.Replace(temporary, path, null); else File.Move(temporary, path);
         }
 
         private Dictionary<string, string> ReadChatFolders()
@@ -1261,41 +1286,93 @@ namespace ArniLite
 
         private void RememberFolder(string path)
         {
-            var folderFile = Path.Combine(_dataDirectory, "folders.txt");
-            var lines = File.Exists(folderFile) ? File.ReadAllLines(folderFile) : new string[0];
-            var kept = new List<string> { path };
-            for (var i = 0; i < lines.Length && kept.Count < 8; i++)
-            {
-                if (!string.Equals(lines[i], path, StringComparison.OrdinalIgnoreCase) && Directory.Exists(lines[i]))
-                {
-                    kept.Add(lines[i]);
-                }
-            }
+            if (string.Equals(Folders.FirstOrDefault(), path, StringComparison.OrdinalIgnoreCase)) return;
 
-            Directory.CreateDirectory(_dataDirectory);
-            File.WriteAllLines(folderFile, kept);
-            RefreshLists();
+            var folderFile = Path.Combine(_dataDirectory, "folders.txt");
+            try
+            {
+                var lines = File.Exists(folderFile) ? File.ReadAllLines(folderFile) : Array.Empty<string>();
+                var kept = new List<string> { path };
+                foreach (var folder in lines)
+                {
+                    if (kept.Count == 8) break;
+                    if (!string.Equals(folder, path, StringComparison.OrdinalIgnoreCase) && Directory.Exists(folder))
+                        kept.Add(folder);
+                }
+                if (!lines.SequenceEqual(kept))
+                    ReplaceFolderList(folderFile, kept);
+                Folders.Clear();
+                foreach (var folder in kept) Folders.Add(folder);
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+            {
+                _diagnostics.Write("recent_project_folders_save_failed", exception: ex);
+            }
         }
 
-        private void ChooseFolder()
+        private string ProjectPickerStartPath()
         {
-            using (var dialog = new FolderBrowserDialog { Description = StringCatalog.Get("FolderDialog") })
+            var previous = Folders.FirstOrDefault(IsProjectPickerLocation);
+            if (previous == null)
             {
-                if (dialog.ShowDialog() != DialogResult.OK)
-                {
-                    return;
-                }
-
-                try
-                {
-                    RememberFolder(dialog.SelectedPath);
-                    NewProjectChat(dialog.SelectedPath);
-                }
-                catch (Exception ex)
-                {
-                    Items.Add(new TranscriptRow("Папка", ex.Message, false));
-                }
+                var chatFolders = ReadChatFolders();
+                previous = Chats.Select(chat => chatFolders.TryGetValue(chat.Id, out var folder) ? folder : null)
+                    .FirstOrDefault(IsProjectPickerLocation);
             }
+            if (previous == null) return Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+            var parent = Directory.GetParent(previous);
+            return parent?.Parent != null ? parent.FullName : previous;
+        }
+
+        private static bool IsProjectPickerLocation(string? path) =>
+            path != null && Directory.Exists(path) && Directory.GetParent(path) != null;
+
+        private static string? SelectProjectFolder(string startPath)
+        {
+            var window = System.Windows.Application.Current?.MainWindow;
+            var owner = window == null ? IntPtr.Zero : new WindowInteropHelper(window).Handle;
+            return ProjectFolderPicker.Show(owner, StringCatalog.Get("FolderDialog"), startPath);
+        }
+
+        private void ChooseFolder(bool attachToCurrentChat)
+        {
+            if (!CanChangeContext || (attachToCurrentChat && HasProject)) return;
+
+            try
+            {
+                var path = _selectProjectFolder(ProjectPickerStartPath());
+                if (string.IsNullOrEmpty(path)) return;
+                if (attachToCurrentChat)
+                    AttachFolder(path);
+                else
+                    NewProjectChat(path);
+            }
+            catch (Exception ex)
+            {
+                Items.Add(new TranscriptRow("Папка", ex.Message, false));
+            }
+        }
+
+        private void AttachFolder(string path)
+        {
+            if (!CanChangeContext || HasProject) return;
+            _workspace.SetRoot(path);
+            try
+            {
+                if (!File.Exists(_historyStore.ChatPath(_chatId)))
+                    _historyStore.Rewrite(_chatId, _history);
+                BindCurrentChatFolder();
+            }
+            catch
+            {
+                _workspace.ClearRoot();
+                throw;
+            }
+
+            _collapsedProjects.Remove(_workspace.Root);
+            RefreshProjectContext();
+            RebuildChatRows();
         }
 
         private void Resolve(bool allowed)
@@ -1339,6 +1416,16 @@ namespace ArniLite
             if (detail.IndexOf("tool-call", StringComparison.Ordinal) >= 0)
             {
                 return StringCatalog.Get("ToolLimit");
+            }
+
+            if (detail.IndexOf(AgentOrchestrator.StreamInterrupted, StringComparison.Ordinal) >= 0)
+            {
+                return StringCatalog.Get("StreamInterrupted");
+            }
+
+            if (detail.StartsWith(AgentOrchestrator.RepeatedToolFailure, StringComparison.Ordinal))
+            {
+                return StringCatalog.Get("RepeatedToolFailure", detail.Substring(AgentOrchestrator.RepeatedToolFailure.Length));
             }
 
             return detail;
@@ -1507,6 +1594,7 @@ namespace ArniLite
             (NewChatCommand as RelayCommand)?.Raise();
             (OpenInExplorerCommand as RelayCommand)?.Raise();
             (ChooseFolderCommand as RelayCommand)?.Raise();
+            (AttachFolderCommand as RelayCommand)?.Raise();
             (AllowCommand as RelayCommand)?.Raise();
             (DenyCommand as RelayCommand)?.Raise();
         }
