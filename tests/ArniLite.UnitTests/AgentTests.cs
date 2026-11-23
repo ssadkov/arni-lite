@@ -97,6 +97,37 @@ namespace ArniLite.UnitTests
             Assert.Equal(1, tools.Calls);
             Assert.Contains("repeated", result.Detail);
         }
+
+        [Fact]
+        public async Task StopsWhenAToolReturnsTheSameErrorTwice()
+        {
+            var history = new List<ChatMessage> { new ChatMessage { Role = "user", Content = "tasks today" } };
+            var first = new ToolCallRecord { Index = 0, Id = "call-1", Name = "list_tasks", ArgumentsJson = "{\"date\":\"today\",\"tz\":{\"name\":\"UTC\"}}" };
+            var second = new ToolCallRecord { Index = 0, Id = "call-2", Name = "list_tasks", ArgumentsJson = "{\"tz\":{\"name\":\"UTC\"},\"date\":\"today\"}" };
+            var model = new ScriptedModel(
+                new ModelTurn { Done = true, FinishReason = "tool_calls", ToolCalls = new List<ToolCallRecord> { first } },
+                new ModelTurn { Done = true, FinishReason = "tool_calls", ToolCalls = new List<ToolCallRecord> { second } },
+                new ModelTurn { Done = true, FinishReason = "tool_calls", ToolCalls = new List<ToolCallRecord> { first } });
+            var tools = new EchoingFailureTools("tz: input should be a valid string");
+            var result = await new AgentOrchestrator(new SystemClock(), new AgentLimits()).RunAsync(
+                history, true, model, tools, _ => { }, CancellationToken.None);
+            Assert.Equal(new object[] { "failed", AgentOrchestrator.RepeatedToolFailure + "list_tasks", 2 }, new object[] { result.Status, result.Detail, tools.Calls });
+        }
+
+        [Fact]
+        public async Task KeepsGoingWhenAToolFailsWithDifferentErrors()
+        {
+            var history = new List<ChatMessage> { new ChatMessage { Role = "user", Content = "read" } };
+            var call = new ToolCallRecord { Index = 0, Id = "call-1", Name = "read_file", ArgumentsJson = "{\"path\":\"a.txt\"}" };
+            var model = new ScriptedModel(
+                new ModelTurn { Done = true, FinishReason = "tool_calls", ToolCalls = new List<ToolCallRecord> { call } },
+                new ModelTurn { Done = true, FinishReason = "tool_calls", ToolCalls = new List<ToolCallRecord> { call } },
+                new ModelTurn { Done = true, FinishReason = "stop", Content = "done" });
+            var tools = new EchoingFailureTools("missing a.txt", "locked a.txt");
+            var result = await new AgentOrchestrator(new SystemClock(), new AgentLimits()).RunAsync(
+                history, true, model, tools, _ => { }, CancellationToken.None);
+            Assert.Equal(new object[] { "completed", 2 }, new object[] { result.Status, tools.Calls });
+        }
     }
 
     public class JournalTests
@@ -156,6 +187,30 @@ namespace ArniLite.UnitTests
         {
             Calls++;
             return Task.FromResult(Result);
+        }
+    }
+
+    /// <summary>Fails every call, echoing its call id like the real executor, with the given errors in turn (the last one repeats).</summary>
+    internal sealed class EchoingFailureTools : IToolExecutor
+    {
+        private readonly string[] _errors;
+
+        public EchoingFailureTools(params string[] errors)
+        {
+            _errors = errors;
+        }
+
+        public int Calls { get; private set; }
+
+        public Task<ToolExecution> ExecuteAsync(string turnId, int round, ToolCallRecord call, CancellationToken cancellationToken)
+        {
+            var error = _errors[System.Math.Min(Calls, _errors.Length - 1)];
+            Calls++;
+            return Task.FromResult(new ToolExecution
+            {
+                Status = "failed",
+                ContentJson = "{\"schema_version\":1,\"tool_call_id\":\"" + call.Id + "\",\"status\":\"failed\",\"result\":{\"text\":\"" + error + "\"}}",
+            });
         }
     }
 }

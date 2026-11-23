@@ -388,6 +388,12 @@
   <data name="ToolLimit" xml:space="preserve">
     <value>Ход остановлен: слишком много вызовов инструментов.</value>
   </data>
+  <data name="StreamInterrupted" xml:space="preserve">
+    <value>Модель оборвала ответ, не закончив его. Отправьте сообщение ещё раз или выберите другую модель.</value>
+  </data>
+  <data name="RepeatedToolFailure" xml:space="preserve">
+    <value>Ход остановлен: инструмент {0} дважды вернул одну и ту же ошибку. Уточните запрос или выберите другую модель.</value>
+  </data>
   <data name="InvalidAccount" xml:space="preserve">
     <value>Сервер вернул некорректные данные аккаунта.</value>
   </data>

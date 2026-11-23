@@ -388,6 +388,12 @@
   <data name="ToolLimit" xml:space="preserve">
     <value>Құралдарды шақыру шегіне жетті.</value>
   </data>
+  <data name="StreamInterrupted" xml:space="preserve">
+    <value>Модель жауапты аяқтамай үзіп тастады. Хабарламаны қайта жіберіңіз немесе басқа модельді таңдаңыз.</value>
+  </data>
+  <data name="RepeatedToolFailure" xml:space="preserve">
+    <value>Тоқтатылды: {0} құралы бірдей қатені екі рет қайтарды. Сұрауды нақтылаңыз немесе басқа модельді таңдаңыз.</value>
+  </data>
   <data name="InvalidAccount" xml:space="preserve">
     <value>Сервер аккаунттың қате деректерін қайтарды.</value>
   </data>

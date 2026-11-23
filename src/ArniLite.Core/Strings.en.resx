@@ -388,6 +388,12 @@ to work on files with Arni.</value>
   <data name="ToolLimit" xml:space="preserve">
     <value>Stopped at the tool call limit.</value>
   </data>
+  <data name="StreamInterrupted" xml:space="preserve">
+    <value>The model stopped before finishing its answer. Send the message again or choose another model.</value>
+  </data>
+  <data name="RepeatedToolFailure" xml:space="preserve">
+    <value>Stopped: the tool {0} returned the same error twice. Rephrase the request or choose another model.</value>
+  </data>
   <data name="InvalidAccount" xml:space="preserve">
     <value>The server returned invalid account data.</value>
   </data>

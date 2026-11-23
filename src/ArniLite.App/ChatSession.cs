@@ -1418,6 +1418,16 @@ namespace ArniLite
                 return StringCatalog.Get("ToolLimit");
             }
 
+            if (detail.IndexOf(AgentOrchestrator.StreamInterrupted, StringComparison.Ordinal) >= 0)
+            {
+                return StringCatalog.Get("StreamInterrupted");
+            }
+
+            if (detail.StartsWith(AgentOrchestrator.RepeatedToolFailure, StringComparison.Ordinal))
+            {
+                return StringCatalog.Get("RepeatedToolFailure", detail.Substring(AgentOrchestrator.RepeatedToolFailure.Length));
+            }
+
             return detail;
         }
 
