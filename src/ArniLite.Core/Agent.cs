@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -150,6 +151,9 @@ namespace ArniLite.Core
             var result = new AgentRunResult();
             var started = _clock.UtcNow;
             var blocked = new HashSet<string>(StringComparer.Ordinal);
+            // Tool name plus its error text; a model that repeats a call the tool already rejected
+            // with the same error is not learning from it (2026-11-23: the same TickTick validation error twice).
+            var failures = new HashSet<string>(StringComparer.Ordinal);
             while (result.ModelRounds < _limits.MaxModelRounds)
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -179,7 +183,7 @@ namespace ArniLite.Core
                 if (turn.Interrupted || !turn.Done)
                 {
                     result.Status = "interrupted";
-                    result.Detail = "The model stream ended before a completed event.";
+                    result.Detail = StreamInterrupted;
                     return result;
                 }
 
@@ -243,12 +247,33 @@ namespace ArniLite.Core
                         result.Detail = "A repeated side effect was not run again.";
                         return result;
                     }
+
+                    if (execution.Status == "failed" && !failures.Add((call.Name ?? string.Empty) + "\n" + FailureText(execution.ContentJson)))
+                    {
+                        result.Status = "failed";
+                        result.Detail = RepeatedToolFailure + (call.Name ?? string.Empty);
+                        return result;
+                    }
                 }
             }
 
             result.Status = "failed";
             result.Detail = "The turn reached the model-round limit.";
             return result;
+        }
+
+        /// <summary>Prefix of <see cref="AgentRunResult.Detail"/> when a tool failed twice with the same error; the tool name follows.</summary>
+        public const string RepeatedToolFailure = "repeated-tool-failure: ";
+
+        /// <summary>Detail of a turn whose model stream ended without a finish event.</summary>
+        public const string StreamInterrupted = "The model stream ended before a completed event.";
+
+        private static readonly Regex ToolCallIdField = new Regex("\"tool_call_id\"\\s*:\\s*\"[^\"]*\",?", RegexOptions.CultureInvariant);
+
+        /// <summary>The tool result without its per-call id, so the same error from two calls compares equal.</summary>
+        private static string FailureText(string contentJson)
+        {
+            return ToolCallIdField.Replace(contentJson ?? string.Empty, string.Empty);
         }
     }
 
