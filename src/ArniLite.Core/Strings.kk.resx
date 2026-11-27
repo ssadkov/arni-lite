@@ -15,6 +15,9 @@
   <data name="Copy" xml:space="preserve">
     <value>Көшіру</value>
   </data>
+  <data name="Copied" xml:space="preserve">
+    <value>Көшірілді</value>
+  </data>
   <data name="NewProjectChat" xml:space="preserve">
     <value>Жобадағы жаңа чат</value>
   </data>

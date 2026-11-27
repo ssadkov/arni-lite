@@ -42,13 +42,20 @@
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="Box" Background="{TemplateBinding Background}" CornerRadius="6" Width="28" Height="28">
                         <Viewbox Width="14" Height="14">
-                            <Path Stroke="{TemplateBinding Foreground}" StrokeThickness="1.4" StrokeLineJoin="Round" Fill="Transparent" Data="M5 7h7v8H5z M8 7V5h7v8h-2" />
+                            <Canvas Width="14" Height="14">
+                                <Path x:Name="CopyGlyph" Stroke="{TemplateBinding Foreground}" StrokeThickness="1.4" StrokeLineJoin="Round" Fill="Transparent" Data="M5 7h7v8H5z M8 7V5h7v8h-2" />
+                                <Path x:Name="CopiedGlyph" Visibility="Collapsed" Stroke="#2F6B3A" StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Data="M1,7 L5,11 L13,2" />
+                            </Canvas>
                         </Viewbox>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Box" Property="Background" Value="#E7E5E0" />
                         </Trigger>
+                        <DataTrigger Binding="{Binding Copied}" Value="True">
+                            <Setter TargetName="CopyGlyph" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="CopiedGlyph" Property="Visibility" Value="Visible" />
+                        </DataTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

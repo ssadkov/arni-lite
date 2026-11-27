@@ -1,10 +1,11 @@
-# Arni (0.1.6)
+# Arni (0.1.7)
 
 Лёгкое приложение для Windows 7 SP1 и новее. Чаты с моделями Arni, агент в папке проекта и установка отдельно для 32- и 64-битной Windows. Нужен .NET Framework 4.8.
 
 ## Возможности
 
 - Чаты по папке проекта и потоковый ответ модели. Папку можно привязать к открытому чату через «Без проекта» или панель «Файлы».
+- Копирование ответа целиком и отдельного блока кода. Кнопка на секунду становится галочкой.
 - Вход через Яндекс или Google в браузере. Сессия хранится только у текущего пользователя Windows.
 - Счёт и лимиты аккаунта справа вверху: баланс, пополнение, расходы, тарифы и выход. Звёздочка у суммы отмечает бонус DeepSeek.
 - Агент читает и ищет файлы проекта, предлагает правки и выполняет команды после подтверждения.
@@ -24,6 +25,7 @@
 Lightweight client for Windows 7 SP1 and newer. Arni chats, a project agent, and separate 32-bit and 64-bit installers. Requires .NET Framework 4.8.
 
 - Project chats with streaming model responses. Link a folder to an open chat from “No project” or the Files panel.
+- Copy a whole answer, or one code block. The button turns into a check for a moment.
 - Sign-in with Yandex or Google in the browser. The session stays with the current Windows user.
 - Account balance and limits at the top right, with top-up, expenses, prices, and sign-out. An asterisk marks a balance that includes a DeepSeek bonus.
 - The agent reads and searches project files, proposes edits, and runs commands after confirmation.

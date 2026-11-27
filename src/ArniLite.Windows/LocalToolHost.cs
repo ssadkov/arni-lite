@@ -446,7 +446,7 @@ namespace ArniLite.Windows
             else
             {
                 var script = Path.Combine(Path.GetTempPath(), "arni-lite-" + Guid.NewGuid().ToString("N") + ".cmd");
-                File.WriteAllText(script, "@echo off\r\n" + command + "\r\n", new UTF8Encoding(true));
+                File.WriteAllText(script, CmdScript.Text(command), CmdScript.Encoding);
                 try
                 {
                     ran = await _processes.RunProcessAsync(

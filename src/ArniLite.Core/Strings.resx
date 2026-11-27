@@ -15,6 +15,9 @@
   <data name="Copy" xml:space="preserve">
     <value>Копировать</value>
   </data>
+  <data name="Copied" xml:space="preserve">
+    <value>Скопировано</value>
+  </data>
   <data name="NewProjectChat" xml:space="preserve">
     <value>Новый чат в проекте</value>
   </data>

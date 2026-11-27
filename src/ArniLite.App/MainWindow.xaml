@@ -176,7 +176,7 @@
                                 <Border x:Name="Message" MaxWidth="760" Padding="0,8" HorizontalAlignment="Stretch">
                                     <StackPanel>
                                         <DockPanel Margin="0,0,0,8">
-                                            <Button DockPanel.Dock="Right" Style="{StaticResource IconButton}" Command="{Binding CopyCommand}" AutomationProperties.Name="{local:Loc CopyMessage}" />
+                                            <Button DockPanel.Dock="Right" Style="{StaticResource IconButton}" Command="{Binding CopyCommand}" ToolTip="{Binding CopyToolTip}" AutomationProperties.Name="{Binding CopyToolTip}" />
                                             <TextBlock Text="{Binding DisplayTitle}" FontSize="11" FontWeight="SemiBold" Foreground="#71806A" VerticalAlignment="Center" />
                                         </DockPanel>
                                         <TextBox IsReadOnly="True" BorderThickness="0" Background="Transparent" TextWrapping="Wrap" AcceptsReturn="True" FontFamily="Consolas" FontSize="13" Text="{Binding Body, Mode=OneWay}" MaxHeight="240" VerticalScrollBarVisibility="Auto" Visibility="{Binding IsCodeBlock, Converter={StaticResource BoolVis}}" />

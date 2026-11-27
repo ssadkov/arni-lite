@@ -10,7 +10,7 @@
     <Company>Arnion</Company>
     <RootNamespace>ArniLite</RootNamespace>
     <AssemblyName>ArniLite</AssemblyName>
-    <Version>0.1.6</Version>
+    <Version>0.1.7</Version>
     <RuntimeIdentifiers>win7-x86;win7-x64</RuntimeIdentifiers>
   </PropertyGroup>
   <ItemGroup>

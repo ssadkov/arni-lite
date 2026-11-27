@@ -124,4 +124,12 @@ namespace ArniLite.Core
         public bool IsCode { get; }
         public string Text { get; }
     }
+
+    public static class ResponseCopy
+    {
+        public static string Text(string message, bool codePart, string part)
+        {
+            return codePart ? part ?? string.Empty : message ?? string.Empty;
+        }
+    }
 }

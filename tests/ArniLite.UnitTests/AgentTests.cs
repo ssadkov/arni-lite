@@ -158,6 +158,16 @@ namespace ArniLite.UnitTests
             Assert.Equal("line", parts[1].Text);
             Assert.Contains("Done", parts[2].Text);
         }
+
+        [Fact]
+        public void CopiesTheWholeAnswerAndACodeBlockSeparately()
+        {
+            var message = "See\n```txt\nline\n```\nDone";
+            var parts = CodeFences.Split(message);
+            Assert.Equal(message, ResponseCopy.Text(message, parts[0].IsCode, parts[0].Text));
+            Assert.Equal("line", ResponseCopy.Text(message, parts[1].IsCode, parts[1].Text));
+            Assert.Equal(message, ResponseCopy.Text(message, parts[2].IsCode, parts[2].Text));
+        }
     }
 
     internal sealed class ScriptedModel : IModelCompletion

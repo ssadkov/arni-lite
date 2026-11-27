@@ -931,7 +931,7 @@ namespace ArniLite
                     continue;
                 }
 
-                Items.Add(new TranscriptRow(title, parts[i].Text, parts[i].IsCode));
+                Items.Add(new TranscriptRow(title, parts[i].Text, parts[i].IsCode, ResponseCopy.Text(message.Content, parts[i].IsCode, parts[i].Text)));
             }
         }
 
@@ -1604,12 +1604,17 @@ namespace ArniLite
     {
         private string _body;
 
-        public TranscriptRow(string title, string body, bool code)
+        private readonly string _copyText;
+        private bool _copied;
+        private DispatcherTimer _copiedTimer;
+
+        public TranscriptRow(string title, string body, bool code, string copyText = null)
         {
             Title = title ?? string.Empty;
             _body = body ?? string.Empty;
             IsCode = code;
-            CopyCommand = new RelayCommand(() => System.Windows.Clipboard.SetText(Body));
+            _copyText = copyText;
+            CopyCommand = new RelayCommand(Copy);
         }
 
         public string Title { get; }
@@ -1636,7 +1641,52 @@ namespace ArniLite
             "Нет доступа к файлам" => StringCatalog.Get("NoFileAccess"),
             _ => Title,
         };
-        public void RefreshLocalization() => Notify(nameof(DisplayTitle));
+        public void RefreshLocalization()
+        {
+            Notify(nameof(DisplayTitle));
+            Notify(nameof(CopyToolTip));
+        }
+
+        public bool Copied => _copied;
+
+        public string CopyToolTip => StringCatalog.Get(_copied ? "Copied" : IsCodeBlock ? "CopyCode" : "Copy");
+
+        public string ClipboardText => _copyText ?? string.Empty;
+
+        private void Copy()
+        {
+            if (ClipboardText.Length == 0)
+            {
+                return;
+            }
+
+            try
+            {
+                System.Windows.Clipboard.SetDataObject(ClipboardText, true);
+            }
+            catch (System.Runtime.InteropServices.ExternalException)
+            {
+                return;
+            }
+
+            _copied = true;
+            Notify(nameof(Copied));
+            Notify(nameof(CopyToolTip));
+            if (_copiedTimer == null)
+            {
+                _copiedTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1200) };
+                _copiedTimer.Tick += (_, _) =>
+                {
+                    _copiedTimer.Stop();
+                    _copied = false;
+                    Notify(nameof(Copied));
+                    Notify(nameof(CopyToolTip));
+                };
+            }
+
+            _copiedTimer.Stop();
+            _copiedTimer.Start();
+        }
         public bool IsCode { get; }
         public bool IsTool => IsCode && Title != "Arni" && Title != "Вы";
         public bool IsCodeBlock => IsCode && !IsTool;
